@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/navigation_main"
+    app:startDestination="@id/fragment_dashboard">
+
+    <fragment
+        android:id="@+id/fragment_dashboard"
+        android:name="kaist.iclab.standup.smi.ui.dashboard.DashboardFragment"
+        android:label="@string/title_dashboard" >
+
+        <action
+            android:id="@+id/action_dashboard_to_daily_chart"
+            app:destination="@id/fragment_daily_chart" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/fragment_config"
+        android:name="kaist.iclab.standup.smi.ui.config.ConfigFragment"
+        android:label="@string/title_config" >
+    </fragment>
+
+    <fragment
+        android:id="@+id/fragment_timeline"
+        android:name="kaist.iclab.standup.smi.ui.timeline.TimelineFragment"
+        android:label="TimelineFragment" />
+
+    <fragment
+        android:id="@+id/fragment_daily_chart"
+        android:name="kaist.iclab.standup.smi.ui.daily.DailyChartFragment"
+        android:label="DailyChartFragment" >
+        <argument
+            android:name="dataType"
+            app:argType="string"/>
+
+        <argument
+            android:name="year"
+            app:argType="integer" />
+        <argument
+            android:name="month"
+            app:argType="integer" />
+        <argument
+            android:name="day"
+            app:argType="integer" />
+    </fragment>
+
+</navigation>

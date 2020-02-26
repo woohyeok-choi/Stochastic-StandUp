@@ -1,0 +1,56 @@
+{
+  "project_info": {
+    "project_number": "394960974487",
+    "firebase_url": "https://standup-stochastic-incentive.firebaseio.com",
+    "project_id": "standup-stochastic-incentive",
+    "storage_bucket": "standup-stochastic-incentive.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:394960974487:android:b6e652655b0b2f82232fd2",
+        "android_client_info": {
+          "package_name": "kaist.iclab.standup.smi"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "394960974487-b2m8v71gil3nqghnc8h5qs3lnre03f6u.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "kaist.iclab.standup.smi",
+            "certificate_hash": "70f41fa902944b6d7caee8764ee8ea561c42d778"
+          }
+        },
+        {
+          "client_id": "394960974487-aop4bonfhlbot5ufok45dm9o83aft55i.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "kaist.iclab.standup.smi",
+            "certificate_hash": "b97a283b749c6f7e923da38b6842d932b93e703b"
+          }
+        },
+        {
+          "client_id": "394960974487-875u2105ebu1eisp79i7uv459q0nd77f.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBw5sq0b58B-LfXi5qOZ71JUggOhNXYegg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "394960974487-875u2105ebu1eisp79i7uv459q0nd77f.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

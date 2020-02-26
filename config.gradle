@@ -1,0 +1,10 @@
+def config = [:]
+
+config.version_code = 1
+config.version_name = "0.0.1"
+
+config.pref_name = "stand-up-pref"
+config.debug_pref_name = "stand-up-pref-debug"
+config.firebase_project_id = "standup-stochastic-incentive"
+
+ext.config = config

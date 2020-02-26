@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="LocalTimeRangePreference">
+        <attr name="ltrp_tickIntervalMin" format="reference|integer"/>
+    </declare-styleable>
+
+    <declare-styleable name="SeekBarPreference">
+        <attr name="sbp_max" format="reference|integer"/>
+        <attr name="sbp_min" format="reference|integer"/>
+        <attr name="sbp_sectionCount" format="reference|integer"/>
+        <attr name="sbp_sectionTextCount" format="reference|integer"/>
+    </declare-styleable>
+</resources>

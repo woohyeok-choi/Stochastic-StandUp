@@ -1,0 +1,9 @@
+<resources>
+    <dimen name="txt_size_launcher">40sp</dimen>
+    <dimen name="img_size_launcher">64dp</dimen>
+    <dimen name="fab_with_progress_size">24dp</dimen>
+    <dimen name="fab_margin">16dp</dimen>
+    <dimen name="app_bar_height">180dp</dimen>
+    <dimen name="text_margin">16dp</dimen>
+
+</resources>
