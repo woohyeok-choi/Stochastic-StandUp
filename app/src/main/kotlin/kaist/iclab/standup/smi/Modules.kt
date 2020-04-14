@@ -2,70 +2,231 @@ package kaist.iclab.standup.smi
 
 import android.Manifest
 import android.os.Build
+import com.google.android.gms.location.ActivityTransition
+import com.google.android.gms.location.ActivityTransitionRequest
+import com.google.android.gms.location.DetectedActivity
+import com.google.android.gms.location.LocationRequest
+import com.google.android.libraries.places.api.Places
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.FirebaseFirestore
-import kaist.iclab.standup.smi.io.SedentaryTrackRepository
-import kaist.iclab.standup.smi.ui.config.ConfigNavigator
+import com.google.maps.GeoApiContext
+import kaist.iclab.standup.smi.data.Mission
+import kaist.iclab.standup.smi.repository.EventRepository
+import kaist.iclab.standup.smi.repository.IncentiveRepository
+import kaist.iclab.standup.smi.repository.MissionRepository
+import kaist.iclab.standup.smi.repository.StatRepository
+import kaist.iclab.standup.smi.tracker.ActivityTracker
+import kaist.iclab.standup.smi.tracker.LocationTracker
 import kaist.iclab.standup.smi.ui.config.ConfigViewModel
-import kaist.iclab.standup.smi.ui.dashboard.DashboardNavigator
 import kaist.iclab.standup.smi.ui.dashboard.DashboardViewModel
-import kaist.iclab.standup.smi.ui.main.MainNavigator
 import kaist.iclab.standup.smi.ui.main.MainViewModel
-import kaist.iclab.standup.smi.ui.splash.SplashNavigator
 import kaist.iclab.standup.smi.ui.splash.SplashViewModel
-import kaist.iclab.standup.smi.ui.timeline.TimelineNavigator
 import kaist.iclab.standup.smi.ui.timeline.TimelineViewModel
 import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.viewmodel.dsl.viewModel
+import org.koin.core.qualifier.named
 import org.koin.dsl.module
+import java.util.concurrent.TimeUnit
 
-private val PERMISSIONS = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
-    arrayOf(
-        Manifest.permission.ACCESS_COARSE_LOCATION,
-        Manifest.permission.ACCESS_FINE_LOCATION,
-        Manifest.permission.WRITE_EXTERNAL_STORAGE,
-        Manifest.permission.READ_EXTERNAL_STORAGE
-    )
-} else {
-    arrayOf(
-        Manifest.permission.ACCESS_COARSE_LOCATION,
-        Manifest.permission.ACCESS_FINE_LOCATION,
+private val DEFAULT_PERMISSIONS = arrayOf(
+    Manifest.permission.INTERNET,
+    Manifest.permission.ACCESS_WIFI_STATE,
+    Manifest.permission.ACCESS_COARSE_LOCATION,
+    Manifest.permission.ACCESS_FINE_LOCATION,
+    Manifest.permission.READ_EXTERNAL_STORAGE,
+    Manifest.permission.WRITE_EXTERNAL_STORAGE,
+    Manifest.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
+    Manifest.permission.VIBRATE
+)
+
+private val PERMISSIONS =
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) DEFAULT_PERMISSIONS else DEFAULT_PERMISSIONS + arrayOf(
         Manifest.permission.ACTIVITY_RECOGNITION,
-        Manifest.permission.WRITE_EXTERNAL_STORAGE,
-        Manifest.permission.READ_EXTERNAL_STORAGE
+        Manifest.permission.ACCESS_BACKGROUND_LOCATION
     )
+private val COLLECTION_ROOT = if (BuildConfig.FIREBASE_TEST_MODE) "tests" else "users"
+private const val COLLECTION_EVENTS = "events"
+
+private const val COLLECTION_MISSIONS = "missions"
+private const val COLLECTION_PLACES = "places"
+private const val COLLECTION_INTERACTIONS = "interactions"
+private const val DOCUMENT_USER = "user"
+
+val firebaseModules = module {
+    factory(named(COLLECTION_EVENTS)) {
+        {
+            val userName = FirebaseAuth.getInstance().currentUser?.email
+            val instance = FirebaseFirestore.getInstance()
+
+            userName?.let { name ->
+                instance.collection(COLLECTION_ROOT).document(name).collection(COLLECTION_EVENTS)
+            }
+        }
+    }
+
+    factory(named(COLLECTION_MISSIONS)) {
+        {
+            val userName = FirebaseAuth.getInstance().currentUser?.email
+            val instance = FirebaseFirestore.getInstance()
+
+            userName?.let { name ->
+                instance.collection(COLLECTION_ROOT).document(name).collection(COLLECTION_MISSIONS)
+            }
+        }
+    }
+
+    factory(named(COLLECTION_PLACES)) {
+        {
+            val userName = FirebaseAuth.getInstance().currentUser?.email
+            val instance = FirebaseFirestore.getInstance()
+
+            userName?.let { name ->
+                instance.collection(COLLECTION_ROOT).document(name).collection(COLLECTION_PLACES)
+            }
+        }
+    }
+
+    factory(named(COLLECTION_INTERACTIONS)) {
+        {
+            val userName = FirebaseAuth.getInstance().currentUser?.email
+            val instance = FirebaseFirestore.getInstance()
+            userName?.let { name ->
+                instance.collection(COLLECTION_ROOT).document(name)
+                    .collection(COLLECTION_INTERACTIONS)
+            }
+        }
+    }
+
+    factory(named(DOCUMENT_USER)) {
+        {
+            val userName = FirebaseAuth.getInstance().currentUser?.email
+            val instance = FirebaseFirestore.getInstance()
+            userName?.let { name ->
+                instance.collection(COLLECTION_ROOT).document(name)
+            }
+        }
+    }
 }
 
-private val ref: () -> DocumentReference? = {
-    val userName = FirebaseAuth.getInstance().currentUser?.email
-    val instance = FirebaseFirestore.getInstance()
-    userName?.let { instance.collection("users").document(it) }
+val trackerModule = module {
+    factory(named("activityIntent")) {
+        StandUpIntentService.intentForLocation(androidContext())
+    }
+
+    factory(named("locationIntent")) {
+        StandUpIntentService.intentForActivity(androidContext())
+    }
+
+    single(createdAtStart = false) {
+        ActivityTracker(
+            context = androidContext(),
+            request = ActivityTransitionRequest(
+                listOf(
+                    ActivityTransition.Builder()
+                        .setActivityType(DetectedActivity.STILL)
+                        .setActivityTransition(ActivityTransition.ACTIVITY_TRANSITION_ENTER)
+                        .build(),
+                    ActivityTransition.Builder()
+                        .setActivityType(DetectedActivity.STILL)
+                        .setActivityTransition(ActivityTransition.ACTIVITY_TRANSITION_EXIT)
+                        .build()
+                )
+            ),
+            pendingIntent = get(named("activityIntent"))
+        )
+    }
+
+    single(createdAtStart = false) {
+        LocationTracker(
+            context = androidContext(),
+            request = LocationRequest.create()
+                .setInterval(TimeUnit.MINUTES.toMillis(3))
+                .setSmallestDisplacement(10.0F)
+                .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY),
+            pendingIntent = get(named("locationIntent"))
+        )
+    }
 }
 
-val ioModule = module {
-    factory { ref }
-    single { SedentaryTrackRepository(androidContext(), get())  }
+val repositoryModules = module {
+    single(createdAtStart = false) {
+        EventRepository(
+            reference = get(named(COLLECTION_EVENTS))
+        )
+    }
+
+    single(createdAtStart = false) {
+        MissionRepository(
+            reference = get(named(COLLECTION_MISSIONS))
+        )
+    }
+
+    single(createdAtStart = false) {
+        StatRepository(
+            geoApiContext = GeoApiContext.Builder()
+                .apiKey(androidContext().getString(R.string.google_api_key))
+                .connectTimeout(10, TimeUnit.SECONDS)
+                .maxRetries(5)
+                .readTimeout(10, TimeUnit.SECONDS)
+                .build(),
+            placesClient = Places.createClient(androidContext()),
+            rootReference = get(named(DOCUMENT_USER)),
+            docReference = get(named(COLLECTION_PLACES))
+        )
+    }
+
+    single(createdAtStart = false) {
+        object : IncentiveRepository {
+            override fun calculateStochasticIncentive(
+                missions: List<Mission>,
+                timestamp: Long,
+                latitude: Double,
+                longitude: Double
+            ): Int? {
+                return 50
+            }
+        }
+    }
+
+    single(createdAtStart = false) {
+        StandUpMissionHandler(
+            missionRepository = get(),
+            statRepository = get(),
+            eventRepository = get(),
+            incentiveRepository = get()
+        )
+    }
 }
 
 val viewModelModules = module {
-    viewModel { (navigator: SplashNavigator) ->
-        SplashViewModel(androidContext(), PERMISSIONS, navigator)
+    viewModel {
+        SplashViewModel(androidContext(), PERMISSIONS)
     }
 
-    viewModel { (navigator: MainNavigator) ->
-        MainViewModel(navigator)
+    viewModel {
+        MainViewModel()
     }
 
-    viewModel { (navigator: TimelineNavigator) ->
-        TimelineViewModel(navigator)
+    viewModel {
+        TimelineViewModel(
+            eventRepository = get(),
+            missionRepository = get(),
+            statRepository = get(),
+            placeReference = get(named(COLLECTION_PLACES))
+        )
     }
 
-    viewModel { (navigator: DashboardNavigator) ->
-        DashboardViewModel(navigator)
+    viewModel {
+        DashboardViewModel(
+            eventRepository = get(),
+            missionRepository = get()
+        )
     }
 
-    viewModel { (navigator: ConfigNavigator) ->
-        ConfigViewModel(navigator)
+    viewModel {
+        ConfigViewModel(
+            context = androidContext(),
+            permissions = PERMISSIONS
+        )
     }
 }

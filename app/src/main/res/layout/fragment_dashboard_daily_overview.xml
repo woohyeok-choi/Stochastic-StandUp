@@ -1,13 +1,125 @@
 <?xml version="1.0" encoding="utf-8"?>
-<layout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
+
     <data>
+
         <variable
             name="viewModel"
             type="kaist.iclab.standup.smi.ui.dashboard.DashboardViewModel" />
+
     </data>
+
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
+        android:layout_height="wrap_content"
+        android:paddingTop="@dimen/space_vertical_default"
+        android:paddingBottom="@dimen/space_vertical_default">
+
+        <kaist.iclab.standup.smi.view.AnimatedCircle
+            app:isAnimated="true"
+            android:layout_width="236dp"
+            android:layout_height="236dp"
+            android:layout_gravity="center"
+            app:angle="@{360F * viewModel.dailyTotalSedentaryMinutesRate}"
+            app:backgroundColor="@android:color/transparent"
+            app:fillColor="@color/blue"
+            app:fillWidth="@dimen/circle_forth_line_width"
+            app:strokeColor="@color/light_grey"
+            app:strokeDotSize="@dimen/circle_back_line_dot"
+            app:strokeGapSize="@dimen/circle_back_line_gap"
+            app:strokeStyle="dot"
+            app:strokeWidth="@dimen/circle_back_line_width"
+            app:showPoint="true"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"/>
+
+        <kaist.iclab.standup.smi.view.AnimatedCircle
+            app:isAnimated="true"
+            android:layout_width="200dp"
+            android:layout_height="200dp"
+            android:layout_gravity="center"
+            app:angle="@{360F * viewModel.dailyAvgSedentaryMinutesRate}"
+            app:backgroundColor="@android:color/transparent"
+            app:fillColor="@color/violet"
+            app:fillWidth="@dimen/circle_forth_line_width"
+            app:strokeColor="@color/light_grey"
+            app:strokeDotSize="@dimen/circle_back_line_dot"
+            app:strokeGapSize="@dimen/circle_back_line_gap"
+            app:strokeStyle="dot"
+            app:strokeWidth="@dimen/circle_back_line_width"
+            app:showPoint="true"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"/>
+
+        <kaist.iclab.standup.smi.view.AnimatedCircle
+            app:isAnimated="true"
+            android:layout_width="164dp"
+            android:layout_height="164dp"
+            android:layout_gravity="center"
+            app:angle="@{360F * viewModel.dailyNumProlongedSedentarinessRate}"
+            app:backgroundColor="@android:color/transparent"
+            app:fillColor="@color/magenta"
+            app:fillWidth="@dimen/circle_forth_line_width"
+            app:strokeColor="@color/light_grey"
+            app:strokeDotSize="@dimen/circle_back_line_dot"
+            app:strokeGapSize="@dimen/circle_back_line_gap"
+            app:strokeStyle="dot"
+            app:strokeWidth="@dimen/circle_back_line_width"
+            app:showPoint="true"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"/>
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="88dp"
+            android:layout_height="wrap_content"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent">
+
+            <ImageView
+                android:id="@+id/img_stat_avg_sedentary_time"
+                android:layout_width="wrap_content"
+                android:layout_height="0dp"
+                android:src="@drawable/baseline_attach_money_white_36"
+                android:tint="@color/dark_yellow"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <com.robinhood.ticker.TickerView
+                android:id="@+id/txt_stat_total_incentives"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="end"
+                android:text="@{viewModel.dailyTotalIncentives.toString()}"
+                android:textColor="@color/grey"
+                android:textSize="@dimen/txt_size_larger"
+                app:ticker_animationDuration="1250"
+                app:ticker_defaultCharacterList="number"
+                app:ticker_defaultPreferredScrollingDirection="any"
+                app:layout_constraintStart_toEndOf="@id/img_stat_avg_sedentary_time"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:maxLines="2"
+                android:text="@string/dashboard_overview_incentives_unit"
+                android:textColor="@color/grey"
+                android:textSize="@dimen/txt_size_small"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@id/img_stat_avg_sedentary_time"
+                app:layout_constraintTop_toBottomOf="@id/txt_stat_total_incentives" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

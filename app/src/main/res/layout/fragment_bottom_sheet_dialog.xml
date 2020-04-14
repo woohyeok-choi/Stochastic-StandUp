@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <data>
+        <import type="android.view.View"/>
+
+        <variable
+            name="showPositiveButton"
+            type="Boolean" />
+
+        <variable
+            name="textPositiveButton"
+            type="String" />
+
+        <variable
+            name="showNegativeButton"
+            type="Boolean" />
+
+        <variable
+            name="textNegativeButton"
+            type="String" />
+    </data>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:paddingTop="@dimen/space_vertical_default"
+        android:paddingBottom="@dimen/space_vertical_default"
+        android:paddingStart="@dimen/space_horizontal_largest"
+        android:paddingEnd="@dimen/space_horizontal_largest"
+        app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior">
+
+        <FrameLayout
+            android:id="@+id/container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintLeft_toLeftOf="parent"/>
+
+        <Button
+            android:id="@+id/btn_negative"
+            style="@style/Widget.AppCompat.Button.ButtonBar.AlertDialog"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="@{textNegativeButton}"
+            android:visibility="@{showNegativeButton ? View.VISIBLE : View.GONE}"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/container"/>
+
+
+        <Button
+            android:id="@+id/btn_positive"
+            style="@style/Widget.AppCompat.Button.ButtonBar.AlertDialog"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="@{textPositiveButton}"
+            android:visibility="@{showPositiveButton ? View.VISIBLE : View.GONE}"
+            app:layout_constraintRight_toLeftOf="@id/btn_negative"
+            app:layout_constraintTop_toBottomOf="@id/container"/>
+
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</layout>

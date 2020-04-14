@@ -1,0 +1,40 @@
+package kaist.iclab.standup.smi.ui.dashboard
+
+import kaist.iclab.standup.smi.BR
+import kaist.iclab.standup.smi.R
+import kaist.iclab.standup.smi.base.BaseFragment
+import kaist.iclab.standup.smi.databinding.FragmentDashboardStatPageBinding
+import kaist.iclab.standup.smi.ui.dashboard.DashboardFragment.Companion.ARG_HAS_NEXT
+import kaist.iclab.standup.smi.ui.dashboard.DashboardFragment.Companion.ARG_HAS_PREVIOUS
+import org.koin.androidx.viewmodel.ext.android.sharedViewModel
+
+class DashboardChildStatPageFragment : BaseFragment<FragmentDashboardStatPageBinding, DashboardViewModel>() {
+    override val viewModel: DashboardViewModel by sharedViewModel()
+    override val viewModelVariable: Int = BR.viewModel
+    override val layoutId: Int = R.layout.fragment_dashboard_stat_page
+
+    override fun beforeExecutePendingBindings() {
+        dataBinding.hasNext = arguments?.getBoolean(ARG_HAS_NEXT) ?: false
+        dataBinding.hasPrevious = arguments?.getBoolean(ARG_HAS_PREVIOUS) ?: false
+
+        dataBinding.itemStatTotalSedentaryTime.setOnClickListener {
+            (parentFragment as? DashboardNavigator)?.navigateChartType(DashboardFragment.CHART_TYPE_TOTAL_SEDENTARY_TIME)
+        }
+
+        dataBinding.itemStatAvgSedentaryTime.setOnClickListener {
+            (parentFragment as? DashboardNavigator)?.navigateChartType(DashboardFragment.CHART_TYPE_AVG_SEDENTARY_TIME)
+        }
+
+        dataBinding.itemStatProlongedSedentariness.setOnClickListener {
+            (parentFragment as? DashboardNavigator)?.navigateChartType(DashboardFragment.CHART_TYPE_NUM_PROLONGED_SEDENTARINESS)
+        }
+
+        dataBinding.imgLeftMore.setOnClickListener {
+            (parentFragment as? DashboardNavigator)?.navigatePreviousDate()
+        }
+
+        dataBinding.imgRightMore.setOnClickListener {
+            (parentFragment as? DashboardNavigator)?.navigateNextDate()
+        }
+    }
+}

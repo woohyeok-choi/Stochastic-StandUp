@@ -1,5 +1,6 @@
 package kaist.iclab.standup.smi.base
 
+import android.app.Application
 import android.os.Bundle
 import android.view.Menu
 import androidx.annotation.CallSuper
@@ -17,8 +18,15 @@ abstract class BaseActivity<B : ViewDataBinding, VM : ViewModel> : AppCompatActi
     protected lateinit var dataBinding: B
     @get:LayoutRes
     protected abstract val layoutId: Int
-    @get:MenuRes
-    protected abstract val menuRes: Int?
+
+
+    protected fun d(msg: String) {
+        AppLog.d(javaClass, msg)
+    }
+
+    protected fun e(msg: String, throwable: Throwable? = null) {
+        AppLog.e(javaClass, msg, throwable)
+    }
 
     abstract fun beforeExecutePendingBindings()
 
@@ -32,8 +40,6 @@ abstract class BaseActivity<B : ViewDataBinding, VM : ViewModel> : AppCompatActi
         dataBinding.lifecycleOwner = this
 
         beforeExecutePendingBindings()
-
-        (viewModel as? BaseViewModel<*>)?.load(intent?.extras)
 
         dataBinding.executePendingBindings()
     }
@@ -66,11 +72,5 @@ abstract class BaseActivity<B : ViewDataBinding, VM : ViewModel> : AppCompatActi
     override fun onDestroy() {
         super.onDestroy()
         AppLog.d(javaClass, "onDestroy()")
-    }
-
-    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-        AppLog.d(javaClass, "onCreateOptionsMenu(menu: $menu)")
-        menuRes?.let { menuInflater.inflate(it, menu) }
-        return menuRes != null
     }
 }

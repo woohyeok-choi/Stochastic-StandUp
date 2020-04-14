@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <data>
+        <import type="kaist.iclab.standup.smi.common.Formatter"/>
+        <variable
+            name="place"
+            type="kaist.iclab.standup.smi.data.PlaceStat" />
+    </data>
+
+    <LinearLayout
+        android:id="@+id/container_place"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:clickable="true"
+        android:focusable="true"
+        android:background="?selectableItemBackground"
+        android:paddingTop="@dimen/space_vertical_small"
+        android:paddingBottom="@dimen/space_vertical_small"
+        android:paddingStart="@dimen/space_horizontal_large"
+        android:paddingEnd="@dimen/space_horizontal_large">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:gravity="top|start"
+            android:text="@{place.name}"
+            android:textColor="@color/black"
+            android:paddingBottom="@dimen/txt_bottom_padding"
+            android:textSize="@dimen/txt_size_medium"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="top|start"
+            android:maxLines="2"
+            android:ellipsize="end"
+            android:paddingBottom="@dimen/txt_bottom_padding"
+            android:text="@{place.address}"
+            android:textColor="@color/grey"
+            android:textSize="@dimen/txt_size_default"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="top|start"
+            android:maxLines="2"
+            android:ellipsize="end"
+            android:paddingBottom="@dimen/txt_bottom_padding"
+            android:text="@{@string/timeline_list_item_place_visit_stat(Formatter.getRelativeTimeSpanString(context, place.lastVisitTime), place.numVisit, place.incentive)}"
+            android:textColor="@color/grey"
+            android:textSize="@dimen/txt_size_default"/>
+
+    </LinearLayout>
+</layout>

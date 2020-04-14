@@ -1,31 +1,42 @@
 package kaist.iclab.standup.smi
 
 import android.app.Application
-import com.google.firebase.ktx.Firebase
-import com.google.firebase.ktx.app
-import com.google.firebase.remoteconfig.FirebaseRemoteConfig
+import com.google.android.libraries.maps.MapsInitializer
+import com.google.android.libraries.places.api.Places
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.FirebaseFirestoreSettings
 import github.agustarc.koap.Koap
-import kaist.iclab.standup.smi.io.pref.DebugPrefs
-import kaist.iclab.standup.smi.io.pref.LocalPrefs
-import kaist.iclab.standup.smi.io.pref.RemotePrefs
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
+import kaist.iclab.standup.smi.pref.LocalPrefs
+import kaist.iclab.standup.smi.pref.RemotePrefs
+import net.danlew.android.joda.JodaTimeAndroid
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
+import java.util.*
 
-class StandUpApplication: Application() {
-
+class StandUpApplication : Application() {
     override fun onCreate() {
         super.onCreate()
 
+        Koap.bind(this, LocalPrefs)
+        RemotePrefs.bind(this)
+        RemotePrefs.localMode = BuildConfig.DEBUG
+        JodaTimeAndroid.init(this)
+        Places.initialize(this, getString(R.string.google_api_key), Locale.getDefault())
+        MapsInitializer.initialize(this)
+        FirebaseFirestore.getInstance().firestoreSettings =
+            FirebaseFirestoreSettings.Builder().apply {
+                isPersistenceEnabled = true
+            }.build()
+
         startKoin {
             androidContext(this@StandUpApplication)
-            modules(listOf(ioModule, viewModelModules))
-        }
 
-        Koap.bind(this, LocalPrefs, DebugPrefs)
-        GlobalScope.launch {
-            RemotePrefs.bind()
+            modules(listOf(
+                firebaseModules,
+                trackerModule,
+                repositoryModules,
+                viewModelModules
+            ))
         }
     }
 }

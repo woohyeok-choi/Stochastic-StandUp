@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <data>
+        <variable
+            name="item"
+            type="kaist.iclab.standup.smi.ui.config.ConfigHeader" />
+    </data>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingStart="@dimen/space_horizontal_large"
+        android:paddingEnd="@dimen/space_horizontal_large"
+        android:paddingTop="@dimen/space_vertical_default"
+        android:paddingBottom="@dimen/txt_bottom_padding"
+        android:text="@{item.title}"
+        android:textSize="@dimen/txt_size_default"
+        android:textColor="@color/blue"
+        android:textStyle="bold"/>
+</layout>

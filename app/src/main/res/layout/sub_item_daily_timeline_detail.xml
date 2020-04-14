@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <data>
+
+        <import type="android.text.format.DateUtils" />
+        <import type="kaist.iclab.standup.smi.data.Mission"/>
+        <variable
+            name="mission"
+            type="kaist.iclab.standup.smi.data.Mission" />
+    </data>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingStart="@dimen/space_horizontal_large"
+        android:paddingTop="@dimen/space_vertical_small"
+        android:paddingEnd="@dimen/space_horizontal_large"
+        android:paddingBottom="@dimen/space_vertical_small">
+
+        <ImageView
+            android:id="@+id/img_result"
+            android:layout_width="wrap_content"
+            android:layout_height="0dp"
+            android:src="@{mission.succeeded ? @drawable/baseline_check_24 : @drawable/baseline_close_24}"
+            android:tint="@color/light_grey"
+            android:paddingStart="0dp"
+            android:paddingEnd="@dimen/drawable_padding_default"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintLeft_toLeftOf="parent"/>
+
+        <TextView
+            android:id="@+id/txt_result"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:gravity="top|start"
+            android:textColor="@color/black"
+            android:text="@{mission.succeeded ? @string/timeline_list_item_mission_success : @string/timeline_list_item_mission_failure}"
+            android:textSize="@dimen/txt_size_default"
+            android:paddingBottom="@dimen/txt_bottom_padding"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintLeft_toRightOf="@id/img_result"
+            app:layout_constraintRight_toLeftOf="@id/txt_delivered_time"/>
+
+        <TextView
+            android:id="@+id/txt_incentive"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:gravity="top|start"
+            android:textColor="@color/grey"
+            android:textSize="@dimen/txt_size_small"
+            incentive="@{mission.incentive}"
+            succeeded="@{mission.succeeded}"
+            android:paddingBottom="@dimen/txt_bottom_padding"
+            app:layout_constraintTop_toBottomOf="@id/txt_result"
+            app:layout_constraintLeft_toRightOf="@id/img_result"
+            app:layout_constraintRight_toLeftOf="@id/txt_delivered_time"/>
+
+        <TextView
+            android:id="@+id/txt_delivered_time"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:gravity="top|start"
+            android:textColor="@color/grey"
+            android:textSize="@dimen/txt_size_small"
+            android:text="@{DateUtils.formatDateTime(context, mission.triggerTime, DateUtils.FORMAT_SHOW_TIME)}"
+            android:paddingBottom="@dimen/txt_bottom_padding"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+</layout>

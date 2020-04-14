@@ -17,11 +17,12 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.5.3'
+        classpath 'com.android.tools.build:gradle:3.6.2'
         classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.11'
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.3.61"
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.3.71"
+        classpath "org.jetbrains.kotlin:kotlin-serialization:1.3.71"
         classpath "com.google.gms:google-services:4.3.3"
-        classpath 'com.google.firebase:firebase-crashlytics-gradle:2.0.0-beta02'
+        classpath 'com.google.firebase:firebase-crashlytics-gradle:2.0.0-beta03'
     }
 }
 
@@ -38,4 +39,8 @@ allprojects {
 
 task clean(type: Delete) {
     delete rootProject.buildDir
+}
+
+task flushFirestore(type: Exec) {
+    commandLine 'cmd', '/c', "curl -v -X DELETE \"http://localhost:8080/emulator/v1/projects/${config.firebase_project_id}/databases/(default)/documents\""
 }

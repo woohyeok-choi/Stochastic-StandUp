@@ -1,28 +1,23 @@
-<androidx.coordinatorlayout.widget.CoordinatorLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/coordinator_layout"
+    android:padding="@dimen/space_vertical_default"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
     ​
-    <com.google.android.material.appbar.AppBarLayout
-        android:id="@+id/app_bar"
+
+    ​
+
+    <RadioButton
+
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-        ​
-        <androidx.appcompat.widget.Toolbar
-            android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"/>
-        ​
-    </com.google.android.material.appbar.AppBarLayout>
-    ​
-    <!-- Main content -->
-    ​
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_margin="16dp"
-        app:layout_anchor="@id/app_bar"
-        app:layout_anchorGravity="bottom|right|end"/>
+        android:background="@drawable/text_radio_button"
+        android:button="@android:color/transparent"
+        android:text="asdfasdfsad"
+        android:checked="true"
+
+        />
+    <!-- Main content -->
     ​
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

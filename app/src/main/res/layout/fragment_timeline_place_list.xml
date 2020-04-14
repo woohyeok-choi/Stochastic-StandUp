@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <data>
+
+        <import type="android.view.View" />
+
+        <variable
+            name="viewModel"
+            type="kaist.iclab.standup.smi.ui.timeline.TimelineViewModel" />
+    </data>
+
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/bottom_sheet_peek_height">
+
+            <ProgressBar
+                style="?android:progressBarStyleSmall"
+                android:layout_width="@dimen/size_progress_bar"
+                android:layout_height="@dimen/size_progress_bar"
+                android:layout_gravity="center"
+                android:indeterminateTint="@color/light_grey"
+                android:visibility="@{viewModel.placeLoadStatus.loading ? View.VISIBLE : View.GONE}" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:gravity="center"
+                android:text="@string/general_load_failed"
+                android:textColor="@color/grey"
+                android:textSize="@dimen/txt_size_default"
+                android:visibility="@{viewModel.placeLoadStatus.failed ? View.VISIBLE : View.GONE}" />
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/container_overall_stat"
+                crossFadeIn="@{viewModel.placeLoadStatus.succeeded}"
+                duration="@{250}"
+                isGone="@{false}"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <TextView
+                    android:id="@+id/txt_stat_total_visited_places"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:drawableStart="@drawable/baseline_location_on_24"
+                    android:drawablePadding="@dimen/drawable_padding_default"
+                    android:drawableTint="@color/grey"
+                    android:gravity="center_vertical"
+                    android:text="@{@string/general_visited_places(viewModel.totalVisitedPlaces)}"
+                    android:textColor="@color/grey"
+                    android:textSize="@dimen/txt_size_default"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toStartOf="@+id/txt_stat_total_incentives"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintWidth_percent="0.50" />
+
+                <TextView
+                    android:id="@+id/txt_stat_total_incentives"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:drawableStart="@drawable/baseline_attach_money_24"
+                    android:drawablePadding="@dimen/drawable_padding_default"
+                    android:drawableTint="@color/dark_yellow"
+                    android:gravity="center_vertical"
+                    android:text="@{@string/general_points_abbrev(viewModel.totalIncentives)}"
+                    android:textColor="@color/grey"
+                    android:textSize="@dimen/txt_size_default"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toEndOf="@+id/txt_stat_total_visited_places"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintWidth_percent="0.50" />
+            </androidx.constraintlayout.widget.ConstraintLayout>
+        </FrameLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/light_grey" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/list_timeline"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:scrollbars="vertical"
+            android:visibility="@{viewModel.placeLoadStatus.succeeded ? View.VISIBLE : View.GONE}"
+            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
+    </LinearLayout>
+</layout>

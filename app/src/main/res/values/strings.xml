@@ -1,6 +1,29 @@
 <resources>
     <string name="app_name">Stand Up</string>
 
+    <!-- General -->
+    <string name="general_unknown">Unknown</string>
+    <string name="general_hyphen">-</string>
+    <string name="general_range">%1s - %2s</string>
+    <string name="general_points_abbrev">%1d pts.</string>
+    <string name="general_minute_abbrev">%1s min.</string>
+    <string name="general_about_minute_abbrev">About %1d min.</string>
+    <string name="general_times">%1d time(s)</string>
+    <string name="general_plus_points">(+ %1d)</string>
+    <string name="general_minus_points">(- %1d)</string>
+    <string name="general_load_failed">Fail to load contents</string>
+    <string name="general_visited_places">%1d places</string>
+    <string name="general_retry">Retry</string>
+    <plurals name="general_minutes">
+        <item quantity="one">%1d minute</item>
+        <item quantity="other">%1d minutes</item>
+    </plurals>
+    <plurals name="general_hours">
+        <item quantity="one">%1d hour</item>
+        <item quantity="other">%1d hours</item>
+    </plurals>
+    <string name="general_days">%1d day(s)</string>
+
     <!-- Error -->
     <string name="error_general">Error</string>
     <string name="error_google_play_service_outdated">Outdated version of Google Play service</string>
@@ -15,6 +38,7 @@
     <string name="error_no_matched_entity">No matched entity</string>
     <string name="error_no_matched_field">No matched field</string>
     <string name="error_no_document_reference">No document reference</string>
+    <string name="error_empty_input">Empty input</string>
 
     <!-- Toast -->
     <string name="toast_welcome">Welcome, %1s</string>
@@ -29,96 +53,100 @@
     <string name="title_dashboard">Dashboard</string>
     <string name="title_timeline">Timeline</string>
     <string name="title_config">Config</string>
-    <string name="title_activity_main2">Main2Activity</string>
-    <string name="title_activity_scrolling">ScrollingActivity</string>
-    <string name="large_text">
-        "Material is the metaphor.\n\n"
 
-        "A material metaphor is the unifying theory of a rationalized space and a system of motion."
-        "The material is grounded in tactile reality, inspired by the study of paper and ink, yet "
-        "technologically advanced and open to imagination and magic.\n"
-        "Surfaces and edges of the material provide visual cues that are grounded in reality. The "
-        "use of familiar tactile attributes helps users quickly understand affordances. Yet the "
-        "flexibility of the material creates new affordances that supercede those in the physical "
-        "world, without breaking the rules of physics.\n"
-        "The fundamentals of light, surface, and movement are key to conveying how objects move, "
-        "interact, and exist in space and in relation to each other. Realistic lighting shows "
-        "seams, divides space, and indicates moving parts.\n\n"
+    <!-- Texts for Dashboard -->
+    <string name="dashboard_overview_incentives_unit">points</string>
+    <string name="dashboard_stat_total_sedentary_time">Total sitting time (min.)</string>
+    <string name="dashboard_stat_avg_sedentary_time">Avg. sitting time (min.)</string>
+    <string name="dashboard_stat_prolonged_sedentariness"># Prolonged sitting</string>
 
-        "Bold, graphic, intentional.\n\n"
+    <string name="dashboard_stat_num_missions_received"># Missions received</string>
+    <string name="dashboard_stat_num_missions_adhered"># Missions succeeded</string>
+    <string name="dashboard_stat_missions_rate">Success rates (%)</string>
 
-        "The foundational elements of print based design typography, grids, space, scale, color, "
-        "and use of imagery guide visual treatments. These elements do far more than please the "
-        "eye. They create hierarchy, meaning, and focus. Deliberate color choices, edge to edge "
-        "imagery, large scale typography, and intentional white space create a bold and graphic "
-        "interface that immerse the user in the experience.\n"
-        "An emphasis on user actions makes core functionality immediately apparent and provides "
-        "waypoints for the user.\n\n"
+    <string name="dashboard_chart_label_incentives">Incentives</string>
+    <string name="dashboard_chart_label_total_sedentary_time">Total sitting time in minutes</string>
+    <string name="dashboard_chart_label_avg_sedentary_time">Avg. sitting time in minutes</string>
+    <string name="dashboard_chart_label_num_prolonged_sedentariness">Num. prolonged sitting sessions</string>
 
-        "Motion provides meaning.\n\n"
+    <!-- Texts for Timeline -->
+    <string name="timeline_title_place">Places Visited</string>
+    <string name="timeline_tab_item_daily">Daily</string>
+    <string name="timeline_tab_item_place">Place</string>
+    <string name="timeline_list_item_mission_success">Success!</string>
+    <string name="timeline_list_item_mission_failure">Failure!</string>
+    <string name="timeline_list_item_mission_bid_positive_success">Got %1d pts.</string>
+    <string name="timeline_list_item_mission_bid_negative_success">Kept %1d pts.</string>
+    <string name="timeline_list_item_mission_bid_positive_failure">Lost a chance to get %1d pts.</string>
+    <string name="timeline_list_item_mission_bid_negative_failure">Lost %1d pts.</string>
+    <string name="timeline_list_item_place_visit_stat">%1s · %2d visits · %3d pts</string>
 
-        "Motion respects and reinforces the user as the prime mover. Primary user actions are "
-        "inflection points that initiate motion, transforming the whole design.\n"
-        "All action takes place in a single environment. Objects are presented to the user without "
-        "breaking the continuity of experience even as they transform and reorganize.\n"
-        "Motion is meaningful and appropriate, serving to focus attention and maintain continuity. "
-        "Feedback is subtle yet clear. Transitions are efﬁcient yet coherent.\n\n"
+    <string name="timeline_place_order_menu">Sort</string>
+    <string name="timeline_place_order_field">Field</string>
+    <string name="timeline_place_order_field_visit_time">Visited time</string>
+    <string name="timeline_place_order_field_duration">Duration</string>
+    <string name="timeline_place_order_field_num_visits">Visits</string>
+    <string name="timeline_place_order_field_num_missions">Missions</string>
+    <string name="timeline_place_order_field_incentives">Incentives</string>
 
-        "3D world.\n\n"
+    <string name="timeline_place_order_direction">Order</string>
+    <string name="timeline_place_order_direction_ascending">Ascending</string>
+    <string name="timeline_place_order_direction_descending">Descending</string>
 
-        "The material environment is a 3D space, which means all objects have x, y, and z "
-        "dimensions. The z-axis is perpendicularly aligned to the plane of the display, with the "
-        "positive z-axis extending towards the viewer. Every sheet of material occupies a single "
-        "position along the z-axis and has a standard 1dp thickness.\n"
-        "On the web, the z-axis is used for layering and not for perspective. The 3D world is "
-        "emulated by manipulating the y-axis.\n\n"
+    <string name="timeline_place_rename_title">Rename</string>
+    <string name="timeline_place_rename_hint">Type a place name you want.</string>
 
-        "Light and shadow.\n\n"
+    <!-- Config -->
+    <string name="config_header_general">General</string>
+    <string name="config_item_user_name">User name</string>
+    <string name="config_item_email">Email</string>
+    <string name="config_item_app_version">Version</string>
+    <string name="config_item_permissions">Permission</string>
+    <string name="config_item_permissions_granted">Granted</string>
+    <string name="config_item_permissions_denied">Denied</string>
 
-        "Within the material environment, virtual lights illuminate the scene. Key lights create "
-        "directional shadows, while ambient light creates soft shadows from all angles.\n"
-        "Shadows in the material environment are cast by these two light sources. In Android "
-        "development, shadows occur when light sources are blocked by sheets of material at "
-        "various positions along the z-axis. On the web, shadows are depicted by manipulating the "
-        "y-axis only. The following example shows the card with a height of 6dp.\n\n"
+    <string name="config_header_mission">Mission</string>
+    <string name="config_item_mission_time_range">Available time (at least 12 hrs)</string>
+    <string name="config_item_do_not_disturb">Do-not-disturb</string>
+    <string name="config_item_do_not_disturb_set">Until %1s / %2d time(s) available.</string>
+    <string name="config_item_do_not_disturb_unset">Not set / %2d time(s) available.</string>
 
-        "Resting elevation.\n\n"
+    <string name="config_header_debug">Debug</string>
+    <string name="config_item_min_stay_time">Duration for stay event</string>
+    <string name="config_item_min_mission_trigger_time">Duration for mission trigger</string>
+    <string name="config_item_mission_timeout">Mission timeout</string>
+    <string name="config_max_daily_budget">Daily budget</string>
+    <string name="config_max_daily_do_not_disturb">Daily chances for do-not-disturb mode</string>
+    <string name="config_win_size_incentive_calc">Duration for incentive calculation</string>
+    <string name="config_num_data_incentive_calc"># missions for incentive calculation</string>
+    <string name="config_range_incentive">Range of incentive amount</string>
+    <string name="config_default_incentive">Default incentive amount</string>
+    <string name="config_unit_incentive">Unit step of incentive amount</string>
+    <string name="config_is_stochastic_mode">Stochastic incentive mode</string>
+    <string name="config_is_stochastic_mode_stochastic">Stochastic mode</string>
+    <string name="config_is_stochastic_mode_fixed">Fixed mode</string>
 
-        "All material objects, regardless of size, have a resting elevation, or default elevation "
-        "that does not change. If an object changes elevation, it should return to its resting "
-        "elevation as soon as possible.\n\n"
+    <!-- Notification channel descriptions -->
+    <string name="ntf_channel_name_foreground">Foreground</string>
+    <string name="ntf_channel_name_mission_start">Mission start</string>
+    <string name="ntf_channel_name_mission_success">Mission success</string>
+    <string name="ntf_channel_name_mission_failure">Mission failure</string>
 
-        "Component elevations.\n\n"
+    <!-- Notification texts -->
+    <string name="ntf_foreground_title">Points: %1d</string>
+    <string name="ntf_foreground_text_normal">Running in the background…</string>
+    <string name="ntf_foreground_text_do_not_disturb">Do-not-disturb mode…</string>
+    <string name="ntf_foreground_action_cancel">Cancel</string>
 
-        "The resting elevation for a component type is consistent across apps (e.g., FAB elevation "
-        "does not vary from 6dp in one app to 16dp in another app).\n"
-        "Components may have different resting elevations across platforms, depending on the depth "
-        "of the environment (e.g., TV has a greater depth than mobile or desktop).\n\n"
+    <string name="ntf_mission_start_title">Time to stand up!</string>
+    <string name="ntf_mission_start_text_gain">You have sit for %1d minutes. Stand up and move around for a while to get %2d points.</string>
+    <string name="ntf_mission_start_text_loss">You have sit for %1d minutes. Stand up and move around for a while to keep %2d points.</string>
 
-        "Responsive elevation and dynamic elevation offsets.\n\n"
+    <string name="ntf_mission_success_title">Mission success!</string>
+    <string name="ntf_mission_success_text_gain">Good job. You got %d points.</string>
+    <string name="ntf_mission_success_text_loss">Good job. You keep %d points.</string>
 
-        "Some component types have responsive elevation, meaning they change elevation in response "
-        "to user input (e.g., normal, focused, and pressed) or system events. These elevation "
-        "changes are consistently implemented using dynamic elevation offsets.\n"
-        "Dynamic elevation offsets are the goal elevation that a component moves towards, relative "
-        "to the component’s resting state. They ensure that elevation changes are consistent "
-        "across actions and component types. For example, all components that lift on press have "
-        "the same elevation change relative to their resting elevation.\n"
-        "Once the input event is completed or cancelled, the component will return to its resting "
-        "elevation.\n\n"
-
-        "Avoiding elevation interference.\n\n"
-
-        "Components with responsive elevations may encounter other components as they move between "
-        "their resting elevations and dynamic elevation offsets. Because material cannot pass "
-        "through other material, components avoid interfering with one another any number of ways, "
-        "whether on a per component basis or using the entire app layout.\n"
-        "On a component level, components can move or be removed before they cause interference. "
-        "For example, a floating action button (FAB) can disappear or move off screen before a "
-        "user picks up a card, or it can move if a snackbar appears.\n"
-        "On the layout level, design your app layout to minimize opportunities for interference. "
-        "For example, position the FAB to one side of stream of a cards so the FAB won’t interfere "
-        "when a user tries to pick up one of cards.\n\n"
-    </string>
-    <string name="action_settings">Settings</string>
+    <string name="ntf_mission_failure_title">Mission failure!</string>
+    <string name="ntf_mission_failure_text_gain">You lost a chance for %d points.</string>
+    <string name="ntf_mission_failure_text_loss">You lost %1d points.</string>
 </resources>

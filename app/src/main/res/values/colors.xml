@@ -3,8 +3,15 @@
     <color name="blue">#5c4db1</color>
     <color name="dark_blue">#3E3579</color>
     <color name="extreme_light_blue">#dfdeff</color>
+    <color name="light_blue">#9B8AFF</color>
+    <color name="violet">#943DB3</color>
+
     <color name="magenta">#DC4F89</color>
     <color name="yellow">#ffbf67</color>
     <color name="dark_yellow">#FFA000</color>
+    <color name="light_grey">#C8C8C8</color>
+    <color name="grey">#686767</color>
+    <color name="black">#292929</color>
+    <color name="green">#009688</color>
 
 </resources>

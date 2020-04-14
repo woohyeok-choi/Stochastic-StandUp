@@ -14,12 +14,12 @@ import org.koin.core.parameter.parametersOf
 
 
 class SplashActivity : BaseActivity<ActivitySplashBinding, SplashViewModel>(), SplashNavigator {
-    override val viewModel: SplashViewModel by viewModel { parametersOf(this) }
+    override val viewModel: SplashViewModel by viewModel()
     override val viewModelVariable: Int = BR.viewModel
     override val layoutId: Int = R.layout.activity_splash
-    override val menuRes: Int? = null
 
     override fun beforeExecutePendingBindings() {
+        viewModel.navigator = this
         viewModel.doSignIn(this)
     }
 

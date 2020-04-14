@@ -2,13 +2,16 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
         android:id="@+id/fragment_dashboard"
+        android:icon="@drawable/baseline_dashboard_white_36"
         android:title="@string/title_dashboard"/>
 
     <item
         android:id="@+id/fragment_timeline"
+        android:icon="@drawable/baseline_timeline_white_36"
         android:title="@string/title_timeline"/>
 
     <item
         android:id="@+id/fragment_config"
+        android:icon="@drawable/baseline_settings_white_36"
         android:title="@string/title_config"/>
 </menu>

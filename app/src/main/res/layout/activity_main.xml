@@ -11,11 +11,11 @@
             type="kaist.iclab.standup.smi.ui.main.MainViewModel" />
     </data>
 
-    <androidx.coordinatorlayout.widget.CoordinatorLayout
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:fitsSystemWindows="true"
-        tools:context=".ui.main.MainActivity">
+        android:orientation="vertical">
 
         <fragment
             android:id="@+id/fragment_nav_host"
@@ -30,33 +30,11 @@
         <com.google.android.material.bottomnavigation.BottomNavigationView
             android:id="@+id/nav_bottom"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="?actionBarSize"
             android:layout_gravity="bottom"
             app:itemTextColor="@android:color/white"
+            app:itemIconTint="@android:color/white"
             android:background="@color/dark_blue"
             app:menu="@menu/nav_bottom" />
-
-        <kaist.iclab.standup.smi.view.ProgressFloatingActionButton
-            android:id="@+id/fab_mission"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            app:layout_anchor="@id/fragment_nav_host"
-            app:layout_anchorGravity="bottom|end|right"
-            android:layout_marginLeft="@dimen/fab_margin"
-            android:layout_marginRight="@dimen/fab_margin"
-            android:layout_marginTop="@dimen/fab_margin"
-            android:layout_marginBottom="70dp"
-            android:clickable="true"
-            android:focusable="true"
-            indeterminate="false">
-
-            <com.google.android.material.floatingactionbutton.FloatingActionButton
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:backgroundTint="@color/dark_yellow"
-                android:src="@drawable/reward_white_48dp"
-                app:borderWidth="0dp" />
-        </kaist.iclab.standup.smi.view.ProgressFloatingActionButton>
-
-    </androidx.coordinatorlayout.widget.CoordinatorLayout>
+    </FrameLayout>
 </layout>

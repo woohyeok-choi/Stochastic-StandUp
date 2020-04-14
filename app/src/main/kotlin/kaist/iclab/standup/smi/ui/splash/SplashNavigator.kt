@@ -11,4 +11,5 @@ interface SplashNavigator : BaseNavigator {
     fun navigatePermissionAgain()
     fun navigateWhitelist(intent: Intent)
     fun navigateSuccess()
+    fun navigateError(throwable: Throwable?)
 }

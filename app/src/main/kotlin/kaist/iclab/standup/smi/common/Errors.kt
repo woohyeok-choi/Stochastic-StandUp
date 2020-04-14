@@ -2,6 +2,7 @@ package kaist.iclab.standup.smi.common
 
 import android.content.Context
 import androidx.annotation.StringRes
+import androidx.fragment.app.Fragment
 import com.github.kittinunf.fuel.core.FuelError
 import com.google.android.gms.auth.api.signin.GoogleSignInStatusCodes
 import com.google.android.gms.common.api.ApiException
@@ -16,6 +17,7 @@ class StandUpError(
     override val message: String? = null
 ): Exception(message) {
     fun toString(context: Context) : String = listOfNotNull(context.getString(res), message).joinToString(" - ")
+    fun toString(fragment: Fragment) : String = listOfNotNull(fragment.getString(res), message).joinToString(" - ")
 }
 
 private fun googleApiCodeToMessage(code: Int) = when (code) {
@@ -40,12 +42,12 @@ fun throwError(res: Int, message: String? = null): Nothing = throw StandUpError(
 
 fun error(res: Int, message: String? = null) = StandUpError(res, message)
 
-fun wrapError(throwable: Throwable? = null) : StandUpError = when(throwable) {
-    is StandUpError -> throwable
-    is ApiException -> StandUpError(R.string.error_google_api, googleApiCodeToMessage(throwable.statusCode))
+fun Throwable?.wrap() : StandUpError = when(this) {
+    is StandUpError -> this
+    is ApiException -> StandUpError(R.string.error_google_api, googleApiCodeToMessage(statusCode))
     is FirebaseAuthInvalidUserException -> StandUpError(R.string.error_firebase_invalid_user)
     is FirebaseAuthInvalidCredentialsException -> StandUpError(R.string.error_firebase_invalid_credential)
     is FirebaseAuthUserCollisionException -> StandUpError(R.string.error_firebase_user_collision)
-    is FuelError -> StandUpError(R.string.error_http_connection, throwable.message)
-    else -> StandUpError(R.string.error_general, throwable?.message)
+    is FuelError -> StandUpError(R.string.error_http_connection, message)
+    else -> StandUpError(R.string.error_general, this?.message)
 }

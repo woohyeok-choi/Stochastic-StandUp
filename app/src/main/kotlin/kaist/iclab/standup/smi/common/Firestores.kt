@@ -1,51 +1,49 @@
 package kaist.iclab.standup.smi.common
 
-
+import android.text.format.DateUtils
+import android.util.Log
 import com.google.firebase.firestore.*
-import kaist.iclab.standup.smi.R
-import kaist.iclab.standup.smi.common.asSuspend
-import kaist.iclab.standup.smi.common.throwError
 import kotlin.reflect.KProperty
 import kotlin.reflect.full.primaryConstructor
 
 
 @Suppress("UNCHECKED_CAST")
-abstract class DataField<T : Any>(val name: String) {
+abstract class DataField<T : Any>(val name: String, private val default: T) {
     abstract fun fromSnapshot(value: DocumentSnapshot): T?
 
-    operator fun getValue(thisRef: DocumentEntity, property: KProperty<*>): T? = thisRef.readValues[this] as? T
+    operator fun getValue(thisRef: DocumentEntity, property: KProperty<*>): T =
+        (thisRef.readValues[this] as? T) ?: default
 
-    operator fun setValue(thisRef: DocumentEntity, property: KProperty<*>, value: T?) {
-        value?.let { thisRef.writeValues[this] = it }
+    operator fun setValue(thisRef: DocumentEntity, property: KProperty<*>, value: T) {
+        value.let { thisRef.writeValues[this] = it }
     }
 }
 
-class IntField(name: String) : DataField<Int>(name) {
+class IntField(name: String, default: Int) : DataField<Int>(name, default) {
     override fun fromSnapshot(value: DocumentSnapshot): Int? = value.getLong(name)?.toInt()
 }
 
-class LongField(name: String) : DataField<Long>(name) {
+class LongField(name: String, default: Long) : DataField<Long>(name, default) {
     override fun fromSnapshot(value: DocumentSnapshot): Long? = value.getLong(name)
 }
 
-class FloatField(name: String) : DataField<Float>(name) {
+class FloatField(name: String, default: Float) : DataField<Float>(name, default) {
     override fun fromSnapshot(value: DocumentSnapshot): Float? = value.getDouble(name)?.toFloat()
-
 }
 
-class DoubleField(name: String) : DataField<Double>(name) {
+class DoubleField(name: String, default: Double) : DataField<Double>(name, default) {
     override fun fromSnapshot(value: DocumentSnapshot): Double? = value.getDouble(name)
 }
 
-class StringField(name: String) : DataField<String>(name) {
+class StringField(name: String, default: String) : DataField<String>(name, default) {
     override fun fromSnapshot(value: DocumentSnapshot): String? = value.getString(name)
 }
 
-class BooleanField(name: String) : DataField<Boolean>(name) {
+class BooleanField(name: String, default: Boolean) : DataField<Boolean>(name, default) {
     override fun fromSnapshot(value: DocumentSnapshot): Boolean? = value.getBoolean(name) ?: false
 }
 
-abstract class Documents(val name: String) {
+abstract class Documents {
     internal val fields = mutableListOf<DataField<*>>()
 
     private fun <T : Any> registerField(field: DataField<T>): DataField<T> {
@@ -53,43 +51,24 @@ abstract class Documents(val name: String) {
         return field
     }
 
-    fun integer(name: String) = registerField(
-        IntField(
-            name
-        )
-    )
-    fun long(name: String) = registerField(
-        LongField(
-            name
-        )
-    )
-    fun float(name: String) = registerField(
-        FloatField(
-            name
-        )
-    )
-    fun double(name: String) = registerField(
-        DoubleField(
-            name
-        )
-    )
-    fun string(name: String) = registerField(
-        StringField(
-            name
-        )
-    )
-    fun boolean(name: String) = registerField(
-        BooleanField(
-            name
-        )
-    )
+    fun integer(name: String, default: Int) = registerField(IntField(name, default))
+
+    fun long(name: String, default: Long) = registerField(LongField(name, default))
+
+    fun float(name: String, default: Float) = registerField(FloatField(name, default))
+
+    fun double(name: String, default: Double) = registerField(DoubleField(name, default))
+
+    fun string(name: String, default: String) = registerField(StringField(name, default))
+
+    fun boolean(name: String, default: Boolean) = registerField(BooleanField(name, default))
 }
 
 abstract class DocumentEntity {
     internal val readValues: MutableMap<DataField<*>, Any> = mutableMapOf()
     internal val writeValues: MutableMap<DataField<*>, Any> = mutableMapOf()
 
-    var id: String? = null
+    var id: String = ""
 }
 
 
@@ -112,46 +91,84 @@ class QueryBuilder(private val ref: CollectionReference) {
     }
 
     infix fun <T : Any> DataField<T>.lessThanOrEqualTo(value: T) {
-        query = query?.whereLessThanOrEqualTo(name, value) ?: ref.whereLessThanOrEqualTo(name, value)
+        query =
+            query?.whereLessThanOrEqualTo(name, value) ?: ref.whereLessThanOrEqualTo(name, value)
     }
 
     infix fun <T : Any> DataField<T>.equalTo(value: T?) {
         query = query?.whereEqualTo(name, value) ?: ref.whereEqualTo(name, value)
     }
 
-    fun <T : Any> orderBy(field: DataField<T>, isAscending: Boolean = true) {
-        query = query?.orderBy(field.name, if(isAscending) Query.Direction.ASCENDING else Query.Direction.DESCENDING)
-    }
-
-    fun limit(n: Long) {
-        query = query?.limit(n)
+    infix fun <T : Any> DataField<T>.isOneOf(value: List<T?>) {
+        query = query?.whereIn(name, value) ?: ref.whereIn(name, value)
     }
 }
 
 @Suppress("UNCHECKED_CAST")
-abstract class DocumentEntityClass<T : DocumentEntity>(private val documents: Documents, type: Class<T>? = null) {
-    private val klass : Class<*> = type ?: javaClass.enclosingClass as Class<T>
-    private val constructor  = klass.kotlin.primaryConstructor!!
-    private val name : String = documents.name
+abstract class DocumentEntityClass<T : DocumentEntity>(
+    private val documents: Documents,
+    type: Class<T>? = null
+) {
+    private val klass: Class<*> = type ?: javaClass.enclosingClass as Class<T>
+    private val constructor = klass.kotlin.primaryConstructor!!
 
-    private fun checkReference(ref: DocumentReference?) : DocumentReference = ref ?: throwError(R.string.error_no_document_reference)
+    suspend fun create(ref: CollectionReference, id: String? = null, body: T.() -> Unit): String? {
+        val instance = constructor.call() as T
+        instance.body()
+        val data = documents.fields.associate { field ->
+            field.name to instance.writeValues[field]
+        }
 
-    suspend fun create(ref: DocumentReference?, body: T.() -> Unit): String? {
+        return if (!id.isNullOrBlank()) {
+            ref.document(id).set(data).asSuspend()
+            id
+        } else {
+            ref.add(data).asSuspend()?.id
+        }
+    }
+
+    suspend fun update(ref: CollectionReference, id: String, body: T.() -> Unit) {
         val instance = constructor.call() as T
         instance.body()
         val data = instance.writeValues.mapKeys { it.key.name }
-        return checkReference(ref).collection(name).add(data).asSuspend()?.id
+        ref.document(id).set(data, SetOptions.merge()).asSuspend()
     }
 
-    suspend fun update(ref: DocumentReference?, id: String, body: T.() -> Unit) {
+    suspend fun update(ref: CollectionReference, id: String, vararg params: Pair<DataField<*>, Any?>) {
+        val data = params.associate { (k, v) -> k.name to v }
+        ref.document(id).set(data, SetOptions.merge()).asSuspend()
+    }
+
+    suspend fun updateSelf(ref: DocumentReference, body: T.() -> Unit) {
         val instance = constructor.call() as T
         instance.body()
         val data = instance.writeValues.mapKeys { it.key.name }
-        checkReference(ref).collection(name).document(id).set(data).asSuspend()
+        ref.set(data, SetOptions.merge()).asSuspend()
     }
 
-    suspend fun get(ref: DocumentReference?, id: String) : T? {
-        val data = checkReference(ref).collection(name).document(id).get().asSuspend() ?: return null
+    suspend fun updateSelf(ref: DocumentReference, vararg params: Pair<DataField<*>, Any?>) {
+        val data = params.associate { (k, v) -> k.name to v }
+        ref.set(data, SetOptions.merge()).asSuspend()
+    }
+
+    suspend fun get(ref: CollectionReference, id: String): T? {
+        val snapshot = ref.document(id).get().asSuspend() ?: return null
+        if (!snapshot.exists()) return null
+        return fromDocumentSnapshot(snapshot)
+    }
+
+    fun fromDocumentSnapshot(snapshot: DocumentSnapshot) : T {
+        val instance = constructor.call() as T
+        instance.id = snapshot.id
+
+        documents.fields.forEach { field ->
+            field.fromSnapshot(snapshot)?.let { instance.readValues[field] = it }
+        }
+        return instance
+    }
+
+    suspend fun getSelf(ref: DocumentReference) : T? {
+        val data = ref.get().asSuspend() ?: return null
         val instance = constructor.call() as T
         instance.id = data.id
 
@@ -161,13 +178,31 @@ abstract class DocumentEntityClass<T : DocumentEntity>(private val documents: Do
         return instance
     }
 
-    suspend fun select(ref: DocumentReference?, body: QueryBuilder.() -> Unit) : List<T> {
-        val builder = QueryBuilder(
-            checkReference(ref).collection(name)
+    suspend fun select(
+        ref: CollectionReference,
+        orderBy: DataField<*>? = null,
+        isAscending: Boolean = true,
+        limit: Long? = null,
+        body: (QueryBuilder.() -> Unit)? = null
+    ): List<T> {
+        var query: Query? = if (body != null) {
+            val builder = QueryBuilder(ref)
+            builder.body()
+            builder.query
+        } else {
+            null
+        }
+        if (orderBy != null) query = query?.orderBy(
+            orderBy.name,
+            if (isAscending) Query.Direction.ASCENDING else Query.Direction.DESCENDING
+        ) ?: ref.orderBy(
+            orderBy.name,
+            if (isAscending) Query.Direction.ASCENDING else Query.Direction.DESCENDING
         )
-        builder.body()
-        val query = builder.query!!
-        return query.get().asSuspend()?.documents?.map { snapshot ->
+        if (limit != null) query = query?.limit(limit) ?: ref.limit(limit)
+        val task = query?.get() ?: ref.get()
+
+        return task.asSuspend()?.documents?.map { snapshot ->
             val instance = constructor.call() as T
             instance.id = snapshot.id
 

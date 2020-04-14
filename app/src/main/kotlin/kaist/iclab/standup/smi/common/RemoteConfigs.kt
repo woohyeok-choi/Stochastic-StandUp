@@ -1,20 +1,31 @@
 package kaist.iclab.standup.smi.common
 
+import android.content.Context
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 import com.google.firebase.remoteconfig.FirebaseRemoteConfigSettings
 import com.squareup.moshi.Moshi
+import com.squareup.moshi.Types
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import github.agustarc.koap.*
-import github.agustarc.koap.delegator.ReadWritePreference
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.reflect.KProperty
-
 
 private val SERIALIZER: Moshi = Moshi.Builder().add(KotlinJsonAdapterFactory()).build()
 
 @Suppress("UNCHECKED_CAST")
-open class FirebaseRemoteConfigHolder {
-    internal suspend fun bind() {
+open class FirebaseRemoteConfigHolder(name: String,
+                                      default: Boolean = false,
+                                      mode: Int = Context.MODE_PRIVATE,
+                                      cacheStrategy: CacheStrategy = CacheStrategy.LAZY
+): PreferenceHolder(name, default, mode, cacheStrategy) {
+    private var mLocalMode: AtomicBoolean = AtomicBoolean(false)
+
+    var localMode: Boolean
+        get() = mLocalMode.get()
+        set(value) { mLocalMode.set(value) }
+
+    suspend fun sync() {
         val instance = FirebaseRemoteConfig.getInstance()
         val setting = FirebaseRemoteConfigSettings.Builder()
             .setMinimumFetchIntervalInSeconds(TimeUnit.HOURS.toMillis(1))
@@ -23,95 +34,98 @@ open class FirebaseRemoteConfigHolder {
         instance.fetchAndActivate().asSuspend()
     }
 
-    internal fun <T> getPrimitiveValue(key: String, config: FirebaseRemoteConfig, default: T): T =
-        when (default) {
-            is String -> config.getString(key) as T
-            is Long -> config.getLong(key) as T
-            is Int -> config.getLong(key).toInt() as T
-            is Float -> config.getDouble(key).toFloat() as T
-            is Double -> config.getDouble(key) as T
-            is Boolean -> config.getBoolean(key) as T
-            else -> default
-        }
-
-    internal fun getString(key: String, config: FirebaseRemoteConfig): String = config.getString(key)
-}
-
-open class FirebaseRemoteConfigReadPrimitiveProperty<T>(
-    private val key: String? = null,
-    private val default: T
-) {
-    operator fun getValue(thisRef: FirebaseRemoteConfigHolder, property: KProperty<*>): T {
-        return thisRef.getPrimitiveValue(
-            if (key.isNullOrBlank()) property.name else key,
-            FirebaseRemoteConfig.getInstance(),
-            default
-        )
-    }
-}
-
-class FirebaseRemoteConfigReadSerializable<T>(
-    private val key: String? = null,
-    private val clazz: Class<T>
-) {
-    operator fun getValue(thisRef: FirebaseRemoteConfigHolder, property: KProperty<*>): T? {
-        val value = thisRef.getString(if (key.isNullOrBlank()) property.name else key, FirebaseRemoteConfig.getInstance())
-        return SERIALIZER.adapter(clazz).fromJson(value)
-    }
-}
-
-class ReadWriteSerializable<T>(
-    private val key: String? = null,
-    private val clazz: Class<T>,
-    default: T
-) : ReadWritePreference<PreferenceHolder, T?>(default = default){
-    override fun getValue(thisRef: PreferenceHolder, property: KProperty<*>): T? {
-        val key = if (key.isNullOrBlank()) property.name else key
-        return if (Koap.isTestMode || cacheUsable()) {
-            field
+    fun <T> getValue(key: String, property: KProperty<*>, default: T): T {
+        return if (localMode) {
+            getPreferencePrimitiveValue(key, property, default)
         } else {
-            if (thisRef.hasKey(key, property)) {
-                val json = thisRef.getString(key, property, "")
-                field = SERIALIZER.adapter(clazz).fromJson(json)
-                cacheLoaded = true
-                field
-            } else {
-                field
+            val config = FirebaseRemoteConfig.getInstance()
+            when (default) {
+                is String -> config.getString(key) as T
+                is Long -> config.getLong(key) as T
+                is Int -> config.getLong(key).toInt() as T
+                is Float -> config.getDouble(key).toFloat() as T
+                is Boolean -> config.getBoolean(key) as T
+                else -> default
             }
         }
     }
 
-    override fun setValue(thisRef: PreferenceHolder, property: KProperty<*>, value: T?) {
-        if (field == value) return
-        val key = if (key.isNullOrBlank()) property.name else key
-        val json = SERIALIZER.adapter(clazz).toJson(value)
-        thisRef.putString(key, property, json)
-        field = value
+    fun <T> putValue(key: String, property: KProperty<*>, value: T) {
+        putPreferencePrimitiveValue(key, property, value)
     }
 
-    override fun setCacheValue(thisRef: PreferenceHolder, property: KProperty<*>) {
-        val key = if (key.isNullOrBlank()) property.name else key
-        if (thisRef.hasKey(key, property)) {
-            val json = thisRef.getString(key, property, "")
-            field = SERIALIZER.adapter(clazz).fromJson(json)
+    fun getStringValue(key: String, property: KProperty<*>, default: String): String {
+        return if (localMode) {
+            FirebaseRemoteConfig.getInstance().getString(key)
+        } else {
+            getString(key, property, default)
         }
     }
 }
 
-class FirebaseRemoteConfigReadString(key: String? = null, default: String) :
-    FirebaseRemoteConfigReadPrimitiveProperty<String>(key, default)
 
-class FirebaseRemoteConfigReadLong(key: String? = null, default: Long) :
-    FirebaseRemoteConfigReadPrimitiveProperty<Long>(key, default)
+open class FirebaseRemoteConfigProperty<T>(
+    private val key: String? = null,
+    private val default: T
+) {
+    operator fun getValue(thisRef: FirebaseRemoteConfigHolder, property: KProperty<*>): T {
+        return thisRef.getValue(
+            if (key.isNullOrBlank()) property.name else key, property, default
+        )
+    }
 
-class FirebaseRemoteConfigReadInt(key: String? = null, default: Int) :
-    FirebaseRemoteConfigReadPrimitiveProperty<Int>(key, default)
+    operator fun setValue(thisRef: FirebaseRemoteConfigHolder, property: KProperty<*>, value: T) {
+        thisRef.putValue(if(key.isNullOrBlank()) property.name else key, property, default)
+    }
+}
 
-class FirebaseRemoteConfigReadFloat(key: String? = null, default: Float) :
-    FirebaseRemoteConfigReadPrimitiveProperty<Float>(key, default)
+class FirebaseRemoteConfigString(key: String? = null, default: String) :
+    FirebaseRemoteConfigProperty<String>(key, default)
 
-class FirebaseRemoteConfigReadDouble(key: String? = null, default: Double) :
-    FirebaseRemoteConfigReadPrimitiveProperty<Double>(key, default)
+class FirebaseRemoteConfigLong(key: String? = null, default: Long) :
+    FirebaseRemoteConfigProperty<Long>(key, default)
 
-class FirebaseRemoteConfigReadBoolean(key: String? = null, default: Boolean) :
-    FirebaseRemoteConfigReadPrimitiveProperty<Boolean>(key, default)
+class FirebaseRemoteConfigInt(key: String? = null, default: Int) :
+    FirebaseRemoteConfigProperty<Int>(key, default)
+
+class FirebaseRemoteConfigFloat(key: String? = null, default: Float) :
+    FirebaseRemoteConfigProperty<Float>(key, default)
+
+class FirebaseRemoteConfigBoolean(key: String? = null, default: Boolean) :
+    FirebaseRemoteConfigProperty<Boolean>(key, default)
+
+
+class FirebaseRemoteConfigSerializable<T>(
+    private val key: String? = null,
+    private val clazz: Class<T>
+) {
+    operator fun getValue(thisRef: FirebaseRemoteConfigHolder, property: KProperty<*>): T? {
+        val value = thisRef.getString(if (key.isNullOrBlank()) property.name else key, property, "")
+        return SERIALIZER.adapter(clazz).fromJson(value)
+    }
+
+    operator fun setValue(thisRef: PreferenceHolder, property: KProperty<*>, value: T?) {
+        val key = if (key.isNullOrBlank()) property.name else key
+        val json = SERIALIZER.adapter(clazz).toJson(value)
+        thisRef.putString(key, property, json)
+    }
+}
+
+class FirebaseRemoteConfigList<T>(
+    private val key: String? = null,
+    private val clazz: Class<T>,
+    private val default: List<T> = listOf()
+) {
+    operator fun getValue(thisRef: FirebaseRemoteConfigHolder, property: KProperty<*>): List<T> {
+        val value = thisRef.getString(if (key.isNullOrBlank()) property.name else key, property, "")
+        val type = Types.newParameterizedType(List::class.java, clazz)
+        return SERIALIZER.adapter<List<T>>(type).fromJson(value) ?: default
+    }
+
+    operator fun setValue(thisRef: PreferenceHolder, property: KProperty<*>, value: List<T>?) {
+        val key = if (key.isNullOrBlank()) property.name else key
+        val type = Types.newParameterizedType(List::class.java, clazz)
+        val json = SERIALIZER.adapter<List<T>>(type).toJson(value)
+        thisRef.putString(key, property, json)
+    }
+}

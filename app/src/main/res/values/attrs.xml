@@ -1,13 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <declare-styleable name="LocalTimeRangePreference">
-        <attr name="ltrp_tickIntervalMin" format="reference|integer"/>
+    <declare-styleable name="AnimatedCircle">
+        <attr name="backgroundColor" format="color"/>
+        <attr name="strokeWidth" format="dimension"/>
+        <attr name="strokeColor" format="color"/>
+        <attr name="strokeDotSize" format="dimension"/>
+        <attr name="strokeGapSize" format="dimension"/>
+        <attr name="fillWidth" format="dimension"/>
+        <attr name="fillColor" format="color"/>
+        <attr name="strokeStyle" format="enum">
+            <enum name="line" value="0"/>
+            <enum name="dot" value="1"/>
+        </attr>
+        <attr name="startAngle" format="float"/>
+        <attr name="angle" format="float"/>
+        <attr name="size" format="dimension"/>
+        <attr name="isAnimated" format="boolean"/>
+        <attr name="showPoint" format="boolean"/>
+        <attr name="pointRadius" format="float|dimension"/>
+        <attr name="pointColor" format="color"/>
     </declare-styleable>
 
-    <declare-styleable name="SeekBarPreference">
-        <attr name="sbp_max" format="reference|integer"/>
-        <attr name="sbp_min" format="reference|integer"/>
-        <attr name="sbp_sectionCount" format="reference|integer"/>
-        <attr name="sbp_sectionTextCount" format="reference|integer"/>
-    </declare-styleable>
 </resources>

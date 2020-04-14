@@ -1,13 +1,76 @@
 <?xml version="1.0" encoding="utf-8"?>
-<layout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
+
     <data>
+
+        <import type="kaist.iclab.standup.smi.ui.dashboard.DashboardFragment" />
+
+        <import type="android.view.View" />
+
         <variable
             name="viewModel"
             type="kaist.iclab.standup.smi.ui.dashboard.DashboardViewModel" />
     </data>
-    <androidx.constraintlayout.widget.ConstraintLayout
+
+    <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        app:cardElevation="@dimen/card_view_elevation"
+        app:cardUseCompatPadding="true"
+        app:contentPaddingBottom="@dimen/card_view_padding_vertical"
+        app:contentPaddingLeft="@dimen/card_view_padding_horizontal"
+        app:contentPaddingRight="@dimen/card_view_padding_horizontal"
+        app:contentPaddingTop="@dimen/card_view_padding_vertical">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:id="@+id/txt_chart_name"
+                tint="@{viewModel.currentChartType == DashboardFragment.CHART_TYPE_NUM_PROLONGED_SEDENTARINESS ? @color/magenta : (viewModel.currentChartType == DashboardFragment.CHART_TYPE_AVG_SEDENTARY_TIME ? @color/violet : @color/blue)}"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:drawableStart="@{viewModel.currentChartType == DashboardFragment.CHART_TYPE_NUM_PROLONGED_SEDENTARINESS ? @drawable/ic_prolonged_sedentariness_24 : (viewModel.currentChartType == DashboardFragment.CHART_TYPE_AVG_SEDENTARY_TIME ? @drawable/ic_avg_sedentariness_24 : @drawable/ic_sedentariness_24)}"
+                android:gravity="center_vertical"
+                android:text="@{viewModel.currentChartType == DashboardFragment.CHART_TYPE_NUM_PROLONGED_SEDENTARINESS ? @string/dashboard_chart_label_num_prolonged_sedentariness : (viewModel.currentChartType == DashboardFragment.CHART_TYPE_AVG_SEDENTARY_TIME ? @string/dashboard_chart_label_avg_sedentary_time : @string/dashboard_chart_label_total_sedentary_time)}"
+                android:textColor="@color/grey"
+                android:textSize="@dimen/txt_size_default"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:minHeight="300dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/txt_chart_name">
+
+                <com.github.mikephil.charting.charts.CombinedChart
+                    android:id="@+id/chart"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:visibility="@{viewModel.weeklyLoadStatus.succeeded ? View.VISIBLE : View.INVISIBLE}" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:text="@string/general_load_failed"
+                    android:visibility="@{viewModel.weeklyLoadStatus.failed ? View.VISIBLE : View.GONE}" />
+
+                <ProgressBar
+                    style="?android:progressBarStyleSmall"
+                    android:visibility="@{viewModel.weeklyLoadStatus.loading ? View.VISIBLE : View.GONE}"
+                    android:layout_width="@dimen/size_progress_bar"
+                    android:layout_height="@dimen/size_progress_bar"
+                    android:layout_gravity="center"
+                    android:indeterminateTint="@color/light_grey" />
+            </FrameLayout>
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </androidx.cardview.widget.CardView>
 </layout>
