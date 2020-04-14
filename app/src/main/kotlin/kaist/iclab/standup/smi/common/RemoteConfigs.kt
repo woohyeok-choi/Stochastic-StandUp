@@ -1,6 +1,7 @@
 package kaist.iclab.standup.smi.common
 
 import android.content.Context
+import android.util.Log
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 import com.google.firebase.remoteconfig.FirebaseRemoteConfigSettings
 import com.squareup.moshi.Moshi
@@ -51,14 +52,16 @@ open class FirebaseRemoteConfigHolder(name: String,
     }
 
     fun <T> putValue(key: String, property: KProperty<*>, value: T) {
-        putPreferencePrimitiveValue(key, property, value)
+        if (localMode) {
+            putPreferencePrimitiveValue(key, property, value)
+        }
     }
 
     fun getStringValue(key: String, property: KProperty<*>, default: String): String {
         return if (localMode) {
-            FirebaseRemoteConfig.getInstance().getString(key)
-        } else {
             getString(key, property, default)
+        } else {
+            FirebaseRemoteConfig.getInstance().getString(key)
         }
     }
 }
@@ -75,7 +78,7 @@ open class FirebaseRemoteConfigProperty<T>(
     }
 
     operator fun setValue(thisRef: FirebaseRemoteConfigHolder, property: KProperty<*>, value: T) {
-        thisRef.putValue(if(key.isNullOrBlank()) property.name else key, property, default)
+        thisRef.putValue(if(key.isNullOrBlank()) property.name else key, property, value)
     }
 }
 

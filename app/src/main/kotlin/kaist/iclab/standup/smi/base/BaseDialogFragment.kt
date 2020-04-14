@@ -8,11 +8,12 @@ import androidx.annotation.LayoutRes
 import androidx.annotation.MenuRes
 import androidx.databinding.DataBindingUtil
 import androidx.databinding.ViewDataBinding
+import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModel
 import kaist.iclab.standup.smi.common.AppLog
 
-abstract class BaseFragment<B : ViewDataBinding, VM: ViewModel> : Fragment() {
+abstract class BaseDialogFragment<B : ViewDataBinding, VM: ViewModel> : DialogFragment() {
     protected abstract val viewModel: VM
     protected abstract val viewModelVariable: Int
     protected lateinit var dataBinding: B

@@ -1,6 +1,6 @@
 package kaist.iclab.standup.smi.common
 
-data class Result<T>(val state: Int, val data: T? = null, val error: StandUpError? = null) {
+data class Status(val state: Int, val error: StandUpError? = null) {
     companion object {
         private const val STATE_INIT = 0
 
@@ -8,10 +8,10 @@ data class Result<T>(val state: Int, val data: T? = null, val error: StandUpErro
         const val STATE_SUCCESS = 2
         const val STATE_FAILURE = -1
 
-        fun <R> init() = Result<R>(STATE_INIT)
-        fun <R> loading() = Result<R>(STATE_LOADING)
-        fun <R> success(data: R?) = Result<R>(STATE_SUCCESS, data)
-        fun <R> failure(t: StandUpError? = null) = Result<R>(STATE_FAILURE, null, t)
+        fun init() = Status(STATE_INIT)
+        fun loading() = Status(STATE_LOADING)
+        fun success() = Status(STATE_SUCCESS)
+        fun failure(t: Throwable? = null) = Status(STATE_FAILURE, t.wrap())
     }
 
     fun isSucceeded(): Boolean = state == STATE_SUCCESS

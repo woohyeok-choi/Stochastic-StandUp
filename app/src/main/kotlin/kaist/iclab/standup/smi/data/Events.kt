@@ -5,76 +5,68 @@ import kaist.iclab.standup.smi.common.DocumentEntityClass
 import kaist.iclab.standup.smi.common.Documents
 import org.joda.time.DateTime
 import org.joda.time.DateTimeZone
+import java.util.*
 
 
-object SedentaryEvents : Documents("events") {
-    val offsetMs = integer("offsetMs")
-    val timestamp = long("timestamp")
-    val isEntered = boolean("isEntered")
-    val latitude = double("latitude")
-    val longitude = double("longitude")
-    val activeStartTime = long("activeStartTime")
-    val activeEndTime = long("activeEndTime")
+object Events : Documents() {
+    val offsetMs = integer("offsetMs", TimeZone.getDefault().rawOffset)
+    val timestamp = long("timestamp", -1)
+    val isEntered = boolean("isEntered", false)
+    val latitude = double("latitude", Double.NaN)
+    val longitude = double("longitude", Double.NaN)
+    val geoHash = string("geoHash", "")
 }
 
-class SedentaryEvent : DocumentEntity() {
-    var offsetMs: Int? by SedentaryEvents.offsetMs
-    var timestamp: Long? by SedentaryEvents.timestamp
-    var isEntered: Boolean? by SedentaryEvents.isEntered
-    var latitude: Double? by SedentaryEvents.latitude
-    var longitude: Double? by SedentaryEvents.longitude
-    var activeStartTime: Long? by SedentaryEvents.activeStartTime
-    var activeEndTime: Long? by SedentaryEvents.activeEndTime
+class Event : DocumentEntity() {
+    var offsetMs by Events.offsetMs
+    var timestamp by Events.timestamp
+    var isEntered by Events.isEntered
+    var latitude by Events.latitude
+    var longitude by Events.longitude
+    var geoHash by Events.geoHash
+
+    companion object : DocumentEntityClass<Event>(Events)
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
+        other as Event
 
-        other as SedentaryEvent
+        if (id != other.id) return false
         if (offsetMs != other.offsetMs) return false
         if (timestamp != other.timestamp) return false
         if (isEntered != other.isEntered) return false
         if (latitude != other.latitude) return false
         if (longitude != other.longitude) return false
-        if (activeStartTime != other.activeStartTime) return false
-        if (activeEndTime != other.activeEndTime) return false
+        if (geoHash != other.geoHash) return false
+
 
         return true
     }
 
     override fun hashCode(): Int {
-        var result = offsetMs.hashCode()
-        result = 31 * result + isEntered.hashCode()
+        var result = id.hashCode()
+        result = 31 * result + offsetMs.hashCode()
         result = 31 * result + timestamp.hashCode()
+        result = 31 * result + isEntered.hashCode()
         result = 31 * result + latitude.hashCode()
         result = 31 * result + longitude.hashCode()
-        result = 31 * result + activeStartTime.hashCode()
-        result = 31 * result + activeEndTime.hashCode()
+        result = 31 * result + geoHash.hashCode()
+
+
         return result
     }
 
-    override fun toString(): String =
-        "${javaClass.simpleName} [id=$id, timestamp=$timestamp, isEntered=$isEntered, latitude=$latitude, longitude=$longitude]"
-
-    fun toHumanReadableString(timeZone: DateTimeZone? = null): String {
-        val dateTimeZone = timeZone ?: DateTimeZone.forOffsetMillis(offsetMs ?: 0)
-
-        return "${javaClass.simpleName} [id=$id, startTime=${timestamp?.let {
-            DateTime(
-                it,
-                dateTimeZone
-            )
-        }}, isEntered=$isEntered, latitude=$latitude, longitude=$longitude]"
-    }
-
-    companion object : DocumentEntityClass<SedentaryEvent>(
-        SedentaryEvents
-    )
+    override fun toString(): String = StringBuilder(javaClass.simpleName)
+        .append(" (")
+        .append("id=$id, ")
+        .append("offsetMs=$offsetMs, ")
+        .append("timestamp=$timestamp, ")
+        .append("isEntered=$isEntered, ")
+        .append("latitude=$latitude, ")
+        .append("longitude=$longitude, ")
+        .append("geoHash=$geoHash")
+        .append(")")
+        .toString()
 }
 
-data class SedentaryDurationEvent(
-    val timestamp: Long,
-    val duration: Long,
-    val latitude: Double?,
-    val longitude: Double?
-)

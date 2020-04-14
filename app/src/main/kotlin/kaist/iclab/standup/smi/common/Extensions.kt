@@ -8,17 +8,27 @@ import android.content.pm.PackageManager
 import android.location.Location
 import android.net.Uri
 import android.os.PowerManager
+import android.util.Log
+import android.view.View
+import android.view.animation.AlphaAnimation
+import android.view.animation.Animation
 import android.widget.Toast
 import androidx.annotation.AnyRes
+import androidx.annotation.IdRes
+import androidx.annotation.StringRes
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import com.fonfon.kgeohash.GeoHash
 import com.google.android.gms.tasks.Task
+import com.google.android.libraries.maps.GoogleMap
+import com.google.android.libraries.maps.SupportMapFragment
+import com.google.android.material.snackbar.Snackbar
 import io.reactivex.Single
 import kotlinx.coroutines.withContext
 import org.joda.time.DateTime
 import org.joda.time.DateTimeZone
 import org.joda.time.format.ISODateTimeFormat
+import java.util.concurrent.TimeUnit
 import kotlin.coroutines.*
 import kotlin.math.acos
 import kotlin.math.asin
@@ -54,7 +64,7 @@ fun Context.checkPermissions(permissions: Array<String>): Boolean =
         }
     }
 
-fun Context.checkWhitelist() : Boolean {
+fun Context.checkWhitelist(): Boolean {
     val manager = getSystemService(Context.POWER_SERVICE) as PowerManager
     return manager.isIgnoringBatteryOptimizations(packageName)
 }
@@ -104,38 +114,119 @@ suspend fun <T : Any> Task<T?>.asSuspend(
     }
 }
 
+suspend fun SupportMapFragment.getMapAsSuspend(context: CoroutineContext = EmptyCoroutineContext) = withContext(context) {
+    suspendCoroutine<GoogleMap> { continuation ->
+        getMapAsync { continuation.resume(it) }
+    }
+}
+
 
 fun Context.toast(msg: String, isShort: Boolean = true) {
     Toast.makeText(this, msg, if (isShort) Toast.LENGTH_SHORT else Toast.LENGTH_LONG).show()
 }
 
-fun Context.toast(res: Int, isShort: Boolean = true) {
-    Toast.makeText(this, res, if (isShort) Toast.LENGTH_SHORT else Toast.LENGTH_LONG).show()
-}
+fun Context.toast(@StringRes resId: Int, isShort: Boolean = true) =
+    toast(getString(resId), isShort)
 
-fun Context.toast(res: Int, vararg params: Any, isShort: Boolean = true) {
-    Toast.makeText(this, getString(res, *params), if (isShort) Toast.LENGTH_SHORT else Toast.LENGTH_LONG).show()
-}
+fun Context.toast(@StringRes resId: Int, vararg params: Any, isShort: Boolean = true) =
+    toast(getString(resId, *params), isShort)
 
-fun Context.toast(throwable: Throwable?, isShort: Boolean = true) {
-    Toast.makeText(this, wrapError(throwable).toString(this), if (isShort) Toast.LENGTH_SHORT else Toast.LENGTH_LONG).show()
-}
+fun Context.toast(throwable: Throwable?, isShort: Boolean = true) =
+    toast(throwable.wrap().toString(this), isShort)
 
-fun Fragment.toast(msg: String, isShort: Boolean = true) {
-    context?.toast(msg, isShort)
-}
+fun Fragment.toast(msg: String, isShort: Boolean = true) = context?.toast(msg, isShort)
 
-fun Fragment.toast(res: Int, isShort: Boolean = true) {
-    context?.toast(res, isShort)
-}
+fun Fragment.toast(@StringRes resId: Int, isShort: Boolean = true) = context?.toast(resId, isShort)
 
-fun Fragment.toast(res: Int, vararg params: Any, isShort: Boolean = true) {
-    context?.toast(res, params, isShort)
-}
+fun Fragment.toast(@StringRes resId: Int, vararg params: Any, isShort: Boolean = true) =
+    context?.toast(resId, params, isShort)
 
-fun Fragment.toast(throwable: Throwable?, isShort: Boolean = true) {
+
+fun Fragment.toast(throwable: Throwable?, isShort: Boolean = true) =
     context?.toast(throwable, isShort)
+
+fun snackBar(
+    view: View,
+    msg: String,
+    isShort: Boolean = true,
+    @IdRes anchorId: Int? = null,
+    actionName: String? = null,
+    action: (() -> Unit)? = null
+) {
+    val snackBar =
+        Snackbar.make(view, msg, if (isShort) Snackbar.LENGTH_SHORT else Snackbar.LENGTH_LONG)
+
+    if (anchorId != null) {
+        snackBar.setAnchorView(anchorId)
+    }
+
+    if (actionName != null && action != null) {
+        snackBar.setAction(actionName) { action.invoke() }
+    }
+
+    snackBar.show()
 }
+
+fun snackBar(
+    view: View,
+    throwable: Throwable?,
+    isShort: Boolean = true,
+    @IdRes anchorId: Int? = null,
+    actionName: String? = null,
+    action: (() -> Unit)? = null
+) = snackBar(view, throwable.wrap().toString(), isShort, anchorId, actionName, action)
+
+fun Context.snackBar(
+    view: View,
+    @StringRes resId: Int,
+    isShort: Boolean = true,
+    @IdRes anchorId: Int? = null,
+    @StringRes actionResId: Int? = null,
+    action: (() -> Unit)? = null
+) = snackBar(view, getString(resId), isShort, anchorId, actionResId?.let { getString(it) }, action)
+
+fun Context.snackBar(
+    view: View,
+    @StringRes resId: Int,
+    isShort: Boolean = true,
+    vararg params: Any,
+    @IdRes anchorId: Int? = null,
+    @StringRes actionResId: Int? = null,
+    action: (() -> Unit)? = null
+) = snackBar(
+    view,
+    getString(resId, *params),
+    isShort,
+    anchorId,
+    actionResId?.let { getString(it) },
+    action
+)
+
+fun Fragment.snackBar(
+    view: View,
+    @StringRes resId: Int,
+    isShort: Boolean = true,
+    @IdRes anchorId: Int? = null,
+    @StringRes actionResId: Int? = null,
+    action: (() -> Unit)? = null
+) = snackBar(view, getString(resId), isShort, anchorId, actionResId?.let { getString(it) }, action)
+
+fun Fragment.snackBar(
+    view: View,
+    @StringRes resId: Int,
+    isShort: Boolean = true,
+    vararg params: Any,
+    @IdRes anchorId: Int? = null,
+    @StringRes actionResId: Int? = null,
+    action: (() -> Unit)? = null
+) = snackBar(
+    view,
+    getString(resId, *params),
+    isShort,
+    anchorId,
+    actionResId?.let { getString(it) },
+    action
+)
 
 fun <K, V> MutableMap<K, V>.mergeValue(key: K, value: V, func: (V, V) -> V?) {
     val oldValue = get(key)
@@ -158,18 +249,15 @@ inline fun <T> Iterable<T>.sumByLong(selector: (T) -> Long): Long {
 }
 
 
-fun distance(lat1: Double, lon1: Double, lat2: Double, lon2: Double) : Float {
-    val result = floatArrayOf(0F)
-    Location.distanceBetween(lat1, lon1, lat2, lon2, result)
-    return result.first()
-}
 
-fun regularId(timestamp: Long) : String = DateTime(timestamp, DateTimeZone.UTC).toString(ISODateTimeFormat.dateTime())
 
-fun floorDiv(x: Int, y: Int): Int {
-    var r = x / y
+fun Long.toISODateTime(): String =
+    DateTime(this, DateTimeZone.UTC).toString(ISODateTimeFormat.dateTime())
+
+infix fun Int.floorDiv(y: Int): Int {
+    var r = this / y
     // if the signs are different and modulo not zero, round down
-    if (x xor y < 0 && r * y != x) {
+    if (this xor y < 0 && r * y != this) {
         r--
     }
     return r
@@ -181,16 +269,25 @@ fun Context.getResourceUri(@AnyRes id: Int): Uri = Uri.Builder()
     .path(id.toString())
     .build()
 
-
-fun Pair<Double, Double>.toGeoHash() : String {
+/**
+ * @param nChars the number of GeoHash characters
+ *  5: +-2.4 km error
+ *  6: +-0.61 km error
+ *  7: +-0.076 km error
+ *  8: +-0.019 km error
+ */
+fun Pair<Double, Double>.toGeoHash(nChars: Int = 7): String? {
     val lat = first
     val lon = second
-    return if (!lat.isNaN() || !lon.isNaN()) "" else GeoHash(lat, lon, 8).toString()
+    return if (lat.isNaN() || lon.isNaN()) null else GeoHash(lat, lon, nChars).toString()
 }
 
-fun Location.toGeoHash() = this.let { GeoHash(this, 8).toString() }
+fun Location.toGeoHash() = GeoHash(this, 8).toString()
 
-fun Pair<Double, Double>.toBoundingBoxGeoHash(distanceInMetre: Float) : Pair<String, String> {
+fun String.toLatLng(): Pair<Double, Double> =
+    GeoHash(this).toLocation().let { it.latitude to it.longitude }
+
+fun Pair<Double, Double>.toBoundingBoxGeoHash(distanceInMetre: Float): Pair<String, String> {
     val latitude = first
     val longitude = second
 
@@ -220,4 +317,67 @@ fun Pair<Double, Double>.toBoundingBoxGeoHash(distanceInMetre: Float) : Pair<Str
     return minGeoHash to maxGeoHash
 }
 
-fun Location.toBoundingBoxGeoHash(distanceInMetre: Float) = (latitude to longitude).toBoundingBoxGeoHash(distanceInMetre)
+fun Location.toBoundingBoxGeoHash(distanceInMetre: Float) =
+    (latitude to longitude).toBoundingBoxGeoHash(distanceInMetre)
+
+fun View.animateVisibility(isVisible: Boolean, duration: Long) {
+    Log.d("ASDF", "$isVisible")
+    val view = this
+    val scale = if (isVisible) {
+        AlphaAnimation(0F, 100F)
+    } else {
+        AlphaAnimation(100F, 0F)
+    }
+    scale.fillAfter = true
+    scale.duration = duration
+    scale.setAnimationListener(object : Animation.AnimationListener {
+        override fun onAnimationRepeat(animation: Animation?) {}
+
+        override fun onAnimationEnd(animation: Animation?) {
+            if (!isVisible) view.visibility = View.GONE
+            Log.d("ASDF", "${view.alpha} ${view.scaleY}")
+        }
+
+        override fun onAnimationStart(animation: Animation?) {
+            if (isVisible) view.visibility = View.VISIBLE
+        }
+    })
+    startAnimation(scale)
+}
+
+fun Long.millisToHourMinute() : Pair<Long, Long> {
+    var value = this
+    val hourMs = TimeUnit.HOURS.toMillis(1)
+    val minuteMs = TimeUnit.MINUTES.toMillis(1)
+
+    var hourValue = 0L
+    var minuteValue = 0L
+
+    if (value > hourMs) {
+        hourValue = value / hourMs
+        value -= hourValue * hourMs
+    }
+
+    if (value > minuteMs) {
+        minuteValue = value / minuteMs
+    }
+
+    return hourValue to minuteValue
+}
+
+fun Pair<Long, Long>.hourMinuteToMillis() : Long {
+    val hourMs = TimeUnit.HOURS.toMillis(1)
+    val minuteMs = TimeUnit.MINUTES.toMillis(1)
+    return first * hourMs + second * minuteMs
+}
+
+fun Pair<Long, Long>.hourMinuteToString() = String.format("%02d:%02d", first, second)
+
+fun CharSequence?.toHourMinutes() : Pair<Long, Long> {
+    val parts = this?.split(":") ?: return 0L to 0L
+    return try {
+        parts[0].toLong() to parts[1].toLong()
+    } catch (e: Exception) {
+        0L to 0L
+    }
+}

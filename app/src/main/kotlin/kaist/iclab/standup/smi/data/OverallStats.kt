@@ -4,52 +4,61 @@ import kaist.iclab.standup.smi.common.DocumentEntity
 import kaist.iclab.standup.smi.common.DocumentEntityClass
 import kaist.iclab.standup.smi.common.Documents
 
-object LocationStats : Documents() {
-    val name = string("name")
-    val address = string("address")
-    val geoHash = string("geoHash")
-    val latitude = double("latitude")
-    val longitude = double("longitude")
-    val gain = integer("gain")
-    val loss = integer("loss")
-    val numStayed = integer("numStayed")
-    val numMission = integer("numMission")
-    val numSuccess = integer("numSuccess")
-    val approximateDuration = long("approximateDuration")
+object OverallStats: Documents() {
+    val numPlaces = long("numPlaces", 0)
+    val incentive = long("incentive", 0)
+    val numVisit = long("numVisit", 0)
+    val numMission = long("numMission", 0)
+    val numSuccess = long("numSuccess", 0)
+    val approximateDuration = long("approximateDuration", 0)
 }
 
-class LocationStat : DocumentEntity() {
-    var name by LocationStats.name
-    var address by LocationStats.address
-    var geoHash by LocationStats.geoHash
-    var latitude by LocationStats.latitude
-    var longitude by LocationStats.longitude
-    var gain by LocationStats.gain
-    var loss by LocationStats.loss
-    var numStayed by LocationStats.numStayed
-    var numMission by LocationStats.numMission
-    var numSuccess by LocationStats.numSuccess
-    var approximateDuration by LocationStats.approximateDuration
+class OverallStat: DocumentEntity() {
+    var numPlaces by OverallStats.numPlaces
+    var incentive by OverallStats.incentive
+    var numVisit by OverallStats.numVisit
+    var numMission by OverallStats.numMission
+    var numSuccess by OverallStats.numSuccess
+    var approximateDuration by OverallStats.approximateDuration
 
-    companion object : DocumentEntityClass<LocationStat>(LocationStats)
-}
+    companion object : DocumentEntityClass<OverallStat>(OverallStats)
 
-object AccumulatedStats: Documents() {
-    val gain = integer("gain")
-    val loss = integer("loss")
-    val numStayed = integer("numStayed")
-    val numMission = integer("numMission")
-    val numSuccess = integer("numSuccess")
-    val approximateDuration = long("approximateDuration")
-}
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+        other as OverallStat
 
-class AccumulatedStat: DocumentEntity() {
-    var gain by AccumulatedStats.gain
-    var loss by AccumulatedStats.loss
-    var numStayed by AccumulatedStats.numStayed
-    var numMission by AccumulatedStats.numMission
-    var numSuccess by AccumulatedStats.numSuccess
-    var approximateDuration by AccumulatedStats.approximateDuration
+        if (id != other.id) return false
+        if (numPlaces != other.numPlaces) return false
+        if (incentive != other.incentive) return false
+        if (numVisit != other.numVisit) return false
+        if (numMission != other.numMission) return false
+        if (numSuccess != other.numSuccess) return false
+        if (approximateDuration != other.approximateDuration) return false
 
-    companion object : DocumentEntityClass<AccumulatedStat>(AccumulatedStats)
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = id.hashCode()
+        result = 31 * result + numPlaces.hashCode()
+        result = 31 * result + incentive.hashCode()
+        result = 31 * result + numVisit.hashCode()
+        result = 31 * result + numMission.hashCode()
+        result = 31 * result + numSuccess.hashCode()
+        result = 31 * result + approximateDuration.hashCode()
+        return result
+    }
+
+    override fun toString(): String = StringBuilder(javaClass.simpleName)
+        .append(" (")
+        .append("id=$id, ")
+        .append("numPlaces=$numPlaces, ")
+        .append("incentive=$incentive, ")
+        .append("numVisit=$numVisit, ")
+        .append("numMission=$numMission, ")
+        .append("numSuccess=$numSuccess, ")
+        .append("approximateDuration=$approximateDuration")
+        .append(")")
+        .toString()
 }
