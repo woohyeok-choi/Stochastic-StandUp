@@ -1,21 +1,21 @@
 <resources>
-    <string name="app_name">Stand Up</string>
+    <string name="app_name" translatable="false">Stand Up</string>
 
     <!-- General -->
     <string name="general_unknown">Unknown</string>
-    <string name="general_hyphen">-</string>
-    <string name="general_range">%1s - %2s</string>
+    <string name="general_hyphen" translatable="false">-</string>
+    <string name="general_range" translatable="false">%1s - %2s</string>
     <string name="general_points_abbrev">%1d pts.</string>
     <string name="general_minute_abbrev">%1d min.</string>
     <string name="general_hours_abbrev">%1d hrs.</string>
     <string name="general_weeks">%1d week(s)</string>
     <string name="general_days">%1d day(s)</string>
-    <string name="general_months">1%d month(s)</string>
+    <string name="general_months">%1d month(s)</string>
     <string name="general_years_abbrev">%1d yrs.</string>
     <string name="general_about_minute_abbrev">About %1d min.</string>
     <string name="general_times">%1d time(s)</string>
-    <string name="general_plus_points">(+ %1d)</string>
-    <string name="general_minus_points">(- %1d)</string>
+    <string name="general_plus_points" translatable="false">(+ %1d)</string>
+    <string name="general_minus_points" translatable="false">(- %1d)</string>
     <string name="general_load_failed">Fail to load contents</string>
     <string name="general_visited_places">%1d places</string>
     <string name="general_retry">Retry</string>
@@ -107,10 +107,10 @@
     <string name="config_item_is_mission_triggered">Mission on/off</string>
     <string name="config_item_is_mission_triggered_on">On</string>
     <string name="config_item_is_mission_triggered_off">Off</string>
-    <string name="config_item_mission_time_range">Available time (at least 12 hrs)</string>
+    <string name="config_item_mission_time_range">Mission available time (at least 12 hrs)</string>
     <string name="config_item_do_not_disturb">Do-not-disturb</string>
-    <string name="config_item_do_not_disturb_set">%1s minute(s) left / %2d time(s) available.</string>
-    <string name="config_item_do_not_disturb_unset">Not set / %2d time(s) available.</string>
+    <string name="config_item_do_not_disturb_set">%1s minute(s) left / %2d time(s) available</string>
+    <string name="config_item_do_not_disturb_unset">Not set / %1d time(s) available.</string>
     <string name="config_item_do_not_disturb_value_formatter">In %1d minute(s)</string>
 
 
