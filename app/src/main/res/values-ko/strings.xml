@@ -120,4 +120,6 @@
     <string name="ntf_mission_failure_text_gain">미션에 실패해서 %d 포인트를 받지 못했습니다,</string>
     <string name="ntf_mission_failure_text_loss">미션에 실패해서 %d 포인트를 잃었습니다.</string>
     <string name="ntf_mission_failure_text_none">미션에 실패했습니다.</string>
+    <string name="config_restart_mission">미션 재시작</string>
+    <string name="config_restart_mission_desc">바뀐 설정으로 미션을 재시작합니다.</string>
 </resources>

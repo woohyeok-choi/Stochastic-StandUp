@@ -25,7 +25,7 @@ object Notifications {
     private const val CHANNEL_ID_MISSION_FAILURE = "${BuildConfig.APPLICATION_ID}.CHANNEL_ID_MISSION_FAILURE"
 
     const val NOTIFICATION_ID_FOREGROUND = 0x01
-    const val NOTIFICATION_ID_MISSION = 0x01
+    private const val NOTIFICATION_ID_MISSION = 0x02
 
     data class ChannelSetting(
         @StringRes val nameRes: Int,
@@ -165,6 +165,7 @@ object Notifications {
             setLocalOnly(true)
             setAutoCancel(false)
             setContentTitle(context.getString(R.string.ntf_foreground_title))
+            setShowWhen(false)
             setSmallIcon(R.drawable.mission_24)
             color = context.getColor(R.color.blue)
             if (countDownUntil > currentTime) {
@@ -185,7 +186,7 @@ object Notifications {
         }.build()
     }
 
-    fun buildMissionStartNotification(
+    private fun buildMissionStartNotification(
         context: Context,
         incentives: Int,
         durationMinutes: Long,
@@ -204,9 +205,10 @@ object Notifications {
             setWhen(countDownUntil)
             setUsesChronometer(true)
             setChronometerCountDown(true)
-            setSmallIcon(R.mipmap.ic_launcher_circle)
+            setSmallIcon(R.drawable.mission_24)
+            color = context.getColor(R.color.blue)
             setContentTitle(context.getString(R.string.ntf_mission_start_title))
-            setContentText(
+            setStyle(NotificationCompat.BigTextStyle().bigText(
                 when {
                     incentives > 0 -> context.getString(
                         R.string.ntf_mission_start_text_gain, durationMinutes, incentives
@@ -218,11 +220,11 @@ object Notifications {
                         R.string.ntf_mission_start_text_none, durationMinutes
                     )
                 }
-            )
+            ))
         }.build()
     }
 
-    fun buildMissionSuccessNotification(
+    private fun buildMissionSuccessNotification(
         context: Context,
         incentives: Int
     ): Notification {
@@ -236,9 +238,10 @@ object Notifications {
             setOngoing(false)
             setLocalOnly(false)
             setAutoCancel(true)
-            setSmallIcon(R.mipmap.ic_launcher_circle)
+            setSmallIcon(R.drawable.mission_24)
+            color = context.getColor(R.color.blue)
             setContentTitle(context.getString(R.string.ntf_mission_success_title))
-            setContentText(
+            setStyle(NotificationCompat.BigTextStyle().bigText(
                 when {
                     incentives > 0 -> context.getString(
                         R.string.ntf_mission_success_text_gain, incentives
@@ -250,11 +253,11 @@ object Notifications {
                         R.string.ntf_mission_success_text_none
                     )
                 }
-            )
+            ))
         }.build()
     }
 
-    fun buildMissionFailureNotification(
+    private fun buildMissionFailureNotification(
         context: Context,
         incentives: Int
     ): Notification {
@@ -268,9 +271,10 @@ object Notifications {
             setOngoing(false)
             setLocalOnly(false)
             setAutoCancel(true)
-            setSmallIcon(R.mipmap.ic_launcher_circle)
+            setSmallIcon(R.drawable.mission_24)
+            color = context.getColor(R.color.blue)
             setContentTitle(context.getString(R.string.ntf_mission_failure_title))
-            setContentText(
+            setStyle(NotificationCompat.BigTextStyle().bigText(
                 when {
                     incentives > 0 -> context.getString(
                         R.string.ntf_mission_failure_text_gain, incentives
@@ -282,7 +286,7 @@ object Notifications {
                         R.string.ntf_mission_failure_text_none
                     )
                 }
-            )
+            ))
         }.build()
     }
 
@@ -312,7 +316,7 @@ object Notifications {
                 incentives = incentives
             )
         } else {
-            buildMissionSuccessNotification(
+            buildMissionFailureNotification(
                 context = context,
                 incentives = incentives
             )

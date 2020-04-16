@@ -21,7 +21,10 @@ class ConfigFragment : BaseFragment<FragmentConfigBinding, ConfigViewModel>(), C
 
         adapter = ConfigListAdapter { item, position ->
             when (item) {
-                is ReadOnlyConfigItem -> item.onAction?.invoke()?.let { startActivityForResult(it, position) }
+                is ReadOnlyConfigItem -> {
+                    item.onActivity?.invoke()?.let { startActivityForResult(it, position) }
+                    item.onAction?.invoke(requireContext())
+                }
                 is SingleChoiceConfigItem -> showDialogFragment(ConfigSingleChoiceDialogFragment.newInstance(item), position)
                 is BooleanConfigItem -> showDialogFragment(ConfigBooleanDialogFragment.newInstance(item), position)
                 is NumberConfigItem -> showDialogFragment(ConfigNumberDialogFragment.newInstance(item), position)

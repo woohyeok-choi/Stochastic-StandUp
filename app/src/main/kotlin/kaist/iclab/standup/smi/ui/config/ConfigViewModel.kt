@@ -9,6 +9,7 @@ import androidx.lifecycle.liveData
 import com.google.firebase.auth.FirebaseAuth
 import kaist.iclab.standup.smi.BuildConfig
 import kaist.iclab.standup.smi.R
+import kaist.iclab.standup.smi.StandUpIntentService
 import kaist.iclab.standup.smi.StandUpService
 import kaist.iclab.standup.smi.base.BaseViewModel
 import kaist.iclab.standup.smi.common.checkPermissions
@@ -68,7 +69,7 @@ class ConfigViewModel(
                                 resStr(R.string.config_item_permissions_denied)
                             }
                         }
-                        onAction = {
+                        onActivity = {
                             Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
                                 .setData(Uri.parse("package:${context.packageName}"))
                         }
@@ -78,6 +79,20 @@ class ConfigViewModel(
                 header {
                     id = "$PREFIX.MISSIONS"
                     title = resStr(R.string.config_header_mission)
+
+                    boolean {
+                        id = "$PREFIX.MISSION_ON_OFF"
+                        title = resStr(R.string.config_item_is_mission_triggered)
+                        value = { LocalPrefs.isMissionOn }
+                        formatter = {
+                            if (it) {
+                                resStr(R.string.config_item_is_mission_triggered_on)
+                            } else {
+                                resStr(R.string.config_item_is_mission_triggered_off)
+                            }
+                        }
+                        onSave = { LocalPrefs.isMissionOn = it }
+                    }
 
                     localTimeRange {
                         id = "$PREFIX.MISSION_AVAILABLE_TIME"
@@ -143,20 +158,6 @@ class ConfigViewModel(
                         min = 30
                         max = 120
                     }
-
-                    boolean {
-                        id = "$PREFIX.MISSION_ON_OFF"
-                        title = resStr(R.string.config_item_is_mission_triggered)
-                        value = { LocalPrefs.isMissionOn }
-                        formatter = {
-                            if (it) {
-                                resStr(R.string.config_item_is_mission_triggered_on)
-                            } else {
-                                resStr(R.string.config_item_is_mission_triggered_off)
-                            }
-                        }
-                        onSave = { LocalPrefs.isMissionOn = it }
-                    }
                 }
 
                 header {
@@ -170,7 +171,7 @@ class ConfigViewModel(
                         formatter = { resStr(R.string.general_minute_abbrev, it) }
                         onSave = { RemotePrefs.minTimeForStayEvent = TimeUnit.MINUTES.toMillis(it) }
                         valueFormatter = { resStr(R.string.general_minute_abbrev, it) }
-                        min = 5L
+                        min = 1L
                         max = 40L
                     }
 
@@ -184,7 +185,7 @@ class ConfigViewModel(
                         onSave =
                             { RemotePrefs.minTimeForMissionTrigger = TimeUnit.MINUTES.toMillis(it) }
                         valueFormatter = { resStr(R.string.general_minute_abbrev, it) }
-                        min = 40L
+                        min = 2L
                         max = 150L
                     }
 
@@ -198,8 +199,8 @@ class ConfigViewModel(
                         onSave =
                             { RemotePrefs.timeoutForMissionExpired = TimeUnit.MINUTES.toMillis(it) }
                         valueFormatter = { resStr(R.string.general_minute_abbrev, it) }
-                        min = 40L
-                        max = 150L
+                        min = 1L
+                        max = 20L
                     }
 
                     number {
@@ -320,6 +321,13 @@ class ConfigViewModel(
                         valueFormatter = { resStr(R.string.general_points_abbrev, it) }
                         min = 10
                         max = 100
+                    }
+
+                    readOnly {
+                        id = "$PREFIX.RESTART_MISSION"
+                        title = resStr(R.string.config_restart_mission)
+                        formatter = { resStr(R.string.config_restart_mission_desc) }
+                        onAction = { StandUpIntentService.start(it) }
                     }
                 }
             }.items

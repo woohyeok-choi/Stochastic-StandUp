@@ -1,5 +1,6 @@
 package kaist.iclab.standup.smi.ui.config
 
+import android.content.Context
 import android.content.Intent
 import android.os.Parcel
 import android.os.Parcelable
@@ -67,19 +68,22 @@ data class ReadOnlyConfigItem(
     override var id: String = "",
     override var title: String = "",
     override var formatter: ((Unit) -> String)? = null,
-    var onAction: (() -> Intent)? = null
+    var onActivity: (() -> Intent)? = null,
+    var onAction: ((Context) -> Unit)? = null
 ) : ConfigItem<Unit>(id, title, formatter), Parcelable {
     constructor(parcel: Parcel) : this(
         parcel.readString() ?: "",
         parcel.readString() ?: "",
         parcel.readSerializable() as? ((Unit) -> String)?,
-        parcel.readSerializable() as? (() -> Intent)?
+        parcel.readSerializable() as? (() -> Intent)?,
+        parcel.readSerializable() as? ((Context) -> Unit)?
     )
 
     override fun writeToParcel(parcel: Parcel, flags: Int) {
         parcel.writeString(id)
         parcel.writeString(title)
         parcel.writeSerializable(formatter as? Serializable)
+        parcel.writeSerializable(onActivity as? Serializable)
         parcel.writeSerializable(onAction as? Serializable)
     }
 
