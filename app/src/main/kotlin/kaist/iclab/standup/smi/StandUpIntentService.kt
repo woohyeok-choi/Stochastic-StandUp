@@ -61,6 +61,13 @@ class StandUpIntentService : IntentService(StandUpIntentService::class.java.simp
                         )
                     }
                 }
+                ACTION_MOCK_ENTER_INTO_STILL -> {
+                    handleEnterIntoStill(
+                        timestamp = timestamp,
+                        latitude = latitude,
+                        longitude = longitude
+                    )
+                }
                 ACTION_MISSION -> when (state) {
                     STATE_PREPARE ->
                         handlePrepareMission(
@@ -317,6 +324,9 @@ class StandUpIntentService : IntentService(StandUpIntentService::class.java.simp
         private const val ACTION_ACTIVITY_UPDATE =
             "${BuildConfig.APPLICATION_ID}.ACTION_ACTIVITY_UPDATE"
 
+        private const val ACTION_MOCK_ENTER_INTO_STILL =
+            "${BuildConfig.APPLICATION_ID}.MOCK_ENTER_INTO_STILL"
+
         private const val REQUEST_CODE_MISSION = 0x01
         private const val REQUEST_CODE_LOCATION_UPDATE = 0x02
         private const val REQUEST_CODE_ACTIVITY_UPDATE = 0x03
@@ -363,10 +373,10 @@ class StandUpIntentService : IntentService(StandUpIntentService::class.java.simp
                 PendingIntent.FLAG_UPDATE_CURRENT
             )
 
-        fun prepare(context: Context) {
+        fun start(context: Context) {
             Intent(context, clazz).apply {
-                action = ACTION_MISSION
-            }.putExtra(EXTRA_MISSION_STATE, STATE_PREPARE).let { intent ->
+                action = ACTION_MOCK_ENTER_INTO_STILL
+            }.let { intent ->
                 context.startService(intent)
             }
         }

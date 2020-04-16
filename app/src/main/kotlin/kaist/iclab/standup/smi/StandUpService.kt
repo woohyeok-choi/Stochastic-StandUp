@@ -9,25 +9,16 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
-import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.AlarmManagerCompat
 import androidx.core.content.ContextCompat
 import kaist.iclab.standup.smi.base.BaseService
 import kaist.iclab.standup.smi.common.Notifications
 import kaist.iclab.standup.smi.pref.LocalPrefs
-import kaist.iclab.standup.smi.pref.RemotePrefs
-import kaist.iclab.standup.smi.repository.MissionRepository
-import kaist.iclab.standup.smi.repository.sumIncentives
 import kaist.iclab.standup.smi.tracker.ActivityTracker
 import kaist.iclab.standup.smi.tracker.LocationTracker
-import kotlinx.coroutines.*
-import org.joda.time.DateTime
-import org.joda.time.DateTimeZone
 import org.koin.android.ext.android.inject
 import java.util.*
-import kotlin.coroutines.CoroutineContext
-import kotlin.math.abs
 import kotlin.random.Random
 
 class StandUpService : BaseService() {
@@ -42,7 +33,7 @@ class StandUpService : BaseService() {
         locationTracker.startTracking()
         activityTracker.startTracking()
 
-        StandUpIntentService.prepare(applicationContext)
+        StandUpIntentService.start(applicationContext)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
