@@ -9,6 +9,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.firebase.auth.FirebaseAuth
 import kaist.iclab.standup.smi.BR
 import kaist.iclab.standup.smi.R
+import kaist.iclab.standup.smi.StandUpService
 import kaist.iclab.standup.smi.base.BaseBottomSheetDialogFragment
 import kaist.iclab.standup.smi.base.BaseFragment
 import kaist.iclab.standup.smi.common.asSuspend
@@ -70,10 +71,13 @@ class ConfigFragment : BaseFragment<FragmentConfigBinding, ConfigViewModel>(), C
                 .requestIdToken(getString(R.string.default_web_client_id))
                 .requestEmail()
                 .build()
-            val client = GoogleSignIn.getClient(requireActivity(), options)
-            client.signOut().asSuspend()
+            try {
+                GoogleSignIn.getClient(requireActivity(), options).signOut().asSuspend()
+            } catch (e: Exception) { }
 
             activity?.finish()
+            StandUpService.stopService(requireContext())
+
             startActivity(
                 Intent(context, SplashActivity::class.java)
                     .setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)

@@ -111,34 +111,6 @@ class StandUpIntentService : IntentService(StandUpIntentService::class.java.simp
         }
     }
 
-    private fun schedule(triggerAt: Long, pendingIntent: PendingIntent) {
-        val minTime = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(10)
-        val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
-
-        AlarmManagerCompat.setExactAndAllowWhileIdle(
-            alarmManager,
-            AlarmManager.RTC_WAKEUP,
-            triggerAt.coerceAtLeast(minTime),
-            pendingIntent
-        )
-    }
-
-    private fun getDefaultMissionIntent() = getPendingIntent(
-        context = applicationContext,
-        code = REQUEST_CODE_MISSION,
-        action = ACTION_MISSION
-    )
-
-    private fun cancel() {
-        val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        val intent = getDefaultMissionIntent()
-
-        alarmManager.cancel(intent)
-
-        LocalPrefs.isMissionInProgress = false
-        LocalPrefs.missionIdInProgress = ""
-    }
-
     private suspend fun handleEnterIntoStill(timestamp: Long, latitude: Double, longitude: Double) {
         Log.d(javaClass.simpleName, "handleEnterIntoStill(timestamp = $timestamp, latitude = $latitude, longitude = $longitude)")
 
@@ -168,7 +140,7 @@ class StandUpIntentService : IntentService(StandUpIntentService::class.java.simp
             )
         }
 
-        cancel()
+        cancelMission(context = applicationContext)
     }
 
     private suspend fun handlePrepareMission(timestamp: Long, latitude: Double, longitude: Double) {
@@ -194,7 +166,7 @@ class StandUpIntentService : IntentService(StandUpIntentService::class.java.simp
             )
         )
 
-        schedule(timestamp + RemotePrefs.minTimeForStayEvent, intent)
+        scheduleMission(applicationContext, timestamp + RemotePrefs.minTimeForStayEvent, intent)
     }
 
     private suspend fun handleStandByMission(timestamp: Long, latitude: Double, longitude: Double) {
@@ -222,7 +194,7 @@ class StandUpIntentService : IntentService(StandUpIntentService::class.java.simp
             )
         )
 
-        schedule(timestamp + RemotePrefs.minTimeForMissionTrigger - RemotePrefs.minTimeForStayEvent, intent)
+        scheduleMission(applicationContext, timestamp + RemotePrefs.minTimeForMissionTrigger - RemotePrefs.minTimeForStayEvent, intent)
     }
 
     private suspend fun handleTriggerMission(timestamp: Long, latitude: Double, longitude: Double) {
@@ -261,7 +233,7 @@ class StandUpIntentService : IntentService(StandUpIntentService::class.java.simp
             )
         )
 
-        schedule(timestamp + RemotePrefs.timeoutForMissionExpired, intent)
+        scheduleMission(applicationContext, timestamp + RemotePrefs.timeoutForMissionExpired, intent)
     }
 
     private suspend fun handleCompleteMission(timestamp: Long, latitude: Double, longitude: Double, isSucceeded: Boolean) {
@@ -399,5 +371,30 @@ class StandUpIntentService : IntentService(StandUpIntentService::class.java.simp
             }
         }
 
+        fun scheduleMission(context: Context, triggerAt: Long, pendingIntent: PendingIntent) {
+            val minTime = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(10)
+            val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+
+            AlarmManagerCompat.setExactAndAllowWhileIdle(
+                alarmManager,
+                AlarmManager.RTC_WAKEUP,
+                triggerAt.coerceAtLeast(minTime),
+                pendingIntent
+            )
+        }
+
+        fun cancelMission(context: Context) {
+            val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+            val intent = getPendingIntent(
+                context = context,
+                code = REQUEST_CODE_MISSION,
+                action = ACTION_MISSION
+            )
+
+            alarmManager.cancel(intent)
+
+            LocalPrefs.isMissionInProgress = false
+            LocalPrefs.missionIdInProgress = ""
+        }
     }
 }

@@ -90,6 +90,8 @@ class StandUpService : BaseService() {
         locationTracker.stopTracking()
         activityTracker.stopTracking()
 
+        StandUpIntentService.cancelMission(applicationContext)
+
         stopForeground(true)
     }
 
