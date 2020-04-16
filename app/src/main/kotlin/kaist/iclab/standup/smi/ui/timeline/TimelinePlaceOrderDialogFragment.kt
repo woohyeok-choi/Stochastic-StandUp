@@ -43,6 +43,7 @@ class TimelinePlaceOrderDialogFragment : BaseBottomSheetDialogFragment<FragmentT
     }
 
     override fun onClick(isPositive: Boolean) {
+        if (!isPositive) return
         val isDescending = dataBinding.groupPlaceOrderDirection.checkedRadioButtonId == R.id.btn_place_order_direction_descending
 
         val field = when (dataBinding.groupPlaceOrderField.checkedRadioButtonId) {

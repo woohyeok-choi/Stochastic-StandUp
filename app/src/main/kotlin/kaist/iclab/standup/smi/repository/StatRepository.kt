@@ -14,10 +14,10 @@ import kaist.iclab.standup.smi.common.DataField
 import kaist.iclab.standup.smi.common.asSuspend
 import kaist.iclab.standup.smi.common.throwError
 import kaist.iclab.standup.smi.common.toGeoHash
-import kaist.iclab.standup.smi.data.PlaceStat
-import kaist.iclab.standup.smi.data.PlaceStats
 import kaist.iclab.standup.smi.data.OverallStat
 import kaist.iclab.standup.smi.data.OverallStats
+import kaist.iclab.standup.smi.data.PlaceStat
+import kaist.iclab.standup.smi.data.PlaceStats
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 

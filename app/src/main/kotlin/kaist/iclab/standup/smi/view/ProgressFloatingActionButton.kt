@@ -1,22 +1,15 @@
 package kaist.iclab.standup.smi.view
 
 import android.content.Context
-import android.graphics.Rect
 import android.util.AttributeSet
 import android.util.Log
 import android.view.Gravity
-import android.view.View
 import android.widget.FrameLayout
 import android.widget.ProgressBar
-import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.view.children
 import androidx.core.view.updateLayoutParams
-import com.google.android.material.appbar.AppBarLayout
 import com.google.android.material.floatingactionbutton.FloatingActionButton
-import com.google.android.material.internal.DescendantOffsetUtils
-import com.google.android.material.snackbar.Snackbar.SnackbarLayout
 import kaist.iclab.standup.smi.R
-import kotlin.math.min
 
 class ProgressFloatingActionButton(context: Context, attributeSet: AttributeSet) : FrameLayout(context, attributeSet) {
     private val progressBar: ProgressBar = ProgressBar(context)

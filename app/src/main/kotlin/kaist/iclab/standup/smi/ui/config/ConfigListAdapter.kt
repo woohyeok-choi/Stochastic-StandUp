@@ -1,6 +1,5 @@
 package kaist.iclab.standup.smi.ui.config
 
-import android.view.InflateException
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -11,7 +10,6 @@ import kaist.iclab.standup.smi.R
 import kaist.iclab.standup.smi.databinding.ItemConfigHeaderBinding
 import kaist.iclab.standup.smi.databinding.ItemConfigReadOnlyBinding
 import kaist.iclab.standup.smi.databinding.ItemConfigReadWriteBinding
-import kotlin.collections.ArrayList
 
 class ConfigListAdapter(private val onItemClick: ((item: ConfigItem<*>?, position: Int) -> Unit)) : RecyclerView.Adapter<ConfigListAdapter.ViewHolder>() {
     var items: ArrayList<ConfigData> = arrayListOf()
@@ -25,6 +23,7 @@ class ConfigListAdapter(private val onItemClick: ((item: ConfigItem<*>?, positio
             is ConfigHeader -> VIEW_TYPE_HEADER
             is ReadOnlyConfigItem -> VIEW_TYPE_READ_ONLY
             is BooleanConfigItem -> VIEW_TYPE_BOOLEAN
+            is SingleChoiceConfigItem -> VIEW_TYPE_SINGLE_CHOICE
             is NumberConfigItem -> VIEW_TYPE_NUMBER
             is NumberRangeConfigItem -> VIEW_TYPE_NUMBER_RANGE
             is LocalTimeConfigItem -> VIEW_TYPE_TIME
@@ -110,6 +109,13 @@ class ConfigListAdapter(private val onItemClick: ((item: ConfigItem<*>?, positio
                         onItemClick.invoke(i, position)
                     }
                 }
+                VIEW_TYPE_SINGLE_CHOICE -> {
+                    val i = item as? SingleChoiceConfigItem
+                    binding.setVariable(BR.item, i)
+                    binding.root.setOnClickListener {
+                        onItemClick.invoke(i, position)
+                    }
+                }
                 VIEW_TYPE_NUMBER -> {
                     val i = item as? NumberConfigItem
                     binding.setVariable(BR.item, i)
@@ -148,9 +154,10 @@ class ConfigListAdapter(private val onItemClick: ((item: ConfigItem<*>?, positio
         private const val VIEW_TYPE_HEADER = 0x01
         private const val VIEW_TYPE_READ_ONLY = 0x02
         private const val VIEW_TYPE_BOOLEAN = 0x03
-        private const val VIEW_TYPE_NUMBER = 0x04
-        private const val VIEW_TYPE_NUMBER_RANGE = 0x05
-        private const val VIEW_TYPE_TIME = 0x06
-        private const val VIEW_TYPE_TIME_RANGE = 0x07
+        private const val VIEW_TYPE_SINGLE_CHOICE = 0x04
+        private const val VIEW_TYPE_NUMBER = 0x05
+        private const val VIEW_TYPE_NUMBER_RANGE = 0x06
+        private const val VIEW_TYPE_TIME = 0x07
+        private const val VIEW_TYPE_TIME_RANGE = 0x08
     }
 }

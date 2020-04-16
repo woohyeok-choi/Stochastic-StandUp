@@ -4,7 +4,6 @@ import android.content.Intent
 import android.os.Parcel
 import android.os.Parcelable
 import java.io.Serializable
-import java.util.concurrent.TimeUnit
 
 
 class Config {
@@ -45,6 +44,8 @@ data class ConfigHeader(
     fun readOnly(init: ReadOnlyConfigItem.() -> Unit) = add(ReadOnlyConfigItem(), init)
 
     fun boolean(init: BooleanConfigItem.() -> Unit) = add(BooleanConfigItem(), init)
+
+    fun choice(init: SingleChoiceConfigItem.() -> Unit) = add(SingleChoiceConfigItem(), init)
 
     fun number(init: NumberConfigItem.() -> Unit) = add(NumberConfigItem(), init)
 
@@ -149,6 +150,84 @@ data class BooleanConfigItem(
 }
 
 @Suppress("UNCHECKED_CAST")
+data class SingleChoiceConfigItem(
+    override var id: String = "",
+    override var title: String = "",
+    override var value: (() -> Int)? = null,
+    override var formatter: ((Int) -> String)? = null,
+    override var isSavable: ((newValue: Int) -> Boolean)? = null,
+    override var onSave: ((newValue: Int) -> Unit)? = null,
+    var valueFormatter: ((Int) -> String)? = null,
+    var options: IntArray = intArrayOf()
+) :ReadWriteConfigItem<Int>(id, title, formatter, value, isSavable, onSave), Parcelable {
+    constructor(parcel: Parcel) : this(
+        parcel.readString() ?: "",
+        parcel.readString() ?: "",
+        parcel.readSerializable() as? (() -> Int),
+        parcel.readSerializable() as? ((Int) -> String),
+        parcel.readSerializable() as? ((Int) -> Boolean),
+        parcel.readSerializable() as? ((Int) -> Unit),
+        parcel.readSerializable() as? ((Int) -> String),
+        intArrayOf().apply { parcel.readIntArray(this) }
+    )
+
+    override fun writeToParcel(parcel: Parcel, flags: Int) {
+        parcel.writeString(id)
+        parcel.writeString(title)
+        parcel.writeSerializable(value as? Serializable)
+        parcel.writeSerializable(formatter as? Serializable)
+        parcel.writeSerializable(isSavable as? Serializable)
+        parcel.writeSerializable(onSave as? Serializable)
+        parcel.writeSerializable(valueFormatter as? Serializable)
+        parcel.writeIntArray(options)
+    }
+
+    override fun describeContents(): Int {
+        return 0
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as SingleChoiceConfigItem
+
+        if (id != other.id) return false
+        if (title != other.title) return false
+        if (value != other.value) return false
+        if (formatter != other.formatter) return false
+        if (isSavable != other.isSavable) return false
+        if (onSave != other.onSave) return false
+        if (valueFormatter != other.valueFormatter) return false
+        if (!options.contentEquals(other.options)) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = id.hashCode()
+        result = 31 * result + title.hashCode()
+        result = 31 * result + (value?.hashCode() ?: 0)
+        result = 31 * result + (formatter?.hashCode() ?: 0)
+        result = 31 * result + (isSavable?.hashCode() ?: 0)
+        result = 31 * result + (onSave?.hashCode() ?: 0)
+        result = 31 * result + (valueFormatter?.hashCode() ?: 0)
+        result = 31 * result + options.contentHashCode()
+        return result
+    }
+
+    companion object CREATOR : Parcelable.Creator<SingleChoiceConfigItem> {
+        override fun createFromParcel(parcel: Parcel): SingleChoiceConfigItem {
+            return SingleChoiceConfigItem(parcel)
+        }
+
+        override fun newArray(size: Int): Array<SingleChoiceConfigItem?> {
+            return arrayOfNulls(size)
+        }
+    }
+}
+
+@Suppress("UNCHECKED_CAST")
 data class NumberConfigItem(
     override var id: String = "",
     override var title: String = "",
@@ -156,6 +235,7 @@ data class NumberConfigItem(
     override var formatter: ((Long) -> String)? = null,
     override var isSavable: ((newValue: Long) -> Boolean)? = null,
     override var onSave: ((newValue: Long) -> Unit)? = null,
+    var valueFormatter: ((Long) -> String)? = null,
     var min: Long = 0,
     var max: Long = 100
 ) : ReadWriteConfigItem<Long>(id, title, formatter, value, isSavable, onSave), Parcelable {
@@ -166,6 +246,7 @@ data class NumberConfigItem(
         parcel.readSerializable() as? ((Long) -> String),
         parcel.readSerializable() as? ((Long) -> Boolean),
         parcel.readSerializable() as? ((Long) -> Unit),
+        parcel.readSerializable() as? ((Long) -> String),
         parcel.readLong(),
         parcel.readLong()
     )
@@ -177,6 +258,7 @@ data class NumberConfigItem(
         parcel.writeSerializable(formatter as? Serializable)
         parcel.writeSerializable(isSavable as? Serializable)
         parcel.writeSerializable(onSave as? Serializable)
+        parcel.writeSerializable(valueFormatter as? Serializable)
         parcel.writeLong(min)
         parcel.writeLong(max)
     }
@@ -204,6 +286,7 @@ data class NumberRangeConfigItem(
     override var formatter: ((Pair<Long, Long>) -> String)? = null,
     override var isSavable: ((newValue: Pair<Long, Long>) -> Boolean)? = null,
     override var onSave: ((newValue: Pair<Long, Long>) -> Unit)? = null,
+    var valueFormatter: ((Long) -> String)? = null,
     var min: Long = 0,
     var max: Long = 100
 ) : ReadWriteConfigItem<Pair<Long, Long>>(id, title, formatter, value, isSavable, onSave),
@@ -215,6 +298,7 @@ data class NumberRangeConfigItem(
         parcel.readSerializable() as? ((Pair<Long, Long>) -> String),
         parcel.readSerializable() as? ((Pair<Long, Long>) -> Boolean),
         parcel.readSerializable() as? ((Pair<Long, Long>) -> Unit),
+        parcel.readSerializable() as? ((Long) -> String),
         parcel.readLong(),
         parcel.readLong()
     )
@@ -226,6 +310,7 @@ data class NumberRangeConfigItem(
         parcel.writeSerializable(formatter as? Serializable)
         parcel.writeSerializable(isSavable as? Serializable)
         parcel.writeSerializable(onSave as? Serializable)
+        parcel.writeSerializable(valueFormatter as? Serializable)
         parcel.writeLong(min)
         parcel.writeLong(max)
     }

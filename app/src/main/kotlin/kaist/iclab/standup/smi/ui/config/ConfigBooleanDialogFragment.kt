@@ -35,5 +35,4 @@ class ConfigBooleanDialogFragment : BaseBottomSheetDialogFragment<FragmentConfig
             )
         }
     }
-
 }

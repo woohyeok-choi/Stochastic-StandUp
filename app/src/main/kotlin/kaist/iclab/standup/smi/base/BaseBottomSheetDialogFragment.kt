@@ -3,20 +3,18 @@ package kaist.iclab.standup.smi.base
 import android.content.Context
 import android.content.DialogInterface
 import android.os.Bundle
-import android.view.*
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
 import androidx.annotation.CallSuper
 import androidx.annotation.LayoutRes
-import androidx.annotation.MenuRes
 import androidx.annotation.StringRes
 import androidx.databinding.DataBindingUtil
 import androidx.databinding.ViewDataBinding
-import androidx.fragment.app.DialogFragment
-import androidx.fragment.app.Fragment
-import androidx.lifecycle.ViewModel
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import kaist.iclab.standup.smi.R
 import kaist.iclab.standup.smi.common.AppLog
-import kaist.iclab.standup.smi.databinding.FragmentBottomSheetDialogBinding
+import kaist.iclab.standup.smi.databinding.FragmentBaseDialogBinding
 
 abstract class BaseBottomSheetDialogFragment<B : ViewDataBinding> : BottomSheetDialogFragment() {
     protected lateinit var dataBinding: B
@@ -25,7 +23,7 @@ abstract class BaseBottomSheetDialogFragment<B : ViewDataBinding> : BottomSheetD
     protected abstract val showPositiveButton: Boolean
     protected abstract val showNegativeButton: Boolean
 
-    private lateinit var rootBinding: FragmentBottomSheetDialogBinding
+    private lateinit var rootBinding: FragmentBaseDialogBinding
 
     @StringRes
     protected open val textPositiveButton: Int = android.R.string.ok
@@ -59,7 +57,7 @@ abstract class BaseBottomSheetDialogFragment<B : ViewDataBinding> : BottomSheetD
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         AppLog.d(javaClass, "onCreateView()")
         rootBinding = DataBindingUtil.inflate(
-            inflater, R.layout.fragment_bottom_sheet_dialog, container, false
+            inflater, R.layout.fragment_base_dialog, container, false
         )
         dataBinding = DataBindingUtil.inflate(inflater, layoutId, container, false)
         rootBinding.container.addView(dataBinding.root)

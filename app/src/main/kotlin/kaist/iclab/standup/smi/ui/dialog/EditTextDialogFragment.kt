@@ -9,6 +9,7 @@ import android.widget.FrameLayout
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.core.os.bundleOf
+import androidx.core.widget.doOnTextChanged
 import androidx.fragment.app.DialogFragment
 import kaist.iclab.standup.smi.R
 
@@ -34,6 +35,8 @@ class EditTextDialogFragment : DialogFragment() {
             setText(content)
             setHint(hint)
             setHintTextColor(ContextCompat.getColor(requireContext(), R.color.light_grey))
+            doOnTextChanged { text, _, _, _ ->
+            }
         }
         val layout = FrameLayout(requireContext()).apply {
             setPadding(

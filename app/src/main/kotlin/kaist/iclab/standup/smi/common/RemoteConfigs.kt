@@ -1,7 +1,6 @@
 package kaist.iclab.standup.smi.common
 
 import android.content.Context
-import android.util.Log
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 import com.google.firebase.remoteconfig.FirebaseRemoteConfigSettings
 import com.squareup.moshi.Moshi

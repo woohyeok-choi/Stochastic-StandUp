@@ -1,6 +1,5 @@
 package kaist.iclab.standup.smi
 
-import kaist.iclab.standup.smi.common.floorDiv
 import kaist.iclab.standup.smi.data.Mission
 import kaist.iclab.standup.smi.pref.LocalPrefs
 import kaist.iclab.standup.smi.pref.RemotePrefs
@@ -97,8 +96,9 @@ class StandUpMissionHandler(
             return@filter true
         }
 
-        val incentive = if (RemotePrefs.isStochasticMode) {
-            incentiveRepository.calculateStochasticIncentive(
+        val incentive = when (RemotePrefs.incentiveMode) {
+            RemotePrefs.INCENTIVE_MODE_FIXED -> RemotePrefs.defaultIncentives
+            RemotePrefs.INCENTIVE_MODE_STOCHASTIC -> incentiveRepository.calculateStochasticIncentive(
                 missions = missions,
                 timestamp = timestamp,
                 latitude = latitude,
@@ -106,8 +106,7 @@ class StandUpMissionHandler(
             )?.coerceIn(RemotePrefs.minIncentives, RemotePrefs.maxIncentives)?.let {
                 it / RemotePrefs.unitIncentives * RemotePrefs.unitIncentives
             } ?: RemotePrefs.defaultIncentives
-        } else {
-            RemotePrefs.defaultIncentives
+            else -> 0
         }
 
         missionRepository.startMission(

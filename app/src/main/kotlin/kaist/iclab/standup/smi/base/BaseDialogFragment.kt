@@ -1,34 +1,46 @@
 package kaist.iclab.standup.smi.base
 
 import android.content.Context
+import android.content.DialogInterface
 import android.os.Bundle
-import android.view.*
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
 import androidx.annotation.CallSuper
 import androidx.annotation.LayoutRes
-import androidx.annotation.MenuRes
+import androidx.annotation.StringRes
 import androidx.databinding.DataBindingUtil
 import androidx.databinding.ViewDataBinding
 import androidx.fragment.app.DialogFragment
-import androidx.fragment.app.Fragment
-import androidx.lifecycle.ViewModel
+import kaist.iclab.standup.smi.R
 import kaist.iclab.standup.smi.common.AppLog
+import kaist.iclab.standup.smi.databinding.FragmentBaseDialogBinding
 
-abstract class BaseDialogFragment<B : ViewDataBinding, VM: ViewModel> : DialogFragment() {
-    protected abstract val viewModel: VM
-    protected abstract val viewModelVariable: Int
+abstract class BaseDialogFragment<B : ViewDataBinding> : DialogFragment() {
     protected lateinit var dataBinding: B
     @get:LayoutRes
     protected abstract val layoutId: Int
+    protected abstract val showPositiveButton: Boolean
+    protected abstract val showNegativeButton: Boolean
 
-    protected fun d(msg: String) {
-        AppLog.d(javaClass, msg)
-    }
+    private lateinit var rootBinding: FragmentBaseDialogBinding
 
-    protected fun e(msg: String, throwable: Throwable? = null) {
-        AppLog.e(javaClass, msg, throwable)
+    @StringRes
+    protected open val textPositiveButton: Int = android.R.string.ok
+    @StringRes
+    protected open val textNegativeButton: Int = android.R.string.cancel
+
+    interface OnDismissListener {
+        fun onDismiss(requestCode: Int)
     }
 
     abstract fun beforeExecutePendingBindings()
+
+    abstract fun onClick(isPositive: Boolean)
+
+    protected fun isSavable(isEnabled: Boolean) {
+        rootBinding.btnPositive.isEnabled = isEnabled
+    }
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
@@ -44,8 +56,13 @@ abstract class BaseDialogFragment<B : ViewDataBinding, VM: ViewModel> : DialogFr
     @CallSuper
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         AppLog.d(javaClass, "onCreateView()")
+        rootBinding = DataBindingUtil.inflate(
+            inflater, R.layout.fragment_base_dialog, container, false
+        )
         dataBinding = DataBindingUtil.inflate(inflater, layoutId, container, false)
-        return dataBinding.root
+        rootBinding.container.addView(dataBinding.root)
+
+        return rootBinding.root
     }
 
     @CallSuper
@@ -53,11 +70,26 @@ abstract class BaseDialogFragment<B : ViewDataBinding, VM: ViewModel> : DialogFr
         super.onViewCreated(view, savedInstanceState)
         AppLog.d(javaClass, "onViewCreated()")
 
-        dataBinding.setVariable(viewModelVariable, viewModel)
+        rootBinding.showPositiveButton = showPositiveButton
+        rootBinding.showNegativeButton = showNegativeButton
+        rootBinding.textPositiveButton = getString(textPositiveButton)
+        rootBinding.textNegativeButton = getString(textNegativeButton)
+        rootBinding.lifecycleOwner = this
+
+        rootBinding.btnNegative.setOnClickListener {
+            onClick(false)
+            dismiss()
+        }
+        rootBinding.btnPositive.setOnClickListener {
+            onClick(true)
+            dismiss()
+        }
+
         dataBinding.lifecycleOwner = this
 
         beforeExecutePendingBindings()
 
+        rootBinding.executePendingBindings()
         dataBinding.executePendingBindings()
     }
 
@@ -109,4 +141,11 @@ abstract class BaseDialogFragment<B : ViewDataBinding, VM: ViewModel> : DialogFr
         AppLog.d(javaClass, "onDetach()")
     }
 
+    override fun onDismiss(dialog: DialogInterface) {
+        if (targetFragment != null) {
+            (targetFragment as? OnDismissListener)?.onDismiss(targetRequestCode)
+        } else {
+            (activity as? OnDismissListener)?.onDismiss(targetRequestCode)
+        }
+    }
 }

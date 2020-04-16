@@ -6,6 +6,7 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.core.app.AlarmManagerCompat
 import androidx.core.os.bundleOf
 import com.google.android.gms.location.ActivityTransition
@@ -16,18 +17,22 @@ import kaist.iclab.standup.smi.pref.LocalPrefs
 import kaist.iclab.standup.smi.pref.RemotePrefs
 import kaist.iclab.standup.smi.tracker.ActivityTracker
 import kaist.iclab.standup.smi.tracker.LocationTracker
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 import org.joda.time.DateTime
 import org.joda.time.DateTimeZone
 import org.koin.android.ext.android.inject
 import java.util.concurrent.TimeUnit
+import kotlin.coroutines.CoroutineContext
 
-class StandUpIntentService : IntentService(StandUpIntentService::class.java.simpleName) {
+class StandUpIntentService : IntentService(StandUpIntentService::class.java.simpleName), CoroutineScope {
+    private val job = Job()
+    override val coroutineContext: CoroutineContext = Dispatchers.IO + job
+
     private val locationTracker: LocationTracker by inject()
     private val activityTracker: ActivityTracker by inject()
     private val standUpRepository: StandUpMissionHandler by inject()
 
-    override fun onHandleIntent(intent: Intent?) = runBlocking {
+    override fun onHandleIntent(intent: Intent?) = runBlocking(coroutineContext) {
         try {
             val timestamp = System.currentTimeMillis()
             val state = intent?.getStringExtra(EXTRA_MISSION_STATE) ?: ""
@@ -121,6 +126,8 @@ class StandUpIntentService : IntentService(StandUpIntentService::class.java.simp
     }
 
     private suspend fun handleEnterIntoStill(timestamp: Long, latitude: Double, longitude: Double) {
+        Log.d(javaClass.simpleName, "handleEnterIntoStill(timestamp = $timestamp, latitude = $latitude, longitude = $longitude)")
+
         standUpRepository.enterIntoStill(
             timestamp = timestamp,
             latitude = latitude,
@@ -130,6 +137,8 @@ class StandUpIntentService : IntentService(StandUpIntentService::class.java.simp
     }
 
     private suspend fun handleExitFromStill(timestamp: Long, latitude: Double, longitude: Double) {
+        Log.d(javaClass.simpleName, "handleExitFromStill(timestamp = $timestamp, latitude = $latitude, longitude = $longitude)")
+
         standUpRepository.exitFromStill(
             timestamp = timestamp,
             latitude = latitude,
@@ -154,6 +163,9 @@ class StandUpIntentService : IntentService(StandUpIntentService::class.java.simp
             latitude = latitude,
             longitude = longitude
         )
+
+        Log.d(javaClass.simpleName, "handlePrepareMission(timestamp = $timestamp, latitude = $latitude, longitude = $longitude): id = $id")
+
         LocalPrefs.missionIdInProgress = id ?: ""
 
         val intent = getPendingIntent(
@@ -173,6 +185,9 @@ class StandUpIntentService : IntentService(StandUpIntentService::class.java.simp
 
     private suspend fun handleStandByMission(timestamp: Long, latitude: Double, longitude: Double) {
         val id = LocalPrefs.missionIdInProgress
+
+        Log.d(javaClass.simpleName, "handleStandByMission(timestamp = $timestamp, latitude = $latitude, longitude = $longitude): id = $id")
+
         if (!id.isBlank()) {
             standUpRepository.standByMission(
                 timestamp = timestamp,
@@ -198,6 +213,9 @@ class StandUpIntentService : IntentService(StandUpIntentService::class.java.simp
 
     private suspend fun handleTriggerMission(timestamp: Long, latitude: Double, longitude: Double) {
         val id = LocalPrefs.missionIdInProgress
+
+        Log.d(javaClass.simpleName, "handleTriggerMission(timestamp = $timestamp, latitude = $latitude, longitude = $longitude): id = $id")
+
         if (!id.isBlank()) {
             val mission = standUpRepository.startMission(
                 timestamp = timestamp,
@@ -234,6 +252,9 @@ class StandUpIntentService : IntentService(StandUpIntentService::class.java.simp
 
     private suspend fun handleCompleteMission(timestamp: Long, latitude: Double, longitude: Double, isSucceeded: Boolean) {
         val id = LocalPrefs.missionIdInProgress
+
+        Log.d(javaClass.simpleName, "handleCompleteMission(timestamp = $timestamp, latitude = $latitude, longitude = $longitude, isSucceeded = $isSucceeded): id = $id")
+
         val isMissionInProgress = LocalPrefs.isMissionInProgress
 
         if (!id.isBlank()) {
@@ -282,7 +303,8 @@ class StandUpIntentService : IntentService(StandUpIntentService::class.java.simp
             timestamp,
             DateTimeZone.getDefault()
         ).millisOfDay in (LocalPrefs.activeStartTimeMs..LocalPrefs.activeEndTimeMs)
-        return isOffDoNotDisturbMode && isInActiveTime
+        val isMissionOn = LocalPrefs.isMissionOn
+        return isOffDoNotDisturbMode && isInActiveTime && isMissionOn
     }
 
     companion object {
@@ -299,7 +321,6 @@ class StandUpIntentService : IntentService(StandUpIntentService::class.java.simp
         private const val REQUEST_CODE_LOCATION_UPDATE = 0x02
         private const val REQUEST_CODE_ACTIVITY_UPDATE = 0x03
 
-        private const val EXTRA_MISSION_ID = "${BuildConfig.APPLICATION_ID}.EXTRA_MISSION_ID"
         private const val EXTRA_MISSION_STATE = "${BuildConfig.APPLICATION_ID}.EXTRA_MISSION_STATE"
         private const val EXTRA_TIMESTAMP = "${BuildConfig.APPLICATION_ID}.EXTRA_TIMESTAMP"
         private const val EXTRA_LATITUDE = "${BuildConfig.APPLICATION_ID}.EXTRA_LATITUDE"
@@ -342,10 +363,12 @@ class StandUpIntentService : IntentService(StandUpIntentService::class.java.simp
                 PendingIntent.FLAG_UPDATE_CURRENT
             )
 
-        fun prepare(context: Context) = Intent(context, clazz).apply {
-            action = ACTION_MISSION
-        }.putExtra(EXTRA_MISSION_STATE, STATE_PREPARE).let { intent ->
-            context.startActivity(intent)
+        fun prepare(context: Context) {
+            Intent(context, clazz).apply {
+                action = ACTION_MISSION
+            }.putExtra(EXTRA_MISSION_STATE, STATE_PREPARE).let { intent ->
+                context.startService(intent)
+            }
         }
     }
 }

@@ -3,19 +3,22 @@ package kaist.iclab.standup.smi.ui.timeline
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.databinding.DataBindingUtil
-import androidx.paging.PagedList
 import androidx.paging.PagedListAdapter
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import kaist.iclab.standup.smi.R
 import kaist.iclab.standup.smi.data.PlaceStat
 import kaist.iclab.standup.smi.databinding.ItemPlaceTimelineBinding
-import kaist.iclab.standup.smi.repository.SedentaryMissionEvent
 
-class TimelinePlaceListAdapter : PagedListAdapter<PlaceStat, TimelinePlaceListAdapter.ViewHolder>(DIFF_CALLBACK) {
-    var onBind: ((item: PlaceStat) -> Unit)? = null
-    var onClick: ((item: PlaceStat) -> Unit)? = null
-    var onLongClick: ((item: PlaceStat) -> Unit)? = null
+class TimelinePlaceListAdapter :
+    PagedListAdapter<PlaceStat, TimelinePlaceListAdapter.ViewHolder>(DIFF_CALLBACK) {
+    interface OnAdapterListener {
+        fun onBind(item: PlaceStat)
+        fun onClick(item: PlaceStat)
+        fun onLongClick(item: PlaceStat)
+    }
+
+    var listener: OnAdapterListener? = null
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val binding: ItemPlaceTimelineBinding = DataBindingUtil.inflate(
@@ -32,11 +35,11 @@ class TimelinePlaceListAdapter : PagedListAdapter<PlaceStat, TimelinePlaceListAd
 
         holder.bind(
             item = item,
-            onClick = { onClick?.invoke(it) },
-            onLongClick = { onLongClick?.invoke(it) }
+            onClick = { listener?.onClick(it) },
+            onLongClick = { listener?.onLongClick(it) }
         )
 
-        onBind?.invoke(item)
+        listener?.onBind(item)
     }
 
     class ViewHolder(private val binding: ItemPlaceTimelineBinding) :
@@ -62,9 +65,11 @@ class TimelinePlaceListAdapter : PagedListAdapter<PlaceStat, TimelinePlaceListAd
 
     companion object {
         val DIFF_CALLBACK = object : DiffUtil.ItemCallback<PlaceStat>() {
-            override fun areItemsTheSame(oldItem: PlaceStat, newItem: PlaceStat): Boolean = oldItem.id == newItem.id
+            override fun areItemsTheSame(oldItem: PlaceStat, newItem: PlaceStat): Boolean =
+                oldItem.id == newItem.id
 
-            override fun areContentsTheSame(oldItem: PlaceStat, newItem: PlaceStat): Boolean = oldItem == newItem
+            override fun areContentsTheSame(oldItem: PlaceStat, newItem: PlaceStat): Boolean =
+                oldItem == newItem
         }
     }
 }

@@ -9,18 +9,20 @@ import android.media.AudioAttributes
 import android.media.AudioManager
 import android.os.Build
 import android.os.Bundle
+import android.text.format.DateUtils
 import androidx.annotation.AnyRes
 import androidx.annotation.RequiresApi
 import androidx.annotation.StringRes
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import kaist.iclab.standup.smi.BuildConfig
 import kaist.iclab.standup.smi.R
 
 object Notifications {
-    private const val CHANNEL_ID_FOREGROUND = ""
-    private const val CHANNEL_ID_MISSION_START = ""
-    private const val CHANNEL_ID_MISSION_SUCCESS = ""
-    private const val CHANNEL_ID_MISSION_FAILURE = ""
+    private const val CHANNEL_ID_FOREGROUND = "${BuildConfig.APPLICATION_ID}.CHANNEL_ID_FOREGROUND"
+    private const val CHANNEL_ID_MISSION_START = "${BuildConfig.APPLICATION_ID}.CHANNEL_ID_MISSION_START"
+    private const val CHANNEL_ID_MISSION_SUCCESS = "${BuildConfig.APPLICATION_ID}.CHANNEL_ID_MISSION_SUCCESS"
+    private const val CHANNEL_ID_MISSION_FAILURE = "${BuildConfig.APPLICATION_ID}.CHANNEL_ID_MISSION_FAILURE"
 
     const val NOTIFICATION_ID_FOREGROUND = 0x01
     const val NOTIFICATION_ID_MISSION = 0x01
@@ -114,7 +116,7 @@ object Notifications {
         val channels = settings.map { (id, setting) ->
             NotificationChannel(id, context.getString(setting.nameRes), setting.importance).apply {
                 lockscreenVisibility = setting.visibility
-                vibrationPattern = setting.vibration
+                if (setting.vibration != null) vibrationPattern = setting.vibration
                 if (setting.sound != null) {
                     setSound(
                         context.getResourceUri(setting.sound),
@@ -148,7 +150,6 @@ object Notifications {
 
     fun buildForegroundNotification(
         context: Context,
-        incentives: Int,
         cancelIntent: PendingIntent,
         countDownUntil: Long
     ): Notification {
@@ -163,20 +164,21 @@ object Notifications {
             setOngoing(true)
             setLocalOnly(true)
             setAutoCancel(false)
-            setContentTitle(context.getString(R.string.ntf_foreground_title, incentives))
-            setSmallIcon(R.mipmap.ic_launcher_circle)
-
+            setContentTitle(context.getString(R.string.ntf_foreground_title))
+            setSmallIcon(R.drawable.mission_24)
+            color = context.getColor(R.color.blue)
             if (countDownUntil > currentTime) {
-                extras = Bundle()
-                setWhen(countDownUntil)
-                setUsesChronometer(true)
-                setChronometerCountDown(true)
                 addAction(
                     R.drawable.baseline_close_24,
                     context.getString(R.string.ntf_foreground_action_cancel),
                     cancelIntent
                 )
-                setContentText(context.getString(R.string.ntf_foreground_text_do_not_disturb))
+                setContentText(
+                    context.getString(
+                        R.string.ntf_foreground_text_do_not_disturb,
+                        DateUtils.formatDateTime(context, countDownUntil, DateUtils.FORMAT_SHOW_DATE or DateUtils.FORMAT_SHOW_TIME)
+                    )
+                )
             } else {
                 setContentText(context.getString(R.string.ntf_foreground_text_normal))
             }
@@ -205,10 +207,17 @@ object Notifications {
             setSmallIcon(R.mipmap.ic_launcher_circle)
             setContentTitle(context.getString(R.string.ntf_mission_start_title))
             setContentText(
-                context.getString(
-                    if (incentives >= 0) R.string.ntf_mission_start_text_gain else R.string.ntf_mission_start_text_loss,
-                    durationMinutes, incentives
-                )
+                when {
+                    incentives > 0 -> context.getString(
+                        R.string.ntf_mission_start_text_gain, durationMinutes, incentives
+                    )
+                    incentives < 0 -> context.getString(
+                        R.string.ntf_mission_start_text_loss, durationMinutes, incentives
+                    )
+                    else -> context.getString(
+                        R.string.ntf_mission_start_text_none, durationMinutes
+                    )
+                }
             )
         }.build()
     }
@@ -230,10 +239,17 @@ object Notifications {
             setSmallIcon(R.mipmap.ic_launcher_circle)
             setContentTitle(context.getString(R.string.ntf_mission_success_title))
             setContentText(
-                context.getString(
-                    if (incentives >= 0) R.string.ntf_mission_success_text_gain else R.string.ntf_mission_success_text_loss,
-                    incentives
-                )
+                when {
+                    incentives > 0 -> context.getString(
+                        R.string.ntf_mission_success_text_gain, incentives
+                    )
+                    incentives < 0 -> context.getString(
+                        R.string.ntf_mission_success_text_loss, incentives
+                    )
+                    else -> context.getString(
+                        R.string.ntf_mission_success_text_none
+                    )
+                }
             )
         }.build()
     }
@@ -255,10 +271,17 @@ object Notifications {
             setSmallIcon(R.mipmap.ic_launcher_circle)
             setContentTitle(context.getString(R.string.ntf_mission_failure_title))
             setContentText(
-                context.getString(
-                    if (incentives >= 0) R.string.ntf_mission_failure_text_gain else R.string.ntf_mission_failure_text_loss,
-                    incentives
-                )
+                when {
+                    incentives > 0 -> context.getString(
+                        R.string.ntf_mission_failure_text_gain, incentives
+                    )
+                    incentives < 0 -> context.getString(
+                        R.string.ntf_mission_failure_text_loss, incentives
+                    )
+                    else -> context.getString(
+                        R.string.ntf_mission_failure_text_none
+                    )
+                }
             )
         }.build()
     }

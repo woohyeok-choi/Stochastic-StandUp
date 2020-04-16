@@ -4,7 +4,6 @@ import android.content.Context
 import android.text.format.DateUtils
 import kaist.iclab.standup.smi.R
 import java.util.*
-import java.util.Formatter as JavaFormatter
 import java.util.concurrent.TimeUnit
 import kotlin.math.abs
 
@@ -13,6 +12,8 @@ object Formatter {
     private val DAYS_IN_MILLIS = TimeUnit.DAYS.toMillis(1)
     private val WEEK_IN_MILLIS = DAYS_IN_MILLIS * 7
     private val MONTH_IN_MILLIS = WEEK_IN_MILLIS * 4
+    private val YEAR_IN_MILLIS = DAYS_IN_MILLIS * 365
+
 
     @JvmStatic
     fun getRelativeTimeSpanString(context: Context, millis: Long) : CharSequence {
@@ -34,7 +35,6 @@ object Formatter {
             }
             span in (WEEK_IN_MILLIS until MONTH_IN_MILLIS) -> {
                 DateUtils.getRelativeTimeSpanString(millis, now, DateUtils.WEEK_IN_MILLIS)
-
             }
             span > MONTH_IN_MILLIS && nowTime.get(Calendar.YEAR) == thenTime.get(Calendar.YEAR) -> {
                 DateUtils.formatDateRange(context, millis, millis, DateUtils.FORMAT_SHOW_DATE or DateUtils.FORMAT_ABBREV_MONTH)
@@ -48,11 +48,14 @@ object Formatter {
     @JvmStatic
     fun getElapsedTimeString(context: Context, millis: Long) : CharSequence {
         val (time, resId) = when {
-            millis < HOUR_IN_MILLIS -> TimeUnit.MILLISECONDS.toMinutes(millis) to R.plurals.general_minutes
-            millis in (HOUR_IN_MILLIS until DAYS_IN_MILLIS) -> TimeUnit.MILLISECONDS.toHours(millis) to R.plurals.general_hours
-            else -> TimeUnit.MILLISECONDS.toDays(millis) to R.string.general_days
+            millis < HOUR_IN_MILLIS -> TimeUnit.MILLISECONDS.toMinutes(millis) to R.string.general_minus_points
+            millis in (HOUR_IN_MILLIS until DAYS_IN_MILLIS) -> TimeUnit.MILLISECONDS.toHours(millis) to R.string.general_hours_abbrev
+            millis in (DAYS_IN_MILLIS until WEEK_IN_MILLIS) -> TimeUnit.MILLISECONDS.toDays(millis) to R.string.general_days
+            millis in (WEEK_IN_MILLIS until MONTH_IN_MILLIS) -> TimeUnit.MILLISECONDS.toDays(millis) / 7 to R.string.general_weeks
+            millis in (MONTH_IN_MILLIS until YEAR_IN_MILLIS) -> TimeUnit.MILLISECONDS.toDays(millis) / 28 to R.string.general_months
+            else -> TimeUnit.MILLISECONDS.toDays(millis) / 365 to R.string.general_years_abbrev
         }
-        return context.resources.getQuantityString(resId, time.toInt(), time)
+        return context.getString(resId, time.toInt())
     }
 
     @JvmStatic

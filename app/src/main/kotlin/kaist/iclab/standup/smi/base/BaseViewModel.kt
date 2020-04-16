@@ -2,9 +2,7 @@ package kaist.iclab.standup.smi.base
 
 import androidx.annotation.CallSuper
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.lang.ref.WeakReference
 

@@ -20,7 +20,7 @@
             android:paddingBottom="@dimen/space_vertical_small"
             android:text="@{item.title}"
             android:textColor="@color/black"
-            android:textSize="@dimen/txt_size_default"
+            android:textSize="@dimen/txt_size_medium"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintLeft_toLeftOf="parent"/>
 

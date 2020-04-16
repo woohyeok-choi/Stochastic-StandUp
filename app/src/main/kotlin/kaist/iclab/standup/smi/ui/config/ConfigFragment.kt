@@ -2,20 +2,15 @@ package kaist.iclab.standup.smi.ui.config
 
 import android.content.Intent
 import androidx.lifecycle.observe
-import androidx.recyclerview.widget.DividerItemDecoration
-import androidx.recyclerview.widget.LinearLayoutManager
-import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import kaist.iclab.standup.smi.BR
 import kaist.iclab.standup.smi.R
 import kaist.iclab.standup.smi.base.BaseBottomSheetDialogFragment
 import kaist.iclab.standup.smi.base.BaseFragment
 import kaist.iclab.standup.smi.databinding.FragmentConfigBinding
-import org.koin.androidx.viewmodel.ext.android.sharedViewModel
 import org.koin.androidx.viewmodel.ext.android.viewModel
-import org.koin.core.parameter.parametersOf
 
 class ConfigFragment : BaseFragment<FragmentConfigBinding, ConfigViewModel>(), ConfigNavigator, BaseBottomSheetDialogFragment.OnDismissListener {
-    override val viewModel: ConfigViewModel by sharedViewModel()
+    override val viewModel: ConfigViewModel by viewModel()
     override val viewModelVariable: Int = BR.viewModel
     override val layoutId: Int = R.layout.fragment_config
 
@@ -27,6 +22,7 @@ class ConfigFragment : BaseFragment<FragmentConfigBinding, ConfigViewModel>(), C
         adapter = ConfigListAdapter { item, position ->
             when (item) {
                 is ReadOnlyConfigItem -> item.onAction?.invoke()?.let { startActivityForResult(it, position) }
+                is SingleChoiceConfigItem -> showDialogFragment(ConfigSingleChoiceDialogFragment.newInstance(item), position)
                 is BooleanConfigItem -> showDialogFragment(ConfigBooleanDialogFragment.newInstance(item), position)
                 is NumberConfigItem -> showDialogFragment(ConfigNumberDialogFragment.newInstance(item), position)
                 is NumberRangeConfigItem -> showDialogFragment(ConfigNumberRangeDialogFragment.newInstance(item), position)

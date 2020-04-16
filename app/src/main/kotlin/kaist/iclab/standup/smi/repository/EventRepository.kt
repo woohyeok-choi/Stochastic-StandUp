@@ -3,7 +3,8 @@ package kaist.iclab.standup.smi.repository
 import com.google.firebase.firestore.CollectionReference
 import kaist.iclab.standup.smi.common.toGeoHash
 import kaist.iclab.standup.smi.common.toISODateTime
-import kaist.iclab.standup.smi.data.*
+import kaist.iclab.standup.smi.data.Event
+import kaist.iclab.standup.smi.data.Events
 import java.util.*
 
 class EventRepository(

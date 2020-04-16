@@ -6,7 +6,12 @@
     <string name="general_hyphen">-</string>
     <string name="general_range">%1s - %2s</string>
     <string name="general_points_abbrev">%1d pts.</string>
-    <string name="general_minute_abbrev">%1s min.</string>
+    <string name="general_minute_abbrev">%1d min.</string>
+    <string name="general_hours_abbrev">%1d hrs.</string>
+    <string name="general_weeks">%1d week(s)</string>
+    <string name="general_days">%1d day(s)</string>
+    <string name="general_months">1%d month(s)</string>
+    <string name="general_years_abbrev">%1d yrs.</string>
     <string name="general_about_minute_abbrev">About %1d min.</string>
     <string name="general_times">%1d time(s)</string>
     <string name="general_plus_points">(+ %1d)</string>
@@ -14,15 +19,7 @@
     <string name="general_load_failed">Fail to load contents</string>
     <string name="general_visited_places">%1d places</string>
     <string name="general_retry">Retry</string>
-    <plurals name="general_minutes">
-        <item quantity="one">%1d minute</item>
-        <item quantity="other">%1d minutes</item>
-    </plurals>
-    <plurals name="general_hours">
-        <item quantity="one">%1d hour</item>
-        <item quantity="other">%1d hours</item>
-    </plurals>
-    <string name="general_days">%1d day(s)</string>
+
 
     <!-- Error -->
     <string name="error_general">Error</string>
@@ -79,7 +76,8 @@
     <string name="timeline_list_item_mission_bid_negative_success">Kept %1d pts.</string>
     <string name="timeline_list_item_mission_bid_positive_failure">Lost a chance to get %1d pts.</string>
     <string name="timeline_list_item_mission_bid_negative_failure">Lost %1d pts.</string>
-    <string name="timeline_list_item_place_visit_stat">%1s · %2d visits · %3d pts</string>
+    <string name="timeline_list_item_place_visit_stat">%1s · %2d visits · %3s</string>
+    <string name="timeline_list_item_place_mission_stat">%1d / %2d successes · %3d pts.</string>
 
     <string name="timeline_place_order_menu">Sort</string>
     <string name="timeline_place_order_field">Field</string>
@@ -106,10 +104,15 @@
     <string name="config_item_permissions_denied">Denied</string>
 
     <string name="config_header_mission">Mission</string>
+    <string name="config_item_is_mission_triggered">Mission on/off</string>
+    <string name="config_item_is_mission_triggered_on">On</string>
+    <string name="config_item_is_mission_triggered_off">Off</string>
     <string name="config_item_mission_time_range">Available time (at least 12 hrs)</string>
     <string name="config_item_do_not_disturb">Do-not-disturb</string>
-    <string name="config_item_do_not_disturb_set">Until %1s / %2d time(s) available.</string>
+    <string name="config_item_do_not_disturb_set">%1s minute(s) left / %2d time(s) available.</string>
     <string name="config_item_do_not_disturb_unset">Not set / %2d time(s) available.</string>
+    <string name="config_item_do_not_disturb_value_formatter">In %1d minute(s)</string>
+
 
     <string name="config_header_debug">Debug</string>
     <string name="config_item_min_stay_time">Duration for stay event</string>
@@ -122,9 +125,10 @@
     <string name="config_range_incentive">Range of incentive amount</string>
     <string name="config_default_incentive">Default incentive amount</string>
     <string name="config_unit_incentive">Unit step of incentive amount</string>
-    <string name="config_is_stochastic_mode">Stochastic incentive mode</string>
-    <string name="config_is_stochastic_mode_stochastic">Stochastic mode</string>
-    <string name="config_is_stochastic_mode_fixed">Fixed mode</string>
+    <string name="config_incentive_mode">Incentive mode</string>
+    <string name="config_incentive_mode_stochastic">Stochastic mode</string>
+    <string name="config_incentive_mode_fixed">Fixed mode</string>
+    <string name="config_incentive_mode_none">Non-incentive mode</string>
 
     <!-- Notification channel descriptions -->
     <string name="ntf_channel_name_foreground">Foreground</string>
@@ -133,20 +137,24 @@
     <string name="ntf_channel_name_mission_failure">Mission failure</string>
 
     <!-- Notification texts -->
-    <string name="ntf_foreground_title">Points: %1d</string>
+    <string name="ntf_foreground_title">Stand Up</string>
     <string name="ntf_foreground_text_normal">Running in the background…</string>
-    <string name="ntf_foreground_text_do_not_disturb">Do-not-disturb mode…</string>
+    <string name="ntf_foreground_text_do_not_disturb">Do-not-disturb until %s</string>
     <string name="ntf_foreground_action_cancel">Cancel</string>
 
     <string name="ntf_mission_start_title">Time to stand up!</string>
     <string name="ntf_mission_start_text_gain">You have sit for %1d minutes. Stand up and move around for a while to get %2d points.</string>
     <string name="ntf_mission_start_text_loss">You have sit for %1d minutes. Stand up and move around for a while to keep %2d points.</string>
+    <string name="ntf_mission_start_text_none">You have sit for %1d minutes. Stand up and move around for a while.</string>
 
     <string name="ntf_mission_success_title">Mission success!</string>
     <string name="ntf_mission_success_text_gain">Good job. You got %d points.</string>
     <string name="ntf_mission_success_text_loss">Good job. You keep %d points.</string>
+    <string name="ntf_mission_success_text_none">Good job.</string>
 
     <string name="ntf_mission_failure_title">Mission failure!</string>
-    <string name="ntf_mission_failure_text_gain">You lost a chance for %d points.</string>
-    <string name="ntf_mission_failure_text_loss">You lost %1d points.</string>
+    <string name="ntf_mission_failure_text_gain">Unfortunately, you lost a chance for %d points.</string>
+    <string name="ntf_mission_failure_text_loss">Unfortunately, you lost %d points.</string>
+    <string name="ntf_mission_failure_text_none">Unfortunately, you failed this mission.</string>
+
 </resources>

@@ -7,7 +7,9 @@ import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.Query
 import kaist.iclab.standup.smi.R
 import kaist.iclab.standup.smi.base.BaseViewModel
-import kaist.iclab.standup.smi.common.*
+import kaist.iclab.standup.smi.common.Status
+import kaist.iclab.standup.smi.common.sumByLong
+import kaist.iclab.standup.smi.common.throwError
 import kaist.iclab.standup.smi.data.PlaceStat
 import kaist.iclab.standup.smi.data.PlaceStats
 import kaist.iclab.standup.smi.pref.LocalPrefs
@@ -160,35 +162,16 @@ class TimelineViewModel (
     /**
      * Data relevant rename place
      */
-    private var currentPlaceName: String = ""
-    private var currentLatitude: Double = Double.NaN
-    private var currentLongitude: Double = Double.NaN
-
-    fun renamePlace(prevName: String,
-                    newName: String,
+    fun renamePlace(newName: String,
                     latitude: Double,
-                    longitude: Double,
-                    isDailyMode: Boolean
+                    longitude: Double
     ) = viewModelScope.launch(ioContext) {
-        currentPlaceName = prevName
-        currentLatitude = latitude
-        currentLongitude = longitude
-
         try {
             if (newName.isBlank()) throwError(R.string.error_empty_input)
-            statRepository.updatePlaceName(currentLatitude, currentLongitude, newName)
-            if (isDailyMode) refreshDailyStat() else refreshPlaceStats()
+            statRepository.updatePlaceName(latitude, longitude, newName)
         } catch (e: Exception) {
             navigator?.navigatePlaceRenameError(e)
         }
-    }
-
-    fun retryToRenamePlace() {
-        navigator?.navigatePlaceLongClick(
-            placeName = currentPlaceName,
-            latitude = currentLatitude,
-            longitude = currentLongitude
-        )
     }
 
     private fun fieldToString(field: Int) : String = when(field) {

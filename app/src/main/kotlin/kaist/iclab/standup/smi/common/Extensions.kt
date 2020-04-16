@@ -18,6 +18,7 @@ import androidx.annotation.IdRes
 import androidx.annotation.StringRes
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModel
 import com.fonfon.kgeohash.GeoHash
 import com.google.android.gms.tasks.Task
 import com.google.android.libraries.maps.GoogleMap
@@ -28,6 +29,9 @@ import kotlinx.coroutines.withContext
 import org.joda.time.DateTime
 import org.joda.time.DateTimeZone
 import org.joda.time.format.ISODateTimeFormat
+import org.koin.android.ext.android.getKoin
+import org.koin.androidx.viewmodel.koin.getViewModel
+import org.koin.core.qualifier.Qualifier
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.*
 import kotlin.math.acos
@@ -381,3 +385,16 @@ fun CharSequence?.toHourMinutes() : Pair<Long, Long> {
         0L to 0L
     }
 }
+
+inline fun <reified T: ViewModel> Fragment.sharedViewModelFromFragment(
+    qualifier: Qualifier? = null
+): Lazy<T> =
+    lazy(LazyThreadSafetyMode.NONE) {
+        getKoin().getViewModel(
+            requireParentFragment(),
+            T::class,
+            qualifier,
+            null
+        )
+    }
+

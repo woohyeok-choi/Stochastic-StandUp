@@ -6,12 +6,14 @@
 
         <variable
             name="item"
-            type="kaist.iclab.standup.smi.ui.config.LocalTimeConfigItem" />
+            type="kaist.iclab.standup.smi.ui.config.SingleChoiceConfigItem" />
 
     </data>
-    <androidx.constraintlayout.widget.ConstraintLayout
+
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
 
         <TextView
             android:id="@+id/txt_title"
@@ -20,17 +22,16 @@
             android:text="@{item.title}"
             android:textColor="@color/black"
             android:textSize="@dimen/txt_size_medium"
-            android:paddingBottom="@dimen/space_vertical_small"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintLeft_toLeftOf="parent"/>
+            android:paddingBottom="@dimen/space_vertical_small"/>
 
-        <TimePicker
-            android:id="@+id/time_picker_config"
+        <RadioGroup
+            android:id="@+id/radio_options"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:layout_constraintTop_toBottomOf="@id/txt_title"
-            app:layout_constraintLeft_toLeftOf="parent"/>
+            android:orientation="vertical"
+            android:showDividers="middle"
+            android:divider="@drawable/empty_divider"/>
 
-    </androidx.constraintlayout.widget.ConstraintLayout>
+    </LinearLayout>
 
 </layout>

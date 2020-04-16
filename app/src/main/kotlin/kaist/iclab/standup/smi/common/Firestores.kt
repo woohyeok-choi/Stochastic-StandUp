@@ -1,7 +1,5 @@
 package kaist.iclab.standup.smi.common
 
-import android.text.format.DateUtils
-import android.util.Log
 import com.google.firebase.firestore.*
 import kotlin.reflect.KProperty
 import kotlin.reflect.full.primaryConstructor

@@ -175,7 +175,7 @@ val repositoryModules = module {
         )
     }
 
-    single(createdAtStart = false) {
+    single<IncentiveRepository>(createdAtStart = false) {
         object : IncentiveRepository {
             override fun calculateStochasticIncentive(
                 missions: List<Mission>,
@@ -183,7 +183,7 @@ val repositoryModules = module {
                 latitude: Double,
                 longitude: Double
             ): Int? {
-                return 50
+                return 150
             }
         }
     }

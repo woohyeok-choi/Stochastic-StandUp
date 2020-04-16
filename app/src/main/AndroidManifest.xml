@@ -28,7 +28,6 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
-
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="@string/google_api_key" />
@@ -54,6 +53,7 @@
         <activity android:name=".StandUpService$AvoidSmartManagerActivity" />
 
         <service android:name=".StandUpService" />
+        <service android:name=".StandUpIntentService" />
     </application>
 
 </manifest>

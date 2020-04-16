@@ -16,9 +16,13 @@ class TimelineDailyListAdapter : RecyclerView.Adapter<TimelineDailyListAdapter.V
             notifyDataSetChanged()
         }
 
-    var onBind: ((item: SedentaryMissionEvent) -> Unit)? = null
-    var onClick: ((item: SedentaryMissionEvent) -> Unit)? = null
-    var onLongClick: ((item: SedentaryMissionEvent) -> Unit)? = null
+    interface OnAdapterListener {
+        fun onBind(item: SedentaryMissionEvent)
+        fun onClick(item: SedentaryMissionEvent)
+        fun onLongClick(item: SedentaryMissionEvent)
+    }
+
+    var listener: OnAdapterListener? = null
 
     override fun getItemCount(): Int = items.size
 
@@ -38,11 +42,11 @@ class TimelineDailyListAdapter : RecyclerView.Adapter<TimelineDailyListAdapter.V
             item = item,
             isFirst = position == 0,
             isLast = position == items.lastIndex,
-            onClick = { onClick?.invoke(it) },
-            onLongClick = { onLongClick?.invoke(it) }
+            onClick = { listener?.onClick(it) },
+            onLongClick = { listener?.onLongClick(it) }
         )
 
-        onBind?.invoke(item)
+        listener?.onBind(item)
     }
 
     class ViewHolder(private val binding: ItemDailyTimelineBinding) :

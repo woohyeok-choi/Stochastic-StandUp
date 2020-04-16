@@ -6,8 +6,6 @@ import androidx.fragment.app.Fragment
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import kaist.iclab.standup.smi.ui.dashboard.DashboardFragment.Companion.ARG_HAS_NEXT
 import kaist.iclab.standup.smi.ui.dashboard.DashboardFragment.Companion.ARG_HAS_PREVIOUS
-import org.joda.time.DateTime
-import org.joda.time.Duration
 
 class DashboardStatPagerAdapter(
     private val nItemCount: Int,

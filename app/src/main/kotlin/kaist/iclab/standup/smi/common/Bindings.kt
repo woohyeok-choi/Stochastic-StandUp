@@ -3,7 +3,6 @@ package kaist.iclab.standup.smi.common
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.content.res.ColorStateList
-import android.util.Log
 import android.view.View
 import android.widget.TextView
 import androidx.core.widget.ContentLoadingProgressBar

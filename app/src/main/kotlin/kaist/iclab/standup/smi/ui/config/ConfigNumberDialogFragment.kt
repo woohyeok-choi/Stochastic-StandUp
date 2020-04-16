@@ -12,13 +12,22 @@ class ConfigNumberDialogFragment : BaseBottomSheetDialogFragment<FragmentConfigD
 
     override fun beforeExecutePendingBindings() {
         val item = arguments?.getParcelable(ARG_ITEM) as? NumberConfigItem
+        val min = item?.min?.toInt() ?: 0
+        val max = item?.max?.toInt() ?: 100
+        val value = item?.value?.invoke()?.toInt() ?: 0
+        val values = (min..max).map {
+            item?.valueFormatter?.invoke(it.toLong()) ?: it.toString()
+        }.toTypedArray()
+
         dataBinding.item = item
-        dataBinding.numberPickerConfig.minValue = item?.min?.toInt() ?: 0
-        dataBinding.numberPickerConfig.maxValue = item?.max?.toInt() ?: 100
+        dataBinding.numberPickerConfig.minValue = min
+        dataBinding.numberPickerConfig.maxValue = max
         dataBinding.numberPickerConfig.setOnValueChangedListener { _, _, newVal ->
             isSavable(item?.isSavable?.invoke(newVal.toLong()) ?: true)
         }
-        dataBinding.numberPickerConfig.value = item?.value?.invoke()?.toInt() ?: 0
+        dataBinding.numberPickerConfig.displayedValues = values
+
+        dataBinding.numberPickerConfig.value = value.coerceIn(min, max)
     }
 
     override fun onClick(isPositive: Boolean) {

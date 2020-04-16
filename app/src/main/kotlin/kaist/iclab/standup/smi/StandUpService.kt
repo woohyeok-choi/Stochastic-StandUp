@@ -9,6 +9,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
+import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.AlarmManagerCompat
 import androidx.core.content.ContextCompat
@@ -18,27 +19,35 @@ import kaist.iclab.standup.smi.pref.LocalPrefs
 import kaist.iclab.standup.smi.pref.RemotePrefs
 import kaist.iclab.standup.smi.repository.MissionRepository
 import kaist.iclab.standup.smi.repository.sumIncentives
+import kaist.iclab.standup.smi.tracker.ActivityTracker
+import kaist.iclab.standup.smi.tracker.LocationTracker
 import kotlinx.coroutines.*
 import org.joda.time.DateTime
 import org.joda.time.DateTimeZone
 import org.koin.android.ext.android.inject
-import java.lang.Exception
 import java.util.*
+import kotlin.coroutines.CoroutineContext
 import kotlin.math.abs
 import kotlin.random.Random
 
 class StandUpService : BaseService() {
-    private val scope: CoroutineScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
-
-    private val missionRepository: MissionRepository by inject()
+    private val locationTracker: LocationTracker by inject()
+    private val activityTracker: ActivityTracker by inject()
 
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onCreate() {
         super.onCreate()
+
+        locationTracker.startTracking()
+        activityTracker.startTracking()
+
+        StandUpIntentService.prepare(applicationContext)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        super.onStartCommand(intent, flags, startId)
+
         val currentTime = System.currentTimeMillis()
 
         if (intent?.action == ACTION_CANCEL_DO_NOT_DISTURB) {
@@ -67,9 +76,6 @@ class StandUpService : BaseService() {
 
         val notification = Notifications.buildForegroundNotification(
             context = this,
-            incentives = runBlocking(scope.coroutineContext) {
-                getDailyIncentives(currentTime)
-            },
             cancelIntent = cancelIntent,
             countDownUntil = LocalPrefs.doNotDisturbUntil
         )
@@ -90,26 +96,11 @@ class StandUpService : BaseService() {
 
     override fun onDestroy() {
         super.onDestroy()
-        scope.cancel()
+        locationTracker.stopTracking()
+        activityTracker.stopTracking()
+
         stopForeground(true)
     }
-
-    private suspend fun getDailyIncentives(timestamp: Long): Int {
-        val dateTime = DateTime(timestamp, DateTimeZone.getDefault())
-        val startTime = dateTime.withTimeAtStartOfDay().millis
-        val endTime = dateTime.withTimeAtStartOfDay().plusDays(1).millis
-        val missions = missionRepository.getCompletedMissions(
-            fromTime = startTime,
-            toTime = endTime
-        )
-        val incentive = missions.sumIncentives()
-        return if (incentive >= 0) {
-            incentive.coerceAtMost(RemotePrefs.maxDailyBudget)
-        } else {
-            (RemotePrefs.maxDailyBudget - abs(incentive)).coerceAtLeast(0)
-        }
-    }
-
 
     class BootReceiver : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {

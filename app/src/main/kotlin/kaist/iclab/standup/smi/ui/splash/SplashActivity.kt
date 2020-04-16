@@ -10,7 +10,6 @@ import kaist.iclab.standup.smi.common.toast
 import kaist.iclab.standup.smi.databinding.ActivitySplashBinding
 import kaist.iclab.standup.smi.ui.main.MainActivity
 import org.koin.androidx.viewmodel.ext.android.viewModel
-import org.koin.core.parameter.parametersOf
 
 
 class SplashActivity : BaseActivity<ActivitySplashBinding, SplashViewModel>(), SplashNavigator {

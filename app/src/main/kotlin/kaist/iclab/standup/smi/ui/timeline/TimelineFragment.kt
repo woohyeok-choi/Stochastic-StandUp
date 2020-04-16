@@ -1,7 +1,6 @@
 package kaist.iclab.standup.smi.ui.timeline
 
 import android.os.Bundle
-import android.util.Log
 import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
@@ -13,6 +12,7 @@ import androidx.core.view.iterator
 import androidx.fragment.app.FragmentContainerView
 import androidx.fragment.app.commit
 import androidx.lifecycle.lifecycleScope
+import com.fonfon.kgeohash.toGeoHash
 import com.github.sundeepk.compactcalendarview.CompactCalendarView
 import com.google.android.libraries.maps.CameraUpdateFactory
 import com.google.android.libraries.maps.GoogleMap
@@ -29,24 +29,25 @@ import kaist.iclab.standup.smi.R
 import kaist.iclab.standup.smi.base.BaseFragment
 import kaist.iclab.standup.smi.common.getMapAsSuspend
 import kaist.iclab.standup.smi.common.snackBar
-import kaist.iclab.standup.smi.common.toast
 import kaist.iclab.standup.smi.common.wrap
+import kaist.iclab.standup.smi.data.PlaceStat
 import kaist.iclab.standup.smi.databinding.FragmentTimelineBinding
+import kaist.iclab.standup.smi.repository.SedentaryMissionEvent
 import kaist.iclab.standup.smi.tracker.LocationTracker
-import kaist.iclab.standup.smi.ui.dialog.EditTextDialogFragment
 import kotlinx.android.synthetic.main.fragment_timeline.*
 import kotlinx.coroutines.launch
 import org.joda.time.DateTime
 import org.joda.time.DateTimeZone
 import org.koin.android.ext.android.inject
-import org.koin.androidx.viewmodel.ext.android.sharedViewModel
+import org.koin.androidx.viewmodel.ext.android.viewModel
 import java.util.*
 
 
 class TimelineFragment : BaseFragment<FragmentTimelineBinding, TimelineViewModel>(),
     TimelineNavigator, TimelinePlaceOrderDialogFragment.OnPlaceOrderChangedListener,
-    EditTextDialogFragment.OnTextChangedListener {
-    override val viewModel: TimelineViewModel by sharedViewModel()
+    TimelinePlaceRenameDialogFragment.OnTextChangedListener, TimelinePlaceListAdapter.OnAdapterListener,
+    TimelineDailyListAdapter.OnAdapterListener {
+    override val viewModel: TimelineViewModel by viewModel()
     override val viewModelVariable: Int = BR.viewModel
     override val layoutId: Int = R.layout.fragment_timeline
 
@@ -60,7 +61,7 @@ class TimelineFragment : BaseFragment<FragmentTimelineBinding, TimelineViewModel
         timeZone
     ).withTimeAtStartOfDay()
 
-    private val markers: MutableList<Marker> = mutableListOf()
+    private val markers: MutableMap<Pair<Double, Double>, Marker> = mutableMapOf()
 
     private var lastFocusLocation: Pair<Double, Double> = 0.0 to 0.0
 
@@ -159,24 +160,75 @@ class TimelineFragment : BaseFragment<FragmentTimelineBinding, TimelineViewModel
         return true
     }
 
-    override fun onOrderChanged(isDescending: Boolean, field: Int) {
-        viewModel.loadPlaceStats(
-            isDescending = isDescending,
-            field = field
-        )
+    override fun onTextChanged(prevText: String, curText: String, extra: Bundle?) {
+        val latitude = extra?.getDouble(ARG_PLACE_LATITUDE, Double.NaN) ?: Double.NaN
+        val longitude = extra?.getDouble(ARG_PLACE_LONGITUDE, Double.NaN) ?: Double.NaN
+
+        if (latitude.isNaN() || longitude.isNaN()) return
+
+        lifecycleScope.launch {
+            viewModel.renamePlace(
+                latitude = latitude,
+                longitude = longitude,
+                newName = curText
+            )
+
+            clearMap()
+
+            if (dataBinding.isDailyMode == true) {
+                viewModel.refreshDailyStat().join()
+            } else{
+                viewModel.refreshPlaceStats()
+            }
+        }
     }
 
-    override fun onTextChanged(prevText: String, curText: String, extra: Bundle?) {
-        val latitude = extra?.getDouble(ARG_PLACE_LATITUDE, 0.0) ?: 0.0
-        val longitude = extra?.getDouble(ARG_PLACE_LONGITUDE, 0.0) ?: 0.0
+    override fun onBind(item: PlaceStat) {
+        val location = item.id.toGeoHash().toLocation()
 
-        viewModel.renamePlace(
-            latitude = latitude,
-            longitude = longitude,
-            prevName = prevText,
-            newName = curText,
-            isDailyMode = dataBinding.isDailyMode == true
-        )
+        lifecycleScope.launch {
+            addMarker(
+                latitude = location.latitude,
+                longitude = location.longitude
+            )
+        }
+    }
+
+    override fun onClick(item: PlaceStat) {
+        val location = item.id.toGeoHash().toLocation()
+
+        lifecycleScope.launch {
+            selectPlace(latitude = location.latitude, longitude = location.longitude)
+        }
+    }
+
+    override fun onLongClick(item: PlaceStat) {
+        val location = item.id.toGeoHash().toLocation()
+
+        lifecycleScope.launch {
+            renamePlace(placeName = item.name, latitude = location.latitude, longitude = location.longitude)
+        }
+    }
+
+    override fun onBind(item: SedentaryMissionEvent) {
+        lifecycleScope.launch {
+            addMarker(
+                latitude = item.latitude,
+                longitude = item.longitude
+            )
+        }
+    }
+
+    override fun onClick(item: SedentaryMissionEvent) {
+        lifecycleScope.launch {
+            selectPlace(latitude = item.latitude, longitude = item.longitude)
+        }
+    }
+
+    override fun onLongClick(item: SedentaryMissionEvent) {
+        lifecycleScope.launch {
+            renamePlace(placeName = item.placeName ?: "", latitude = item.latitude, longitude = item.longitude)
+        }
     }
 
     override fun navigateDailyStatError(throwable: Throwable?) {
@@ -208,53 +260,32 @@ class TimelineFragment : BaseFragment<FragmentTimelineBinding, TimelineViewModel
             view = dataBinding.root,
             anchorId = R.id.nav_bottom,
             isShort = false,
-            msg = throwable.wrap().toString(this),
-            actionName = getString(R.string.general_retry)
-        ) {
-            viewModel.retryToRenamePlace()
-        }
+            msg = throwable.wrap().toString(this)
+        )
     }
 
-    override fun navigatePlaceClick(latitude: Double, longitude: Double) {
-        lifecycleScope.launch {
-            changeFocus(latitude, longitude, FOCUSED_ZOOM_LEVEL)
-            bottomSheetBehavior.state = BottomSheetBehavior.STATE_HALF_EXPANDED
-        }
+    private suspend fun selectPlace(latitude: Double, longitude: Double) {
+        bottomSheetBehavior.state = BottomSheetBehavior.STATE_HALF_EXPANDED
+        changeFocus(latitude, longitude)
     }
 
-    override fun navigatePlaceLongClick(
+    private suspend fun renamePlace(
         placeName: String,
         latitude: Double,
         longitude: Double
     ) {
-        lifecycleScope.launch {
-            changeFocus(latitude, longitude, FOCUSED_ZOOM_LEVEL)
-            bottomSheetBehavior.state = BottomSheetBehavior.STATE_HALF_EXPANDED
+        bottomSheetBehavior.state = BottomSheetBehavior.STATE_HALF_EXPANDED
+        changeFocus(latitude, longitude)
 
-            val dialog = EditTextDialogFragment.newInstance(
-                title = getString(R.string.timeline_place_rename_title),
-                content = placeName,
-                hint = getString(R.string.timeline_place_rename_hint),
-                extra = bundleOf(
-                    ARG_PLACE_LATITUDE to latitude,
-                    ARG_PLACE_LONGITUDE to longitude
-                )
+        val dialog = TimelinePlaceRenameDialogFragment.newInstance(
+            name = placeName,
+            extra = bundleOf(
+                ARG_PLACE_LATITUDE to latitude,
+                ARG_PLACE_LONGITUDE to longitude
             )
-            dialog.setTargetFragment(this@TimelineFragment, 0)
-            dialog.show(parentFragmentManager, javaClass.name)
-        }
-    }
-
-    override fun navigateAddMarker(latitude: Double, longitude: Double) {
-        lifecycleScope.launch {
-            getMap()?.addMarker(
-                MarkerOptions().position(
-                    LatLng(latitude, longitude)
-                ).icon(
-                    BitmapDescriptorFactory.fromResource(R.drawable.marker)
-                )
-            )?.let { markers.add(it) }
-        }
+        )
+        dialog.setTargetFragment(this@TimelineFragment, 0)
+        dialog.show(parentFragmentManager, javaClass.name)
     }
 
     private fun toggleCalendar() {
@@ -276,20 +307,27 @@ class TimelineFragment : BaseFragment<FragmentTimelineBinding, TimelineViewModel
         dataBinding.isExpanded = !isExpanded
     }
 
+    override fun onOrderChanged(isDescending: Boolean, field: Int) {
+        lifecycleScope.launch {
+            clearMap()
+
+            viewModel.loadPlaceStats(
+                isDescending = isDescending,
+                field = field
+            )
+        }
+    }
+
     private fun changeDate(date: Date) = lifecycleScope.launch {
+        clearMap()
+
         dataBinding.calendarView.currentDate = date
-
-        getMap()?.clear()
-        markers.clear()
-
         viewModel.loadDailyStat(DateTime(date.time, timeZone))
-
         toggleCalendar()
     }
 
     private fun changeTab(isDailyMode: Boolean) = lifecycleScope.launch {
-        getMap()?.clear()
-        markers.clear()
+        clearMap()
 
         if (isDailyMode) {
             childFragmentManager.commit {
@@ -333,16 +371,40 @@ class TimelineFragment : BaseFragment<FragmentTimelineBinding, TimelineViewModel
 
     private suspend fun getMap(): GoogleMap? {
         if (googleMap == null) {
-            googleMap = (childFragmentManager.findFragmentById(R.id.fragment_map) as? SupportMapFragment)?.getMapAsSuspend()?.apply {
-                isMyLocationEnabled = true
-            }
+            googleMap =
+                (childFragmentManager.findFragmentById(R.id.fragment_map) as? SupportMapFragment)?.getMapAsSuspend()
+                    ?.apply {
+                        isMyLocationEnabled = true
+                        uiSettings.isZoomControlsEnabled = true
+                        uiSettings.isZoomGesturesEnabled = true
+                    }
         }
         return googleMap
     }
 
-    private suspend fun changeFocus(lat: Double? = null, lon: Double? = null, zoomLevel: Float? = null) {
-        if (lat != null && lon != null) {
-            lastFocusLocation = lat to lon
+    private suspend fun addMarker(latitude: Double, longitude: Double) {
+        val marker = getMap()?.addMarker(
+            MarkerOptions().position(
+                LatLng(latitude, longitude)
+            ).icon(
+                BitmapDescriptorFactory.fromResource(R.drawable.marker)
+            )
+        ) ?: return
+        markers[(latitude to longitude)] = marker
+    }
+
+    private suspend fun clearMap() {
+        getMap()?.clear()
+        markers.clear()
+    }
+
+    private suspend fun changeFocus(
+        lat: Double? = null,
+        lng: Double? = null,
+        zoomLevel: Float? = null
+    ) {
+        if (lat != null && lng != null) {
+            lastFocusLocation = lat to lng
         }
         val (latitude, longitude) = lastFocusLocation
 
@@ -352,11 +414,21 @@ class TimelineFragment : BaseFragment<FragmentTimelineBinding, TimelineViewModel
             CameraUpdateFactory.newLatLngZoom(LatLng(latitude, longitude), zoomLevel)
         }
 
-        markers.find {
-            it.position.latitude == latitude && it.position.longitude == longitude
-        }?.setIcon(
-            BitmapDescriptorFactory.fromResource(R.drawable.marker_selected)
-        )
+        markers.keys.forEach { (curLat, curLng) ->
+            val isSame = curLat == latitude && curLng == longitude
+            val icon = if (isSame) {
+                BitmapDescriptorFactory.fromResource(R.drawable.marker_selected)
+            } else {
+                BitmapDescriptorFactory.fromResource(R.drawable.marker)
+            }
+            val zIndex = if (isSame) {
+                Float.MAX_VALUE
+            } else {
+                0F
+            }
+            markers[(curLat to curLng)]?.setIcon(icon)
+            markers[(curLat to curLng)]?.zIndex = zIndex
+        }
 
         getMap()?.animateCamera(camera)
     }
@@ -365,9 +437,7 @@ class TimelineFragment : BaseFragment<FragmentTimelineBinding, TimelineViewModel
         private val PREFIX = TimelineFragment::class.java.name
         private const val DEFAULT_ZOOM_LEVEL_DAILY_MODE = 15F
         private const val DEFAULT_ZOOM_LEVEL_PLACE_MODE = 12F
-        private const val FOCUSED_ZOOM_LEVEL = 16F
 
-        private val ARG_PLACE_ID = "$PREFIX.ARG_PLACE_ID"
         private val ARG_PLACE_LATITUDE = "$PREFIX.ARG_PLACE_LATITUDE"
         private val ARG_PLACE_LONGITUDE = "$PREFIX.ARG_PLACE_LONGITUDE"
 

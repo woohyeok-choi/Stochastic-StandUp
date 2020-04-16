@@ -13,15 +13,18 @@ class ConfigNumberRangeDialogFragment :
 
     override fun beforeExecutePendingBindings() {
         val item = arguments?.getParcelable(ARG_ITEM) as? NumberRangeConfigItem
-        dataBinding.item = item
-
         val min = item?.min?.toInt() ?: 0
-        val max = item?.max?.toInt() ?: 0
+        val max = item?.max?.toInt() ?: 100
         val (from, to) = item?.value?.invoke() ?: (0L to 0L)
+        val values = (min..max).map {
+            item?.valueFormatter?.invoke(it.toLong()) ?: it.toString()
+        }.toTypedArray()
 
+        dataBinding.item = item
         dataBinding.numberPickerConfigFrom.apply {
             minValue = min
             maxValue = max
+            displayedValues = values
             setOnValueChangedListener { _, _, newVal ->
                 val newValue = newVal.toLong() to dataBinding.numberPickerConfigTo.value.toLong()
                 isSavable(item?.isSavable?.invoke(newValue) ?: true)
@@ -31,14 +34,16 @@ class ConfigNumberRangeDialogFragment :
         dataBinding.numberPickerConfigTo.apply {
             minValue = min
             maxValue = max
+            displayedValues = values
             setOnValueChangedListener { _, _, newVal ->
                 val newValue = dataBinding.numberPickerConfigFrom.value.toLong() to newVal.toLong()
                 isSavable(item?.isSavable?.invoke(newValue) ?: true)
             }
         }
 
-        dataBinding.numberPickerConfigFrom.value = from.toInt()
-        dataBinding.numberPickerConfigTo.value = to.toInt()
+        dataBinding.numberPickerConfigFrom.value = from.toInt().coerceIn(min, max)
+        dataBinding.numberPickerConfigTo.value = to.toInt().coerceIn(min, max)
+
     }
 
     override fun onClick(isPositive: Boolean) {

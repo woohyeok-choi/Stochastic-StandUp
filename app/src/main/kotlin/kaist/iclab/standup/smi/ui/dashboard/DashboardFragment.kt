@@ -1,6 +1,5 @@
 package kaist.iclab.standup.smi.ui.dashboard
 
-import android.util.Log
 import androidx.fragment.app.commit
 import androidx.viewpager2.widget.ViewPager2
 import kaist.iclab.standup.smi.BR
@@ -8,18 +7,17 @@ import kaist.iclab.standup.smi.BuildConfig
 import kaist.iclab.standup.smi.R
 import kaist.iclab.standup.smi.base.BaseFragment
 import kaist.iclab.standup.smi.common.snackBar
-import kaist.iclab.standup.smi.common.toast
 import kaist.iclab.standup.smi.common.wrap
 import kaist.iclab.standup.smi.databinding.FragmentDashboardBinding
 import kaist.iclab.standup.smi.pref.LocalPrefs
 import org.joda.time.DateTime
 import org.joda.time.DateTimeZone
 import org.joda.time.Duration
-import org.koin.androidx.viewmodel.ext.android.sharedViewModel
+import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class DashboardFragment : BaseFragment<FragmentDashboardBinding, DashboardViewModel>(),
     DashboardNavigator {
-    override val viewModel: DashboardViewModel by sharedViewModel()
+    override val viewModel: DashboardViewModel by viewModel()
     override val viewModelVariable: Int = BR.viewModel
     override val layoutId: Int = R.layout.fragment_dashboard
 

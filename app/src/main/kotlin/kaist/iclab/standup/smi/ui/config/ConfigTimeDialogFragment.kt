@@ -1,22 +1,16 @@
 package kaist.iclab.standup.smi.ui.config
 
-import android.text.format.DateUtils
 import androidx.core.os.bundleOf
 import kaist.iclab.standup.smi.R
 import kaist.iclab.standup.smi.base.BaseBottomSheetDialogFragment
 import kaist.iclab.standup.smi.common.hourMinuteToMillis
 import kaist.iclab.standup.smi.common.millisToHourMinute
-import kaist.iclab.standup.smi.databinding.FragmentConfigDialogNumberBinding
 import kaist.iclab.standup.smi.databinding.FragmentConfigDialogTimeBinding
-import java.util.concurrent.TimeUnit
-import kotlin.math.min
 
 class ConfigTimeDialogFragment : BaseBottomSheetDialogFragment<FragmentConfigDialogTimeBinding>() {
     override val layoutId: Int = R.layout.fragment_config_dialog_time
     override val showPositiveButton: Boolean = true
     override val showNegativeButton: Boolean = true
-
-
 
     override fun beforeExecutePendingBindings() {
         val item = arguments?.getParcelable(ARG_ITEM) as? LocalTimeConfigItem
@@ -54,5 +48,4 @@ class ConfigTimeDialogFragment : BaseBottomSheetDialogFragment<FragmentConfigDia
             )
         }
     }
-
 }

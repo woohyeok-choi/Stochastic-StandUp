@@ -50,7 +50,18 @@
             android:maxLines="2"
             android:ellipsize="end"
             android:paddingBottom="@dimen/txt_bottom_padding"
-            android:text="@{@string/timeline_list_item_place_visit_stat(Formatter.getRelativeTimeSpanString(context, place.lastVisitTime), place.numVisit, place.incentive)}"
+            android:text="@{@string/timeline_list_item_place_visit_stat(Formatter.getRelativeTimeSpanString(context, place.lastVisitTime), place.numVisit, Formatter.getElapsedTimeString(context, place.approximateDuration))}"
+            android:textColor="@color/grey"
+            android:textSize="@dimen/txt_size_default"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="top|start"
+            android:maxLines="2"
+            android:ellipsize="end"
+            android:paddingBottom="@dimen/txt_bottom_padding"
+            android:text="@{@string/timeline_list_item_place_mission_stat(place.numSuccess, place.numMission, place.incentive)}"
             android:textColor="@color/grey"
             android:textSize="@dimen/txt_size_default"/>
 

@@ -1,11 +1,8 @@
 package kaist.iclab.standup.smi.base
 
-import android.app.Application
 import android.os.Bundle
-import android.view.Menu
 import androidx.annotation.CallSuper
 import androidx.annotation.LayoutRes
-import androidx.annotation.MenuRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
 import androidx.databinding.ViewDataBinding

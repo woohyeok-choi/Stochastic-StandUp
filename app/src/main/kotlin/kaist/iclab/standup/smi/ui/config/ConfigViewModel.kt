@@ -4,11 +4,12 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
-import android.text.format.DateUtils
 import androidx.annotation.StringRes
 import androidx.lifecycle.liveData
 import com.google.firebase.auth.FirebaseAuth
+import kaist.iclab.standup.smi.BuildConfig
 import kaist.iclab.standup.smi.R
+import kaist.iclab.standup.smi.StandUpService
 import kaist.iclab.standup.smi.base.BaseViewModel
 import kaist.iclab.standup.smi.common.checkPermissions
 import kaist.iclab.standup.smi.common.hourMinuteToString
@@ -50,6 +51,14 @@ class ConfigViewModel(
                     }
 
                     readOnly {
+                        id = "$PREFIX.VERSION"
+                        title = resStr(R.string.config_item_app_version)
+                        formatter = {
+                            BuildConfig.VERSION_NAME
+                        }
+                    }
+
+                    readOnly {
                         id = "$PREFIX.PERMISSIONS"
                         title = context.getString(R.string.config_item_permissions)
                         formatter = {
@@ -62,7 +71,6 @@ class ConfigViewModel(
                         onAction = {
                             Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
                                 .setData(Uri.parse("package:${context.packageName}"))
-                                .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                         }
                     }
                 }
@@ -78,7 +86,11 @@ class ConfigViewModel(
                             LocalPrefs.activeStartTimeMs to LocalPrefs.activeEndTimeMs
                         }
                         formatter = { (from, to) ->
-                            resStr(R.string.general_range, from.millisToHourMinute().hourMinuteToString(), to.millisToHourMinute().hourMinuteToString())
+                            resStr(
+                                R.string.general_range,
+                                from.millisToHourMinute().hourMinuteToString(),
+                                to.millisToHourMinute().hourMinuteToString()
+                            )
                         }
                         isSavable = { (from, to) ->
                             from <= to && to - from > TimeUnit.HOURS.toMillis(9)
@@ -89,28 +101,16 @@ class ConfigViewModel(
                         }
                     }
 
-                    localTime {
+                    number {
                         id = "$PREFIX.DO_NOT_DISTURB_UNTIL"
                         title = resStr(R.string.config_item_do_not_disturb)
-                        value = {
-                            LocalPrefs.doNotDisturbUntil
-                        }
-                        formatter = { time ->
-                            val timeZone = DateTimeZone.getDefault()
+                        value = { 0 }
+                        formatter = {
                             val curTime = System.currentTimeMillis()
-                            val curDateTime = DateTime(curTime, timeZone).withTimeAtStartOfDay()
+                            val value = LocalPrefs.doNotDisturbUntil
+                            checkDoNotDisturb(curTime)
 
-                            if (LocalPrefs.doNotDisturbLastTimeSettingMillis <= 0) {
-                                LocalPrefs.doNotDisturbLastTimeSettingMillis = 0
-                            }
-                            val lastDateTime = DateTime(LocalPrefs.doNotDisturbLastTimeSettingMillis, timeZone)
-
-                            if (curDateTime > lastDateTime) {
-                                LocalPrefs.doNotDisturbLastTimeSettingMillis = curDateTime.millis
-                                LocalPrefs.doNotDisturbCount = RemotePrefs.maxDoNotDisturb
-                            }
-
-                            if (curTime > time) {
+                            if (curTime > value) {
                                 resStr(
                                     R.string.config_item_do_not_disturb_unset,
                                     LocalPrefs.doNotDisturbCount
@@ -118,24 +118,44 @@ class ConfigViewModel(
                             } else {
                                 resStr(
                                     R.string.config_item_do_not_disturb_set,
-                                    DateUtils.formatDateTime(context, time, DateUtils.FORMAT_SHOW_DATE or DateUtils.FORMAT_SHOW_TIME),
+                                    TimeUnit.MILLISECONDS.toMinutes(value - curTime),
                                     LocalPrefs.doNotDisturbCount
                                 )
                             }
-
-
                         }
-                        isSavable = { time ->
-                            val timeZone = DateTimeZone.getDefault()
+                        isSavable = {
                             val curTime = System.currentTimeMillis()
-                            val curDateTime = DateTime(curTime, timeZone).withTimeAtStartOfDay()
-                            val expectedTime = curDateTime.millis + time
-                            expectedTime > curTime && LocalPrefs.doNotDisturbCount > 0
+
+                            checkDoNotDisturb(curTime)
+
+                            LocalPrefs.doNotDisturbCount > 0
                         }
-                        onSave = { time ->
-                            LocalPrefs.doNotDisturbUntil = time
+                        valueFormatter = {
+                            resStr(R.string.config_item_do_not_disturb_value_formatter, it)
+                        }
+                        onSave = { value ->
+                            val curTime = System.currentTimeMillis()
+                            LocalPrefs.doNotDisturbUntil =
+                                curTime + TimeUnit.MINUTES.toMillis(value)
                             LocalPrefs.doNotDisturbCount--
+                            StandUpService.startService(context)
                         }
+                        min = 30
+                        max = 120
+                    }
+
+                    boolean {
+                        id = "$PREFIX.MISSION_ON_OFF"
+                        title = resStr(R.string.config_item_is_mission_triggered)
+                        value = { LocalPrefs.isMissionOn }
+                        formatter = {
+                            if (it) {
+                                resStr(R.string.config_item_is_mission_triggered_on)
+                            } else {
+                                resStr(R.string.config_item_is_mission_triggered_off)
+                            }
+                        }
+                        onSave = { LocalPrefs.isMissionOn = it }
                     }
                 }
 
@@ -149,6 +169,7 @@ class ConfigViewModel(
                         value = { TimeUnit.MILLISECONDS.toMinutes(RemotePrefs.minTimeForStayEvent) }
                         formatter = { resStr(R.string.general_minute_abbrev, it) }
                         onSave = { RemotePrefs.minTimeForStayEvent = TimeUnit.MINUTES.toMillis(it) }
+                        valueFormatter = { resStr(R.string.general_minute_abbrev, it) }
                         min = 5L
                         max = 40L
                     }
@@ -156,10 +177,13 @@ class ConfigViewModel(
                     number {
                         id = "$PREFIX.MIN_MISSION_TRIGGER_TIME"
                         title = resStr(R.string.config_item_min_mission_trigger_time)
-                        value = { TimeUnit.MILLISECONDS.toMinutes(RemotePrefs.minTimeForMissionTrigger) }
+                        value =
+                            { TimeUnit.MILLISECONDS.toMinutes(RemotePrefs.minTimeForMissionTrigger) }
                         formatter = { resStr(R.string.general_minute_abbrev, it) }
                         isSavable = { it in min..max }
-                        onSave = { RemotePrefs.minTimeForMissionTrigger = TimeUnit.MINUTES.toMillis(it) }
+                        onSave =
+                            { RemotePrefs.minTimeForMissionTrigger = TimeUnit.MINUTES.toMillis(it) }
+                        valueFormatter = { resStr(R.string.general_minute_abbrev, it) }
                         min = 40L
                         max = 150L
                     }
@@ -167,10 +191,13 @@ class ConfigViewModel(
                     number {
                         id = "$PREFIX.MISSION_TIMEOUT"
                         title = resStr(R.string.config_item_mission_timeout)
-                        value = { TimeUnit.MILLISECONDS.toMinutes(RemotePrefs.timeoutForMissionExpired) }
+                        value =
+                            { TimeUnit.MILLISECONDS.toMinutes(RemotePrefs.timeoutForMissionExpired) }
                         formatter = { resStr(R.string.general_minute_abbrev, it) }
                         isSavable = { it in min..max }
-                        onSave = { RemotePrefs.timeoutForMissionExpired = TimeUnit.MINUTES.toMillis(it) }
+                        onSave =
+                            { RemotePrefs.timeoutForMissionExpired = TimeUnit.MINUTES.toMillis(it) }
+                        valueFormatter = { resStr(R.string.general_minute_abbrev, it) }
                         min = 40L
                         max = 150L
                     }
@@ -182,6 +209,7 @@ class ConfigViewModel(
                         formatter = { resStr(R.string.general_points_abbrev, it) }
                         isSavable = { it in min..max }
                         onSave = { RemotePrefs.maxDailyBudget = it.toInt() }
+                        valueFormatter = { resStr(R.string.general_points_abbrev, it) }
                         min = 500
                         max = 2000
                     }
@@ -193,27 +221,45 @@ class ConfigViewModel(
                         formatter = { resStr(R.string.general_times, it) }
                         isSavable = { it in min..max }
                         onSave = { RemotePrefs.maxDoNotDisturb = it.toInt() }
+                        valueFormatter = { resStr(R.string.general_times, it) }
                         min = 0
                         max = 10
                     }
 
-                    boolean {
-                        id = "$PREFIX.IS_STOCHASTIC_MODE"
-                        title = resStr(R.string.config_is_stochastic_mode)
-                        value = { RemotePrefs.isStochasticMode }
-                        onSave = { RemotePrefs.isStochasticMode = it }
-                        formatter = {
-                            if (it) resStr(R.string.config_is_stochastic_mode_stochastic) else resStr(R.string.config_is_stochastic_mode_fixed)
+                    choice {
+                        id = "$PREFIX.INCENTIVE_MODE"
+                        title = resStr(R.string.config_incentive_mode)
+                        value = { RemotePrefs.incentiveMode }
+                        onSave = { RemotePrefs.incentiveMode = it }
+                        formatter = { value ->
+                            when (value) {
+                                RemotePrefs.INCENTIVE_MODE_FIXED -> resStr(R.string.config_incentive_mode_fixed)
+                                RemotePrefs.INCENTIVE_MODE_STOCHASTIC -> resStr(R.string.config_incentive_mode_stochastic)
+                                else -> resStr(R.string.config_incentive_mode_none)
+                            }
                         }
+                        valueFormatter = { value ->
+                            when (value) {
+                                RemotePrefs.INCENTIVE_MODE_FIXED -> resStr(R.string.config_incentive_mode_fixed)
+                                RemotePrefs.INCENTIVE_MODE_STOCHASTIC -> resStr(R.string.config_incentive_mode_stochastic)
+                                else -> resStr(R.string.config_incentive_mode_none)
+                            }
+                        }
+                        options = intArrayOf(
+                            RemotePrefs.INCENTIVE_MODE_NONE,
+                            RemotePrefs.INCENTIVE_MODE_FIXED,
+                            RemotePrefs.INCENTIVE_MODE_STOCHASTIC
+                        )
                     }
 
                     number {
                         id = "$PREFIX.WIN_SIZE_IN_MILLIS"
                         title = resStr(R.string.config_win_size_incentive_calc)
                         value = { TimeUnit.MILLISECONDS.toDays(RemotePrefs.winSizeInMillis) }
-                        formatter = { resStr(R.string.general_days, it)}
-                        isSavable = {it in min..max }
+                        formatter = { resStr(R.string.general_days, it) }
+                        isSavable = { it in min..max }
                         onSave = { RemotePrefs.winSizeInMillis = TimeUnit.DAYS.toMillis(it) }
+                        valueFormatter = { resStr(R.string.general_days, it) }
                         min = 1
                         max = 14
                     }
@@ -232,15 +278,22 @@ class ConfigViewModel(
                     numberRange {
                         id = "$PREFIX.INCENTIVE_RANGE"
                         title = resStr(R.string.config_range_incentive)
-                        value = { RemotePrefs.minIncentives.toLong() to RemotePrefs.maxIncentives.toLong() }
+                        value =
+                            { RemotePrefs.minIncentives.toLong() to RemotePrefs.maxIncentives.toLong() }
                         formatter = { (from, to) ->
-                            resStr(R.string.general_range, resStr(R.string.general_points_abbrev, from), resStr(R.string.general_points_abbrev, to))
+                            resStr(
+                                R.string.general_range,
+                                resStr(R.string.general_points_abbrev, from),
+                                resStr(R.string.general_points_abbrev, to)
+                            )
                         }
-                        isSavable = { (from, to) -> from in (min..max) && to in (min..max) && from <= to }
+                        isSavable =
+                            { (from, to) -> from in (min..max) && to in (min..max) && from <= to }
                         onSave = { (from, to) ->
                             RemotePrefs.minIncentives = from.toInt()
                             RemotePrefs.maxIncentives = to.toInt()
                         }
+                        valueFormatter = { resStr(R.string.general_points_abbrev, it) }
                         min = 10
                         max = 1000
                     }
@@ -252,6 +305,7 @@ class ConfigViewModel(
                         formatter = { resStr(R.string.general_points_abbrev, it) }
                         isSavable = { it in min..max }
                         onSave = { RemotePrefs.defaultIncentives = it.toInt() }
+                        valueFormatter = { resStr(R.string.general_points_abbrev, it) }
                         min = 10
                         max = 1000
                     }
@@ -263,6 +317,7 @@ class ConfigViewModel(
                         formatter = { resStr(R.string.general_points_abbrev, it) }
                         isSavable = { it in min..max }
                         onSave = { RemotePrefs.unitIncentives = it.toInt() }
+                        valueFormatter = { resStr(R.string.general_points_abbrev, it) }
                         min = 10
                         max = 100
                     }
@@ -271,7 +326,24 @@ class ConfigViewModel(
         )
     }
 
-    private fun resStr(@StringRes stringRes: Int, vararg params: Any): String = context.getString(stringRes, *params)
+    private fun checkDoNotDisturb(curTime: Long) {
+        val timeZone = DateTimeZone.getDefault()
+        val curDateTime = DateTime(curTime, timeZone).withTimeAtStartOfDay()
+
+        if (LocalPrefs.doNotDisturbLastTimeSettingMillis <= 0) {
+            LocalPrefs.doNotDisturbLastTimeSettingMillis = 0
+        }
+
+        val lastSettingDateTime = DateTime(LocalPrefs.doNotDisturbLastTimeSettingMillis, timeZone)
+
+        if (curDateTime > lastSettingDateTime) {
+            LocalPrefs.doNotDisturbLastTimeSettingMillis = curDateTime.millis
+            LocalPrefs.doNotDisturbCount = RemotePrefs.maxDoNotDisturb
+        }
+    }
+
+    private fun resStr(@StringRes stringRes: Int, vararg params: Any): String =
+        context.getString(stringRes, *params)
 
     companion object {
         private val PREFIX = ConfigViewModel::class.java.name

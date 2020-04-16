@@ -3,8 +3,6 @@ package kaist.iclab.standup.smi.data
 import kaist.iclab.standup.smi.common.DocumentEntity
 import kaist.iclab.standup.smi.common.DocumentEntityClass
 import kaist.iclab.standup.smi.common.Documents
-import org.joda.time.DateTime
-import org.joda.time.DateTimeZone
 import java.util.*
 
 
