@@ -157,18 +157,20 @@ fun snackBar(
     actionName: String? = null,
     action: (() -> Unit)? = null
 ) {
-    val snackBar =
-        Snackbar.make(view, msg, if (isShort) Snackbar.LENGTH_SHORT else Snackbar.LENGTH_LONG)
+    try {
+        val snackBar =
+            Snackbar.make(view, msg, if (isShort) Snackbar.LENGTH_SHORT else Snackbar.LENGTH_LONG)
 
-    if (anchorId != null) {
-        snackBar.setAnchorView(anchorId)
-    }
+        if (anchorId != null) {
+            snackBar.setAnchorView(anchorId)
+        }
 
-    if (actionName != null && action != null) {
-        snackBar.setAction(actionName) { action.invoke() }
-    }
+        if (actionName != null && action != null) {
+            snackBar.setAction(actionName) { action.invoke() }
+        }
 
-    snackBar.show()
+        snackBar.show()
+    } catch (e: Exception) {  }
 }
 
 fun snackBar(

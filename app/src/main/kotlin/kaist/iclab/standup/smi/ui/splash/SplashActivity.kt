@@ -32,10 +32,11 @@ class SplashActivity : BaseActivity<ActivitySplashBinding, SplashViewModel>(), S
     }
 
     override fun navigatePermission(isGranted: Boolean, intent: Intent) {
-        if (isGranted)
+        if (isGranted) {
             viewModel.doWhitelist()
-        else
+        } else {
             startActivityForResult(intent, REQUEST_CODE_PERMISSION_SETTING)
+        }
     }
 
     override fun navigatePermissionAgain() {

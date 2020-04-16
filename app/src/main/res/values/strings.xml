@@ -98,7 +98,6 @@
     <string name="config_header_general">General</string>
     <string name="config_item_user_name">User name</string>
     <string name="config_item_email">Email</string>
-    <string name="config_item_app_version">Version</string>
     <string name="config_item_permissions">Permission</string>
     <string name="config_item_permissions_granted">Granted</string>
     <string name="config_item_permissions_denied">Denied</string>
@@ -133,6 +132,11 @@
     <string name="config_mock_still_event_desc">Generate mock still event and start a mission</string>
     <string name="config_mock_stand_up_event">Mock Stand-up Event</string>
     <string name="config_mock_stand_up_event_desc">Generate mock stand-up event</string>
+
+    <string name="config_header_others">Others</string>
+    <string name="config_item_app_version">Version</string>
+    <string name="config_item_sign_out">Sign out</string>
+    <string name="config_item_sign_out_desc">Sign out the account from this device.</string>
 
     <!-- Notification channel descriptions -->
     <string name="ntf_channel_name_foreground">Foreground</string>

@@ -123,5 +123,8 @@
     <string name="config_mock_still_event">좌식 이벤트 발생</string>
     <string name="config_mock_still_event_desc">가짜 좌식 이벤트를 발생시킵니다.</string>
     <string name="config_mock_stand_up_event">기상 이벤트 발생</string>
-    <string name="config_mock_stand_up_event_desck">가짜 기상 이벤트를 발생시킵니다.</string>
+    <string name="config_mock_stand_up_event_desc">가짜 기상 이벤트를 발생시킵니다.</string>
+    <string name="config_header_others">기타</string>
+    <string name="config_item_sign_out">로그아웃</string>
+    <string name="config_item_sign_out_desc">이 기기에서 로그아웃 합니다.</string>
 </resources>

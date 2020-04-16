@@ -6,17 +6,23 @@ import android.net.Uri
 import android.provider.Settings
 import androidx.annotation.StringRes
 import androidx.lifecycle.liveData
+import androidx.lifecycle.viewModelScope
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.firebase.auth.FirebaseAuth
 import kaist.iclab.standup.smi.BuildConfig
 import kaist.iclab.standup.smi.R
 import kaist.iclab.standup.smi.StandUpIntentService
 import kaist.iclab.standup.smi.StandUpService
 import kaist.iclab.standup.smi.base.BaseViewModel
+import kaist.iclab.standup.smi.common.asSuspend
 import kaist.iclab.standup.smi.common.checkPermissions
 import kaist.iclab.standup.smi.common.hourMinuteToString
 import kaist.iclab.standup.smi.common.millisToHourMinute
 import kaist.iclab.standup.smi.pref.LocalPrefs
 import kaist.iclab.standup.smi.pref.RemotePrefs
+import kaist.iclab.standup.smi.ui.splash.SplashActivity
+import kotlinx.coroutines.launch
 import org.joda.time.DateTime
 import org.joda.time.DateTimeZone
 import java.util.concurrent.TimeUnit
@@ -48,14 +54,6 @@ class ConfigViewModel(
                         formatter = {
                             FirebaseAuth.getInstance().currentUser?.email
                                 ?: context.getString(R.string.general_unknown)
-                        }
-                    }
-
-                    readOnly {
-                        id = "$PREFIX.VERSION"
-                        title = resStr(R.string.config_item_app_version)
-                        formatter = {
-                            BuildConfig.VERSION_NAME
                         }
                     }
 
@@ -336,6 +334,27 @@ class ConfigViewModel(
                         formatter = { resStr(R.string.config_mock_stand_up_event_desc) }
                         onAction = { StandUpIntentService.exitFromStill(it) }
                     }
+                }
+
+                header {
+                    id = "$PREFIX.OTHERS"
+                    title = resStr(R.string.config_header_others)
+
+                    readOnly {
+                        id = "$PREFIX.VERSION"
+                        title = resStr(R.string.config_item_app_version)
+                        formatter = { "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})" }
+                    }
+
+                    readOnly {
+                        id = "$PREFIX.SIGN_OUT"
+                        title = resStr(R.string.config_item_sign_out)
+                        formatter = { resStr(R.string.config_item_sign_out_desc) }
+                        onAction = {
+                            navigator?.navigateSignOut()
+                        }
+                    }
+
                 }
             }.items
         )
