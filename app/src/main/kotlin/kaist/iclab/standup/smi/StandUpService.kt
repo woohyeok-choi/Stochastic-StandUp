@@ -33,7 +33,7 @@ class StandUpService : BaseService() {
         locationTracker.startTracking()
         activityTracker.startTracking()
 
-        StandUpIntentService.start(applicationContext)
+        StandUpIntentService.enterIntoStill(applicationContext)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {

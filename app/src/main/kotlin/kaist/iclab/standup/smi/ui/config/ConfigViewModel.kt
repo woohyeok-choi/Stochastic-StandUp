@@ -324,10 +324,17 @@ class ConfigViewModel(
                     }
 
                     readOnly {
-                        id = "$PREFIX.RESTART_MISSION"
-                        title = resStr(R.string.config_restart_mission)
-                        formatter = { resStr(R.string.config_restart_mission_desc) }
-                        onAction = { StandUpIntentService.start(it) }
+                        id = "$PREFIX.MOCK_ENTER_STILL"
+                        title = resStr(R.string.config_mock_still_event)
+                        formatter = { resStr(R.string.config_mock_still_event_desc) }
+                        onAction = { StandUpIntentService.enterIntoStill(it) }
+                    }
+
+                    readOnly {
+                        id = "$PREFIX.MOCK_EXIT_STILL"
+                        title = resStr(R.string.config_mock_stand_up_event)
+                        formatter = { resStr(R.string.config_mock_stand_up_event_desc) }
+                        onAction = { StandUpIntentService.exitFromStill(it) }
                     }
                 }
             }.items

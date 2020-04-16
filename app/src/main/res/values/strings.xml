@@ -129,8 +129,10 @@
     <string name="config_incentive_mode_stochastic">Stochastic mode</string>
     <string name="config_incentive_mode_fixed">Fixed mode</string>
     <string name="config_incentive_mode_none">Non-incentive mode</string>
-    <string name="config_restart_mission">Restart mission</string>
-    <string name="config_restart_mission_desc">Restart mission with changed settings</string>
+    <string name="config_mock_still_event">Mock Still Event</string>
+    <string name="config_mock_still_event_desc">Generate mock still event and start a mission</string>
+    <string name="config_mock_stand_up_event">Mock Stand-up Event</string>
+    <string name="config_mock_stand_up_event_desc">Generate mock stand-up event</string>
 
     <!-- Notification channel descriptions -->
     <string name="ntf_channel_name_foreground">Foreground</string>
