@@ -14,7 +14,6 @@ object Formatter {
     private val MONTH_IN_MILLIS = WEEK_IN_MILLIS * 4
     private val YEAR_IN_MILLIS = DAYS_IN_MILLIS * 365
 
-
     @JvmStatic
     fun getRelativeTimeSpanString(context: Context, millis: Long) : CharSequence {
         val now = System.currentTimeMillis()
@@ -48,8 +47,8 @@ object Formatter {
     @JvmStatic
     fun getElapsedTimeString(context: Context, millis: Long) : CharSequence {
         val (time, resId) = when {
-            millis < HOUR_IN_MILLIS -> TimeUnit.MILLISECONDS.toMinutes(millis) to R.string.general_minus_points
-            millis in (HOUR_IN_MILLIS until DAYS_IN_MILLIS) -> TimeUnit.MILLISECONDS.toHours(millis) to R.string.general_hours_abbrev
+            millis < HOUR_IN_MILLIS -> TimeUnit.MILLISECONDS.toMinutes(millis) to R.string.general_minute_abbrev
+            millis in (HOUR_IN_MILLIS until DAYS_IN_MILLIS) -> TimeUnit.MILLISECONDS.toHours(millis) to R.string.general_hours
             millis in (DAYS_IN_MILLIS until WEEK_IN_MILLIS) -> TimeUnit.MILLISECONDS.toDays(millis) to R.string.general_days
             millis in (WEEK_IN_MILLIS until MONTH_IN_MILLIS) -> TimeUnit.MILLISECONDS.toDays(millis) / 7 to R.string.general_weeks
             millis in (MONTH_IN_MILLIS until YEAR_IN_MILLIS) -> TimeUnit.MILLISECONDS.toDays(millis) / 28 to R.string.general_months

@@ -1,6 +1,7 @@
 package kaist.iclab.standup.smi.pref
 
 import kaist.iclab.standup.smi.BuildConfig
+import kaist.iclab.standup.smi.common.FirebaseRemoteConfigBoolean
 import kaist.iclab.standup.smi.common.FirebaseRemoteConfigHolder
 import kaist.iclab.standup.smi.common.FirebaseRemoteConfigInt
 import kaist.iclab.standup.smi.common.FirebaseRemoteConfigLong
@@ -50,6 +51,7 @@ object RemotePrefs : FirebaseRemoteConfigHolder(BuildConfig.REMOTE_PREF_NAME) {
     var unitIncentives: Int by FirebaseRemoteConfigInt(default = 20)
 
     var incentiveMode: Int by FirebaseRemoteConfigInt(default = INCENTIVE_MODE_NONE)
+    var isGainIncentive: Boolean by FirebaseRemoteConfigBoolean(default = true)
 
     val maxProlongedSedentaryTime: Long by lazy { minTimeForMissionTrigger + timeoutForMissionExpired }
 

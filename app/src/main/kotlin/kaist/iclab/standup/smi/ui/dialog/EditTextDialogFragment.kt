@@ -35,8 +35,7 @@ class EditTextDialogFragment : DialogFragment() {
             setText(content)
             setHint(hint)
             setHintTextColor(ContextCompat.getColor(requireContext(), R.color.light_grey))
-            doOnTextChanged { text, _, _, _ ->
-            }
+
         }
         val layout = FrameLayout(requireContext()).apply {
             setPadding(

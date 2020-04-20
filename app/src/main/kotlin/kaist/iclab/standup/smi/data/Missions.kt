@@ -32,7 +32,9 @@ class Mission : DocumentEntity() {
 
     fun isSucceeded() = state.equals(STATE_SUCCESS, true)
     fun isFailed() = state.equals(STATE_FAILURE, true)
-    fun isInProgress() = state.equals(STATE_IN_PROGRESS, true)
+    fun isPrepared() = state.equals(STATE_PREPARED, true)
+    fun isStandBy() = state.equals(STATE_STAND_BY, true)
+    fun isTriggered() = state.equals(STATE_TRIGGERED, true)
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -73,7 +75,7 @@ class Mission : DocumentEntity() {
         .append(" (")
         .append("id=$id, ")
         .append("offsetMs=$offsetMs, ")
-        .append("startTime=$prepareTime, ")
+        .append("prepareTime=$prepareTime, ")
         .append("standByTime=$standByTime, ")
         .append("deliveredTime=$triggerTime, ")
         .append("reactionTime=$reactionTime, ")
@@ -88,6 +90,8 @@ class Mission : DocumentEntity() {
     companion object : DocumentEntityClass<Mission>(Missions) {
         const val STATE_SUCCESS = "SUCCESS"
         const val STATE_FAILURE = "FAILURE"
-        const val STATE_IN_PROGRESS = "IN_PROGRESS"
+        const val STATE_TRIGGERED = "TRIGGERED"
+        const val STATE_STAND_BY = "STAND_BY"
+        const val STATE_PREPARED = "PREPARED"
     }
 }

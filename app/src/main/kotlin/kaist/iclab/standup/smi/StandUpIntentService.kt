@@ -1,18 +1,15 @@
 package kaist.iclab.standup.smi
 
-import android.app.AlarmManager
 import android.app.IntentService
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
-import androidx.core.app.AlarmManagerCompat
 import androidx.core.os.bundleOf
 import com.google.android.gms.location.ActivityTransition
 import com.google.android.gms.location.DetectedActivity
-import kaist.iclab.standup.smi.common.AppLog
-import kaist.iclab.standup.smi.common.Notifications
+import kaist.iclab.standup.smi.common.*
 import kaist.iclab.standup.smi.pref.LocalPrefs
 import kaist.iclab.standup.smi.pref.RemotePrefs
 import kaist.iclab.standup.smi.tracker.ActivityTracker
@@ -46,14 +43,14 @@ class StandUpIntentService : IntentService(StandUpIntentService::class.java.simp
 
             when (intent?.action) {
                 ACTION_ACTIVITY_UPDATE -> {
-                    if (isExitedFromStill(intent)) {
+                    if (activityTracker.isExitedFromStill(intent)) {
                         handleExitFromStill(
                             timestamp = timestamp,
                             latitude = latitude,
                             longitude = longitude
                         )
                     }
-                    if (isEnteredIntoStill(intent)) {
+                    if (activityTracker.isEnteredIntoStill(intent)) {
                         handleEnterIntoStill(
                             timestamp = timestamp,
                             latitude = latitude,
@@ -111,48 +108,69 @@ class StandUpIntentService : IntentService(StandUpIntentService::class.java.simp
         }
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        job.cancel()
+    }
+
     private suspend fun handleEnterIntoStill(timestamp: Long, latitude: Double, longitude: Double) {
         Log.d(javaClass.simpleName, "handleEnterIntoStill(timestamp = $timestamp, latitude = $latitude, longitude = $longitude)")
 
-        standUpRepository.enterIntoStill(
+        tryCatch {
+            standUpRepository.enterIntoStill(
+                timestamp = timestamp,
+                latitude = latitude,
+                longitude = longitude
+            )
+        }
+
+        handlePrepareMission(
             timestamp = timestamp,
             latitude = latitude,
             longitude = longitude
         )
-        handlePrepareMission(timestamp, latitude, longitude)
     }
 
     private suspend fun handleExitFromStill(timestamp: Long, latitude: Double, longitude: Double) {
         Log.d(javaClass.simpleName, "handleExitFromStill(timestamp = $timestamp, latitude = $latitude, longitude = $longitude)")
 
-        standUpRepository.exitFromStill(
-            timestamp = timestamp,
-            latitude = latitude,
-            longitude = longitude
-        )
-
-        if (LocalPrefs.isMissionInProgress) {
-            handleCompleteMission(
+        tryCatch {
+            standUpRepository.exitFromStill(
                 timestamp = timestamp,
                 latitude = latitude,
-                longitude = longitude,
-                isSucceeded = true
+                longitude = longitude
             )
         }
 
-        cancelMission(context = applicationContext)
+        handleCompleteMission(
+            timestamp = timestamp,
+            latitude = latitude,
+            longitude = longitude,
+            isSucceeded = true
+        )
+
+        val intent = getPendingIntent(
+            context = applicationContext,
+            code = REQUEST_CODE_MISSION,
+            action = ACTION_MISSION
+        )
+
+        cancelAlarm(
+            intent = intent
+        )
     }
 
     private suspend fun handlePrepareMission(timestamp: Long, latitude: Double, longitude: Double) {
-        val id = standUpRepository.prepareMission(
-            timestamp = timestamp,
-            latitude = latitude,
-            longitude = longitude
-        )
+        val id = tryCatch {
+            standUpRepository.prepareMission(
+                timestamp = timestamp,
+                latitude = latitude,
+                longitude = longitude
+            )
+        }
+        LocalPrefs.missionIdInProgress = id ?: ""
 
         Log.d(javaClass.simpleName, "handlePrepareMission(timestamp = $timestamp, latitude = $latitude, longitude = $longitude): id = $id")
-
-        LocalPrefs.missionIdInProgress = id ?: ""
 
         val intent = getPendingIntent(
             context = applicationContext,
@@ -166,21 +184,25 @@ class StandUpIntentService : IntentService(StandUpIntentService::class.java.simp
             )
         )
 
-        scheduleMission(applicationContext, timestamp + RemotePrefs.minTimeForStayEvent, intent)
+        scheduleAlarm(
+            triggerAt = timestamp + RemotePrefs.minTimeForStayEvent,
+            intent = intent
+        )
     }
 
     private suspend fun handleStandByMission(timestamp: Long, latitude: Double, longitude: Double) {
         val id = LocalPrefs.missionIdInProgress
-
         Log.d(javaClass.simpleName, "handleStandByMission(timestamp = $timestamp, latitude = $latitude, longitude = $longitude): id = $id")
 
         if (!id.isBlank()) {
-            standUpRepository.standByMission(
-                timestamp = timestamp,
-                latitude = latitude,
-                longitude = longitude,
-                id = id
-            )
+            tryCatch {
+                standUpRepository.standByMission(
+                    timestamp = timestamp,
+                    latitude = latitude,
+                    longitude = longitude,
+                    id = id
+                )
+            }
         }
 
         val intent = getPendingIntent(
@@ -194,7 +216,10 @@ class StandUpIntentService : IntentService(StandUpIntentService::class.java.simp
             )
         )
 
-        scheduleMission(applicationContext, timestamp + RemotePrefs.minTimeForMissionTrigger - RemotePrefs.minTimeForStayEvent, intent)
+        scheduleAlarm(
+            triggerAt = timestamp + RemotePrefs.minTimeForMissionTrigger - RemotePrefs.minTimeForStayEvent,
+            intent = intent
+        )
     }
 
     private suspend fun handleTriggerMission(timestamp: Long, latitude: Double, longitude: Double) {
@@ -203,12 +228,14 @@ class StandUpIntentService : IntentService(StandUpIntentService::class.java.simp
         Log.d(javaClass.simpleName, "handleTriggerMission(timestamp = $timestamp, latitude = $latitude, longitude = $longitude): id = $id")
 
         if (!id.isBlank()) {
-            val mission = standUpRepository.startMission(
-                timestamp = timestamp,
-                latitude = latitude,
-                longitude = longitude,
-                id = id
-            )
+            val mission = tryCatch {
+                standUpRepository.startMission(
+                    timestamp = timestamp,
+                    latitude = latitude,
+                    longitude = longitude,
+                    id = id
+                )
+            }
 
             if (checkMissionAvailable(timestamp)) {
                 LocalPrefs.isMissionInProgress = true
@@ -233,24 +260,39 @@ class StandUpIntentService : IntentService(StandUpIntentService::class.java.simp
             )
         )
 
-        scheduleMission(applicationContext, timestamp + RemotePrefs.timeoutForMissionExpired, intent)
+        scheduleAlarm(
+            triggerAt = timestamp + RemotePrefs.timeoutForMissionExpired,
+            intent = intent
+        )
     }
 
     private suspend fun handleCompleteMission(timestamp: Long, latitude: Double, longitude: Double, isSucceeded: Boolean) {
         val id = LocalPrefs.missionIdInProgress
+        val isMissionInProgress = LocalPrefs.isMissionInProgress
+
+        LocalPrefs.isMissionInProgress = false
+        LocalPrefs.missionIdInProgress = ""
 
         Log.d(javaClass.simpleName, "handleCompleteMission(timestamp = $timestamp, latitude = $latitude, longitude = $longitude, isSucceeded = $isSucceeded): id = $id")
 
-        val isMissionInProgress = LocalPrefs.isMissionInProgress
-
         if (!id.isBlank()) {
-            val mission = standUpRepository.completeMission(
-                timestamp = timestamp,
-                latitude = latitude,
-                longitude = longitude,
-                id = id,
-                isSucceeded = if (isMissionInProgress) isSucceeded else null
-            )
+            val mission = tryCatch {
+                standUpRepository.completeMission(
+                    timestamp = timestamp,
+                    latitude = latitude,
+                    longitude = longitude,
+                    id = id,
+                    isSucceeded = if (isMissionInProgress) isSucceeded else null
+                )
+            }
+
+            if (!isSucceeded) {
+                handlePrepareMission(
+                    timestamp = timestamp,
+                    latitude = latitude,
+                    longitude = longitude
+                )
+            }
 
             if (isMissionInProgress) {
                 Notifications.notifyMissionResult(
@@ -260,28 +302,7 @@ class StandUpIntentService : IntentService(StandUpIntentService::class.java.simp
                 )
             }
         }
-
-        LocalPrefs.isMissionInProgress = false
-        LocalPrefs.missionIdInProgress = ""
-
-        if (!isSucceeded) {
-            handlePrepareMission(
-                timestamp = timestamp,
-                latitude = latitude,
-                longitude = longitude
-            )
-        }
     }
-
-    private fun isEnteredIntoStill(intent: Intent?): Boolean =
-        activityTracker.extract(intent).any { event ->
-            event.activityType == DetectedActivity.STILL && event.transitionType == ActivityTransition.ACTIVITY_TRANSITION_ENTER
-        }
-
-    private fun isExitedFromStill(intent: Intent?): Boolean =
-        activityTracker.extract(intent).any { event ->
-            event.activityType == DetectedActivity.STILL && event.transitionType == ActivityTransition.ACTIVITY_TRANSITION_EXIT
-        }
 
     private fun checkMissionAvailable(timestamp: Long): Boolean {
         val isOffDoNotDisturbMode = LocalPrefs.doNotDisturbUntil < timestamp
@@ -369,32 +390,6 @@ class StandUpIntentService : IntentService(StandUpIntentService::class.java.simp
             }.let { intent ->
                 context.startService(intent)
             }
-        }
-
-        fun scheduleMission(context: Context, triggerAt: Long, pendingIntent: PendingIntent) {
-            val minTime = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(10)
-            val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-
-            AlarmManagerCompat.setExactAndAllowWhileIdle(
-                alarmManager,
-                AlarmManager.RTC_WAKEUP,
-                triggerAt.coerceAtLeast(minTime),
-                pendingIntent
-            )
-        }
-
-        fun cancelMission(context: Context) {
-            val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-            val intent = getPendingIntent(
-                context = context,
-                code = REQUEST_CODE_MISSION,
-                action = ACTION_MISSION
-            )
-
-            alarmManager.cancel(intent)
-
-            LocalPrefs.isMissionInProgress = false
-            LocalPrefs.missionIdInProgress = ""
         }
     }
 }

@@ -1,21 +1,123 @@
 package kaist.iclab.standup.smi.repository
 
-import kaist.iclab.standup.smi.data.Mission
+import kaist.iclab.standup.smi.common.AppLog
+import kaist.iclab.standup.smi.common.throwError
+import kaist.iclab.standup.smi.common.toGeoHash
+import kaist.iclab.standup.smi.pref.RemotePrefs
 import smile.math.BFGS
 import smile.math.DifferentiableMultivariateFunction
 import smile.math.MathEx
 import java.util.*
 import java.util.stream.IntStream
-import kotlin.math.exp
+import kotlin.math.abs
 
 class StochasticIncentiveRepository : IncentiveRepository {
     override fun calculateStochasticIncentive(
-        missions: List<Mission>,
+        histories: List<IncentiveHistory>,
         timestamp: Long,
         latitude: Double,
         longitude: Double
     ): Int? {
-        return 0
+        if (histories.isEmpty()) {
+            AppLog.d(javaClass, "calculateStochasticIncentive(): Empty histories")
+            return RemotePrefs.defaultIncentives
+        }
+
+        val curContext = (latitude to longitude).toGeoHash(7) ?: return null
+
+        val prevHistoriesInCurContext = histories.filter {
+            (it.latitude to it.longitude).toGeoHash(7) == curContext
+        }
+
+        /**
+         * Case 1: There is no history corresponding to this context; return default incentives
+         */
+        if (prevHistoriesInCurContext.isEmpty()) {
+            AppLog.d(javaClass, "calculateStochasticIncentive(): No history corresponding to $curContext ($latitude, $longitude)")
+            return RemotePrefs.defaultIncentives
+        }
+
+        /**
+         * Case 2: There are all successes corresponding to this context; return minimum incentives
+         */
+        if (prevHistoriesInCurContext.all { it.isSucceeded }) {
+            AppLog.d(javaClass, "calculateStochasticIncentive(): All succeeded histories corresponding to $curContext ($latitude, $longitude)")
+            return RemotePrefs.minIncentives
+        }
+
+        /**
+         * Case 3: There are all failures corresponding to this context; return maximum incentives
+         */
+        if (prevHistoriesInCurContext.all { !it.isSucceeded }) {
+            AppLog.d(javaClass, "calculateStochasticIncentive(): All failed histories corresponding to $curContext ($latitude, $longitude)")
+            return RemotePrefs.maxIncentives
+        }
+
+        /**
+         * Case 4: Normal; mixed with successes and failures
+         */
+
+        val trainContexts = histories.map {
+            val context = (it.latitude to it.longitude).toGeoHash(7) ?: ""
+            arrayOf(context)
+        }.toTypedArray()
+
+        val trainIncentives = histories.map { abs(it.incentive.toDouble()) }.toDoubleArray()
+
+        val encoder = OneHotEncoder.fit(data = trainContexts, dropFirst = true)
+        val encodedTrainContexts = trainContexts.map { encoder.transform(it) }
+        val encodedCurContext = encoder.transform(arrayOf(curContext))
+
+        if (encodedTrainContexts.size != trainIncentives.size) throwError(
+            -1,
+            "Context and incentive are not same shape: contexts = ${encodedTrainContexts.size} / incentives = ${trainIncentives.size}"
+        )
+
+        val trainX = Array(encodedTrainContexts.size) {
+            doubleArrayOf(trainIncentives[it], *encodedTrainContexts[it])
+        }
+
+        val trainY = histories.map { if (it.isSucceeded) 1 else 0 }.toIntArray()
+
+        val model = BinaryLogisticRegression.fit(
+            x = trainX,
+            y = trainY,
+            C = 0.1,
+            tol = 1e-4,
+            maxIter = 500
+        )
+
+        val coefficients = model.coefficients
+        val intercept = model.intercept
+
+        val betaIncentive = coefficients.first()
+        val betaContext = coefficients.copyOfRange(1, coefficients.count())
+
+        if (encodedCurContext.size != betaContext.size) throwError(
+            -1,
+            "Encoded context and coefficients are not same shape: context = $curContext " +
+                    "/ encodedContext = ${encodedCurContext.joinToString(",")} " +
+                    "/ beta = ${betaContext.joinToString(",")}"
+        )
+
+        val dotProduct = encodedCurContext.foldIndexed(0.0) { index, acc, d ->
+            acc + betaContext[index] * d
+        }
+
+        val numerator = dotProduct + intercept
+
+        return if ( (numerator >= 0 && betaIncentive >= 0) || betaIncentive < 0) {
+            AppLog.d(javaClass, "calculateStochasticIncentive(): Incentive does not related for $curContext ($latitude, $longitude); " +
+                    "intercept = $intercept, coefficients = ${coefficients.joinToString(", ")}")
+            RemotePrefs.minIncentives
+        } else {
+            val estimatedReward = - (numerator / betaIncentive)
+            val adjustedReward = (estimatedReward / RemotePrefs.unitIncentives).toInt() * RemotePrefs.unitIncentives
+            AppLog.d(javaClass, "calculateStochasticIncentive(): Incentive calculated for $curContext ($latitude, $longitude); " +
+                    "intercept = $intercept, coefficients = ${coefficients.joinToString(", ")};" +
+                    "estimated = $estimatedReward, adjusted = $adjustedReward")
+            adjustedReward.coerceIn(RemotePrefs.minIncentives, RemotePrefs.maxIncentives)
+        }
     }
 
     class OneHotEncoder private constructor(private val categories: Array<Array<String>>, private val dropFirst: Boolean) {
@@ -35,14 +137,16 @@ class StochasticIncentiveRepository : IncentiveRepository {
         companion object {
             fun fit(data: Array<Array<String>>, dropFirst: Boolean): OneHotEncoder =
                 OneHotEncoder(Array(data[0].size) {
-                        index -> data.map { it[index] }.distinct().toTypedArray()
+                        index -> data.map { it[index] }.sorted().distinct().toTypedArray()
                 }, dropFirst)
         }
     }
 
-    class BinaryLogisticRegression(val w: DoubleArray, val logLikelihood: Double, private val C: Double = 0.1) {
-        private val p = w.size - 1
+    class BinaryLogisticRegression(w: DoubleArray) {
         private var learningRate = 0.1
+
+        val intercept = w.last()
+        val coefficients = w.copyOfRange(0, w.lastIndex)
 
         internal class BinaryObjectiveFunction(
             private val x: Array<DoubleArray>,
@@ -106,33 +210,6 @@ class StochasticIncentiveRepository : IncentiveRepository {
             }
         }
 
-        fun update(x: DoubleArray, y: Int) {
-            require(x.size == p) { "Invalid input vector size: " + x.size }
-
-            val wx = dotProduct(x, w)
-            val err = y - MathEx.logistic(wx)
-
-            w[p] += learningRate * err
-            for (j in 0 until p) {
-                w[j] += learningRate * err * x[j]
-            }
-
-            if (C > 0.0) {
-                for (j in 0 until p) {
-                    w[j] -= learningRate * C * w[j]
-                }
-            }
-        }
-
-        fun predict(x: DoubleArray): Int {
-            val f = 1.0 / (1.0 + exp(-dotProduct(x, w)))
-            return if (f < 0.5) 0 else 1
-        }
-
-        fun predictProbability(x: DoubleArray): Double {
-            return 1.0 / (1.0 + exp(-dotProduct(x, w)))
-        }
-
         companion object {
             private fun dotProduct(x: DoubleArray, w: DoubleArray): Double {
                 var dot = w[x.size]
@@ -157,11 +234,17 @@ class StochasticIncentiveRepository : IncentiveRepository {
                 val p = x[0].size
                 val bfgs = BFGS(tol, maxIter)
                 val w = DoubleArray(p + 1)
-                val logLikelihood = -bfgs.minimize(BinaryObjectiveFunction(x, y, C), 5, w)
-                val model = BinaryLogisticRegression(w, logLikelihood, C)
+
+                bfgs.minimize(BinaryObjectiveFunction(x, y, C), 5, w)
+
+                val model = BinaryLogisticRegression(w)
+
                 model.learningRate = 0.1 / x.size
+
                 return model
             }
         }
     }
+
+
 }

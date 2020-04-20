@@ -5,7 +5,8 @@ import kaist.iclab.standup.smi.R
 import kaist.iclab.standup.smi.base.BaseBottomSheetDialogFragment
 import kaist.iclab.standup.smi.databinding.FragmentConfigDialogBooleanBinding
 
-class ConfigBooleanDialogFragment : BaseBottomSheetDialogFragment<FragmentConfigDialogBooleanBinding>() {
+class ConfigBooleanDialogFragment :
+    BaseBottomSheetDialogFragment<FragmentConfigDialogBooleanBinding>() {
     override val layoutId: Int = R.layout.fragment_config_dialog_boolean
     override val showPositiveButton: Boolean = true
     override val showNegativeButton: Boolean = true
@@ -15,6 +16,11 @@ class ConfigBooleanDialogFragment : BaseBottomSheetDialogFragment<FragmentConfig
         dataBinding.item = item
         dataBinding.switchConfig.setOnCheckedChangeListener { _, isChecked ->
             isSavable(item?.isSavable?.invoke(isChecked) ?: true)
+            dataBinding.switchConfig.text = if(item?.valueFormatter == null) {
+                item?.formatter?.invoke(isChecked)
+            } else {
+                item.valueFormatter?.invoke(isChecked)
+            } ?: getString(if (isChecked) R.string.general_switch_on else R.string.general_switch_off)
         }
         dataBinding.switchConfig.isChecked = item?.value?.invoke() ?: false
     }

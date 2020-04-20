@@ -1,5 +1,6 @@
 package kaist.iclab.standup.smi.ui.dashboard
 
+import android.util.Log
 import android.view.animation.DecelerateInterpolator
 import androidx.annotation.ColorRes
 import androidx.core.content.res.ResourcesCompat
@@ -12,8 +13,10 @@ import kaist.iclab.standup.smi.R
 import kaist.iclab.standup.smi.base.BaseFragment
 import kaist.iclab.standup.smi.common.sharedViewModelFromFragment
 import kaist.iclab.standup.smi.databinding.FragmentDashboardWeeklyChartBinding
+import kaist.iclab.standup.smi.ui.config.config
 import org.joda.time.DateTime
 import java.util.*
+import java.util.concurrent.TimeUnit
 
 class DashboardChildWeeklyChartFragment : BaseFragment<FragmentDashboardWeeklyChartBinding, DashboardViewModel>() {
     override val viewModel: DashboardViewModel by sharedViewModelFromFragment()
@@ -40,6 +43,9 @@ class DashboardChildWeeklyChartFragment : BaseFragment<FragmentDashboardWeeklyCh
             axisLeft.isGranularityEnabled = false
             axisLeft.setDrawAxisLine(false)
             axisLeft.setDrawGridLines(false)
+            axisLeft.setValueFormatter { value, _ ->
+                getString(R.string.general_minute_abbrev, value.toInt())
+            }
 
             axisRight.axisMinimum = 0F
             axisRight.labelCount = 5
@@ -63,6 +69,7 @@ class DashboardChildWeeklyChartFragment : BaseFragment<FragmentDashboardWeeklyCh
                 setData(BarData().apply {
                     barWidth = 0.3F
                 })
+                setData(CandleData())
                 setData(LineData())
             }
         }
@@ -74,43 +81,59 @@ class DashboardChildWeeklyChartFragment : BaseFragment<FragmentDashboardWeeklyCh
             }
         }
 
-        viewModel.weeklyChartData().observe(this) { (data, chartType) ->
-            val colorRes  = when (chartType) {
-                DashboardFragment.CHART_TYPE_TOTAL_SEDENTARY_TIME -> R.color.blue
-                DashboardFragment.CHART_TYPE_AVG_SEDENTARY_TIME -> R.color.violet
-                DashboardFragment.CHART_TYPE_NUM_PROLONGED_SEDENTARINESS -> R.color.magenta
-                else -> return@observe
+        viewModel.weeklyChartData.observe(this) { data ->
+            val duration = data.mapValues { (_, value) ->
+                val (durations, _) = value
+                val (mean, _, _) = durations
+                TimeUnit.MILLISECONDS.toMinutes(mean)
             }
 
-            dataBinding.chart.data.setData(
-                buildBarData(
-                    data = data.mapValues { (_, v) -> v.first },
-                    colorRes = colorRes,
-                    barData = dataBinding.chart.barData
-                )
+            val confInt = data.mapValues { (_, value) ->
+                val (durations, _) = value
+                val (_, lower, upper) = durations
+                TimeUnit.MILLISECONDS.toMinutes(lower) to TimeUnit.MILLISECONDS.toMinutes(upper)
+            }
+
+            val incentive = data.mapValues { (_, value) ->
+                val (_, incentive) = value
+                incentive
+            }
+
+            val barData = buildBarData(
+                data = duration,
+                barData = dataBinding.chart.barData
             )
-            dataBinding.chart.data.setData(
-                buildLineData(
-                    data = data.mapValues { (_, v) -> v.second },
-                    lineData = dataBinding.chart.lineData
-                )
+
+            val candleData = buildCandleData(
+                data = confInt,
+                candleData = dataBinding.chart.candleData
             )
+
+            val lineData = buildLineData(
+                data = incentive,
+                lineData = dataBinding.chart.lineData
+            )
+
+            dataBinding.chart.data.setData(barData)
+            dataBinding.chart.data.setData(candleData)
+            dataBinding.chart.data.setData(lineData)
+
             dataBinding.chart.data.notifyDataChanged()
             dataBinding.chart.notifyDataSetChanged()
             dataBinding.chart.animateY(500) {
                 interpolator.getInterpolation(it)
             }
         }
-
-        viewModel.loadChart(DashboardFragment.CHART_TYPE_TOTAL_SEDENTARY_TIME)
     }
 
-    private fun buildBarData(data: Map<DateTime, Long>,
-                             @ColorRes colorRes: Int,
-                             barData: BarData) : BarData {
+    private fun buildBarData(data: Map<DateTime, Long>, barData: BarData) : BarData {
         val sortedData = TreeMap(data)
+
         val barEntries = sortedData.keys.mapIndexed { index, dateTime ->
-            BarEntry(index.toFloat(), sortedData[dateTime]?.toFloat() ?: 0F)
+            BarEntry(
+                index.toFloat(),
+                sortedData[dateTime]?.toFloat() ?: 0F
+            )
         }
         val prevDataSet = barData.dataSets?.firstOrNull() as? BarDataSet
 
@@ -124,7 +147,7 @@ class DashboardChildWeeklyChartFragment : BaseFragment<FragmentDashboardWeeklyCh
             prevDataSet
         }
 
-        dataSet.color = ResourcesCompat.getColor(resources, colorRes, null)
+        dataSet.color = ResourcesCompat.getColor(resources, R.color.blue, null)
         dataSet.label = ""
 
         barData.clearValues()
@@ -132,6 +155,38 @@ class DashboardChildWeeklyChartFragment : BaseFragment<FragmentDashboardWeeklyCh
 
         return barData
     }
+
+    private fun buildCandleData(data: Map<DateTime, Pair<Long, Long>>, candleData: CandleData) : CandleData {
+        val sortedData = TreeMap(data)
+        val candleEntries = sortedData.keys.mapIndexedNotNull { index, dateTime ->
+            val (upper, lower) = sortedData[dateTime] ?: 0L to 0L
+
+            CandleEntry(
+                index.toFloat(),
+                upper.toFloat(), lower.toFloat(), upper.toFloat(), lower.toFloat()
+            )
+        }
+        val prevDataSet = candleData.dataSets?.firstOrNull() as? CandleDataSet
+
+        val dataSet = if (prevDataSet == null) {
+            CandleDataSet(candleEntries, "").apply {
+                axisDependency = YAxis.AxisDependency.LEFT
+                valueTextSize = 0F
+            }
+        } else {
+            prevDataSet.values = candleEntries
+            prevDataSet
+        }
+
+        dataSet.color = ResourcesCompat.getColor(resources, android.R.color.transparent, null)
+        dataSet.shadowColor = ResourcesCompat.getColor(resources, R.color.magenta, null)
+
+        candleData.clearValues()
+        candleData.addDataSet(dataSet)
+
+        return candleData
+    }
+
 
     private fun buildLineData(data: Map<DateTime, Int>, lineData: LineData) : LineData {
         val sortedData = TreeMap(data)
@@ -141,7 +196,7 @@ class DashboardChildWeeklyChartFragment : BaseFragment<FragmentDashboardWeeklyCh
         val prevDataSet = lineData.dataSets?.firstOrNull() as? LineDataSet
 
         val dataSet = if(prevDataSet == null) {
-            LineDataSet(entries, getString(R.string.dashboard_chart_label_incentives)).apply {
+            LineDataSet(entries, "").apply {
                 axisDependency = YAxis.AxisDependency.RIGHT
                 valueTextSize = 0F
                 color = ResourcesCompat.getColor(resources, R.color.yellow, null)

@@ -8,6 +8,7 @@ import kaist.iclab.standup.smi.R
 import kaist.iclab.standup.smi.databinding.ItemDailyTimelineBinding
 import kaist.iclab.standup.smi.databinding.SubItemDailyTimelineDetailBinding
 import kaist.iclab.standup.smi.repository.SedentaryMissionEvent
+import kaist.iclab.standup.smi.repository.sumIncentives
 
 class TimelineDailyListAdapter : RecyclerView.Adapter<TimelineDailyListAdapter.ViewHolder>() {
     var items: List<SedentaryMissionEvent> = arrayListOf()
@@ -58,6 +59,7 @@ class TimelineDailyListAdapter : RecyclerView.Adapter<TimelineDailyListAdapter.V
             onLongClick: (item: SedentaryMissionEvent) -> Unit
         ) {
             binding.event = item
+            binding.incentive = item.missions.sumIncentives()
             binding.isFirstElement = isFirst
             binding.isLastElement = isLast
             binding.isCollapsed = true

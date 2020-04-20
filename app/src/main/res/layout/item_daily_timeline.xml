@@ -12,6 +12,10 @@
             type="kaist.iclab.standup.smi.repository.SedentaryMissionEvent" />
 
         <variable
+            name="incentive"
+            type="Integer" />
+
+        <variable
             name="isCollapsed"
             type="Boolean" />
 
@@ -31,7 +35,7 @@
         <View
             android:layout_width="@dimen/radius_rounded_corner"
             android:layout_height="0dp"
-            android:background="@drawable/lower_rounded_corner_rect"
+            android:background="@drawable/bg_lower_rounded_corner_rect"
             android:backgroundTint="@color/blue"
             android:visibility="@{isFirstElement ? View.GONE : View.VISIBLE}"
             app:layout_constraintBottom_toBottomOf="@id/circle"
@@ -42,7 +46,7 @@
         <View
             android:layout_width="@dimen/radius_rounded_corner"
             android:layout_height="0dp"
-            android:background="@drawable/upper_rounded_corner_rect"
+            android:background="@drawable/bg_upper_rounded_corner_rect"
             android:backgroundTint="@color/blue"
             android:visibility="@{isLastElement ? View.GONE : View.VISIBLE}"
             app:layout_constraintLeft_toLeftOf="@id/circle"
@@ -54,7 +58,7 @@
             android:id="@+id/circle"
             android:layout_width="@dimen/radius_rounded_corner"
             android:layout_height="@dimen/radius_rounded_corner"
-            android:background="@drawable/point_circle"
+            android:background="@drawable/bg_point_circle"
             android:layout_marginStart="@dimen/space_horizontal_default"
             app:layout_constraintTop_toTopOf="@id/container_place"
             app:layout_constraintBottom_toBottomOf="@id/container_place"
@@ -80,7 +84,7 @@
                 android:layout_height="wrap_content"
                 android:ellipsize="end"
                 android:gravity="top|start"
-                android:text="@{event.placeName}"
+                android:text="@{event.place.name}"
                 android:paddingBottom="@dimen/txt_bottom_padding"
                 android:textColor="@color/black"
                 android:textSize="@dimen/txt_size_medium"
@@ -93,7 +97,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:gravity="top|start"
-                android:text='@{@string/general_range(event.startTime > 0 ? DateUtils.formatDateTime(context, event.startTime, DateUtils.FORMAT_SHOW_TIME) : "", event.endTime != null ? DateUtils.formatDateTime(context, event.endTime, DateUtils.FORMAT_SHOW_TIME) : "")}'
+                android:text='@{@string/general_range(DateUtils.formatDateTime(context, event.event.startTime, DateUtils.FORMAT_SHOW_TIME), (event.event.endTime == null ? "" : DateUtils.formatDateTime(context, event.event.endTime, DateUtils.FORMAT_SHOW_TIME)))}'
                 android:paddingBottom="@dimen/txt_bottom_padding"
                 android:textColor="@color/grey"
                 android:textSize="@dimen/txt_size_small"
@@ -107,7 +111,7 @@
                 android:gravity="top|start"
                 android:maxLines="2"
                 android:ellipsize="end"
-                android:text="@{event.placeAddress}"
+                android:text="@{event.place.address}"
                 android:textColor="@color/grey"
                 android:textSize="@dimen/txt_size_default"
                 android:paddingBottom="@dimen/txt_bottom_padding"
@@ -119,8 +123,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:gravity="top|start"
-                android:text="@{'(' + @string/general_minute_abbrev(TimeUnit.MILLISECONDS.toMinutes(event.duration)) + ')'}"
-                android:textColor="@{event.sedentary ? @color/magenta : @color/blue}"
+                android:text="@{'(' + @string/general_minute_abbrev(TimeUnit.MILLISECONDS.toMinutes(event.event.duration)) + ')'}"
+                android:textColor="@color/grey"
                 android:textSize="@dimen/txt_size_small"
                 android:paddingBottom="@dimen/txt_bottom_padding"
                 app:layout_constraintTop_toBottomOf="@id/txt_visit_time"
@@ -144,19 +148,19 @@
                 android:id="@+id/img_fold_state"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:src="@{isCollapsed ? @drawable/baseline_unfold_more_24 : @drawable/baseline_unfold_less_24}"
+                android:src="@{isCollapsed ? @drawable/ic_unfold_more : @drawable/ic_unfold_less}"
                 android:tint="@color/light_grey"/>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@{@string/general_points_abbrev(event.incentives)}"
+                android:text="@{@string/general_points_abbrev(incentive)}"
                 android:gravity="center_vertical"
                 android:drawablePadding="@dimen/drawable_padding_default"
                 android:textSize="@dimen/txt_size_default"
                 android:textColor="@color/grey"
                 android:paddingBottom="@dimen/txt_bottom_padding"
-                android:drawableStart="@drawable/baseline_attach_money_24"
+                android:drawableStart="@drawable/ic_coin"
                 android:drawableTint="@color/light_grey"
                 android:layout_marginStart="@dimen/space_horizontal_default"/>
 
@@ -169,7 +173,7 @@
                 android:textSize="@dimen/txt_size_default"
                 android:textColor="@color/grey"
                 android:paddingBottom="@dimen/txt_bottom_padding"
-                android:drawableStart="@drawable/mission_24"
+                android:drawableStart="@drawable/ic_mission"
                 android:drawableTint="@color/light_grey"
                 android:layout_marginStart="@dimen/space_horizontal_default"/>
 

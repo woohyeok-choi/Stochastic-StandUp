@@ -6,5 +6,4 @@ interface DashboardNavigator : BaseNavigator {
     fun navigateError(throwable: Throwable?)
     fun navigatePreviousDate()
     fun navigateNextDate()
-    fun navigateChartType(chartType: Int)
 }

@@ -237,18 +237,25 @@ class ConfigViewModel(
                                 else -> resStr(R.string.config_incentive_mode_none)
                             }
                         }
-                        valueFormatter = { value ->
-                            when (value) {
-                                RemotePrefs.INCENTIVE_MODE_FIXED -> resStr(R.string.config_incentive_mode_fixed)
-                                RemotePrefs.INCENTIVE_MODE_STOCHASTIC -> resStr(R.string.config_incentive_mode_stochastic)
-                                else -> resStr(R.string.config_incentive_mode_none)
-                            }
-                        }
                         options = intArrayOf(
                             RemotePrefs.INCENTIVE_MODE_NONE,
                             RemotePrefs.INCENTIVE_MODE_FIXED,
                             RemotePrefs.INCENTIVE_MODE_STOCHASTIC
                         )
+                    }
+
+                    boolean {
+                        id = "$PREFIX.INCENTIVE_GAIN_OR_LOSS"
+                        title = resStr(R.string.config_incentive_gain_or_loss)
+                        value = { RemotePrefs.isGainIncentive }
+                        onSave = { RemotePrefs.isGainIncentive = it}
+                        formatter = {
+                            if (it) {
+                                resStr(R.string.config_incentive_gain_or_loss_gain)
+                            } else {
+                                resStr(R.string.config_incentive_gain_or_loss_loss)
+                            }
+                        }
                     }
 
                     number {

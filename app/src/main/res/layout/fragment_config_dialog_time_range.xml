@@ -36,7 +36,7 @@
             android:textColor="@color/grey"
             android:textSize="@dimen/txt_size_default"
             android:gravity="center"
-            android:background="@drawable/selectable_text_view"
+            android:background="@drawable/bg_selectable_text_view"
             app:layout_constraintTop_toBottomOf="@id/txt_title"
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintRight_toLeftOf="@id/txt_time_config_to"/>
@@ -51,7 +51,7 @@
             android:textColor="@color/grey"
             android:textSize="@dimen/txt_size_default"
             android:gravity="center"
-            android:background="@drawable/selectable_text_view"
+            android:background="@drawable/bg_selectable_text_view"
             app:layout_constraintTop_toBottomOf="@id/txt_title"
             app:layout_constraintRight_toRightOf="parent"
             app:layout_constraintLeft_toRightOf="@id/txt_time_config_from"/>

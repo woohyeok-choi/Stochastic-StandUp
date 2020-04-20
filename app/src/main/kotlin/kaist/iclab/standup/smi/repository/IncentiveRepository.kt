@@ -4,7 +4,7 @@ import kaist.iclab.standup.smi.data.Mission
 
 interface IncentiveRepository {
     fun calculateStochasticIncentive(
-        missions: List<Mission>,
+        histories: List<IncentiveHistory>,
         timestamp: Long,
         latitude: Double,
         longitude: Double

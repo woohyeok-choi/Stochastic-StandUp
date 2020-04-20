@@ -118,7 +118,8 @@ data class BooleanConfigItem(
     override var value: (() -> Boolean)? = null,
     override var formatter: ((Boolean) -> String)? = null,
     override var isSavable: ((newValue: Boolean) -> Boolean)? = null,
-    override var onSave: ((newValue: Boolean) -> Unit)? = null
+    override var onSave: ((newValue: Boolean) -> Unit)? = null,
+    var valueFormatter: ((Boolean) -> String)? = null
 ) : ReadWriteConfigItem<Boolean>(id, title, formatter, value, isSavable, onSave), Parcelable {
     constructor(parcel: Parcel) : this(
         parcel.readString() ?: "",
@@ -126,7 +127,8 @@ data class BooleanConfigItem(
         parcel.readSerializable() as? (() -> Boolean),
         parcel.readSerializable() as? ((Boolean) -> String),
         parcel.readSerializable() as? ((Boolean) -> Boolean),
-        parcel.readSerializable() as? ((Boolean) -> Unit)
+        parcel.readSerializable() as? ((Boolean) -> Unit),
+        parcel.readSerializable() as? ((Boolean) -> String)
     )
 
     override fun writeToParcel(parcel: Parcel, flags: Int) {
@@ -136,6 +138,7 @@ data class BooleanConfigItem(
         parcel.writeSerializable(formatter as? Serializable)
         parcel.writeSerializable(isSavable as? Serializable)
         parcel.writeSerializable(onSave as? Serializable)
+        parcel.writeSerializable(valueFormatter as? Serializable)
     }
 
     override fun describeContents(): Int {

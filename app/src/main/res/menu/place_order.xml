@@ -5,5 +5,5 @@
         android:id="@+id/menu_place_order"
         android:title="@string/timeline_place_order_menu"
         app:showAsAction="always"
-        android:icon="@drawable/baseline_sort_24"/>
+        android:icon="@drawable/ic_sort"/>
 </menu>

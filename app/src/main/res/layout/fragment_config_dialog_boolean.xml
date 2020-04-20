@@ -13,15 +13,25 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
+        <TextView
+            android:id="@+id/txt_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@{item.title}"
+            android:textColor="@color/black"
+            android:textSize="@dimen/txt_size_medium"
+            android:paddingBottom="@dimen/space_vertical_small"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintLeft_toLeftOf="parent"/>
+
         <Switch
             android:id="@+id/switch_config"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:paddingBottom="@dimen/space_vertical_small"
-            android:text="@{item.title}"
-            android:textColor="@color/black"
-            android:textSize="@dimen/txt_size_medium"
-            app:layout_constraintTop_toTopOf="parent"
+            android:paddingBottom="@dimen/space_vertical_default"
+            android:textColor="@color/grey"
+            android:textSize="@dimen/txt_size_default"
+            app:layout_constraintTop_toBottomOf="@id/txt_title"
             app:layout_constraintLeft_toLeftOf="parent"/>
 
     </androidx.constraintlayout.widget.ConstraintLayout>

@@ -17,18 +17,6 @@ class DashboardChildStatPageFragment : BaseFragment<FragmentDashboardStatPageBin
         dataBinding.hasNext = arguments?.getBoolean(ARG_HAS_NEXT) ?: false
         dataBinding.hasPrevious = arguments?.getBoolean(ARG_HAS_PREVIOUS) ?: false
 
-        dataBinding.itemStatTotalSedentaryTime.setOnClickListener {
-            (parentFragment as? DashboardNavigator)?.navigateChartType(DashboardFragment.CHART_TYPE_TOTAL_SEDENTARY_TIME)
-        }
-
-        dataBinding.itemStatAvgSedentaryTime.setOnClickListener {
-            (parentFragment as? DashboardNavigator)?.navigateChartType(DashboardFragment.CHART_TYPE_AVG_SEDENTARY_TIME)
-        }
-
-        dataBinding.itemStatProlongedSedentariness.setOnClickListener {
-            (parentFragment as? DashboardNavigator)?.navigateChartType(DashboardFragment.CHART_TYPE_NUM_PROLONGED_SEDENTARINESS)
-        }
-
         dataBinding.imgLeftMore.setOnClickListener {
             (parentFragment as? DashboardNavigator)?.navigatePreviousDate()
         }

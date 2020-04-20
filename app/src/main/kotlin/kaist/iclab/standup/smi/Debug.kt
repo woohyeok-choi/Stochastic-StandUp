@@ -6,30 +6,32 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 object Debug {
-    suspend fun generateDebugData(repository: StandUpMissionHandler, resources: Resources) = withContext(Dispatchers.IO) {
-        resources.openRawResource(R.raw.sedentary_events).bufferedReader().readLines().forEach { line ->
-            val parts = line.split(",").map { it.trim() }
-            try {
-                val timestamp = parts[1].toLong()
-                val isEntered = parts[2].startsWith("ENTER")
-                val latitude = parts[3].toDouble()
-                val longitude = parts[4].toDouble()
+    suspend fun generateDummyEvents(repository: StandUpMissionHandler, resources: Resources) = withContext(Dispatchers.IO) {
+        resources.openRawResource(R.raw.sedentary_events).bufferedReader().readLines()
+            .forEach { line ->
+                val parts = line.split(",").map { it.trim() }
+                try {
+                    val timestamp = parts[1].toLong()
+                    val isEntered = parts[2].startsWith("ENTER")
+                    val latitude = parts[3].toDouble()
+                    val longitude = parts[4].toDouble()
 
-                if (isEntered) {
-                    repository.enterIntoStill(
-                        timestamp, latitude, longitude
-                    )
-                } else {
-                    repository.exitFromStill(
-                        timestamp, latitude, longitude
-                    )
+                    if (isEntered) {
+                        repository.enterIntoStill(
+                            timestamp, latitude, longitude
+                        )
+                    } else {
+                        repository.exitFromStill(
+                            timestamp, latitude, longitude
+                        )
+                    }
+
+                } catch (e: Exception) {
                 }
-
-            } catch (e: Exception) {
             }
-        }
-        Log.d("Debug", "Complete to write Sedentary Events")
+    }
 
+    suspend fun generateDummyMissions(repository: StandUpMissionHandler, resources: Resources) = withContext(Dispatchers.IO) {
         resources.openRawResource(R.raw.missions).bufferedReader().readLines().forEach { line ->
             val parts = line.split(",").map { it.trim() }
             try {

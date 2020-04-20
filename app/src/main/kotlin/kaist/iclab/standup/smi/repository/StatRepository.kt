@@ -22,8 +22,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 class StatRepository(
-    private val geoApiContext: GeoApiContext,
-    private val placesClient: PlacesClient,
+    private val geoApiContext: GeoApiContext? = null,
+    private val placesClient: PlacesClient? = null,
     private val rootReference: () -> DocumentReference?,
     private val docReference: () -> CollectionReference?
 ) {
@@ -145,6 +145,8 @@ class StatRepository(
         latitude: Double,
         longitude: Double
     ): Pair<String, String> = withContext(Dispatchers.IO) {
+        if (geoApiContext == null || placesClient == null) return@withContext "" to ""
+
         try {
             val results = GeocodingApi.reverseGeocode(geoApiContext, LatLng(latitude, longitude)).await()
             val nearestPlaceId = results.minBy { result ->

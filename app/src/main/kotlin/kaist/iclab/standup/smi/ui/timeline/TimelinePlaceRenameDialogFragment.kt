@@ -3,17 +3,24 @@ package kaist.iclab.standup.smi.ui.timeline
 import android.os.Bundle
 import androidx.core.os.bundleOf
 import androidx.core.widget.doOnTextChanged
+import androidx.fragment.app.DialogFragment
 import kaist.iclab.standup.smi.R
+import kaist.iclab.standup.smi.base.BaseBottomSheetDialogFragment
 import kaist.iclab.standup.smi.base.BaseDialogFragment
 import kaist.iclab.standup.smi.databinding.FragmentTimelineDialogPlaceRenameBinding
 
-class TimelinePlaceRenameDialogFragment : BaseDialogFragment<FragmentTimelineDialogPlaceRenameBinding>() {
+class TimelinePlaceRenameDialogFragment : BaseBottomSheetDialogFragment<FragmentTimelineDialogPlaceRenameBinding>() {
     override val layoutId: Int = R.layout.fragment_timeline_dialog_place_rename
     override val showPositiveButton: Boolean = true
     override val showNegativeButton: Boolean = true
 
     interface OnTextChangedListener {
         fun onTextChanged(prevText: String, curText: String, extra: Bundle?)
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setStyle(DialogFragment.STYLE_NORMAL, R.style.AppTheme_BottomSheetEditText)
     }
 
     override fun beforeExecutePendingBindings() {

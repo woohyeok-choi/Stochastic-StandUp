@@ -4,26 +4,30 @@ import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.content.res.ColorStateList
 import android.view.View
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.core.widget.ContentLoadingProgressBar
 import androidx.databinding.BindingAdapter
+import com.bumptech.glide.Glide
+import com.bumptech.glide.TransitionOptions
+import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
+import com.bumptech.glide.request.RequestOptions
 import kaist.iclab.standup.smi.R
 import kaist.iclab.standup.smi.view.ProgressFloatingActionButton
 import kotlin.math.abs
 
-@BindingAdapter("indeterminate")
-fun setIndeterminate(view: ProgressFloatingActionButton, indeterminate: Boolean) {
-    view.isInIndeterminate = indeterminate
-}
-
-@BindingAdapter("progress")
-fun setProgress(view: ProgressFloatingActionButton, progress: Int) {
-    view.progress = progress
-}
-
-@BindingAdapter("isLoading")
-fun isLoading(view: ContentLoadingProgressBar, isLoading: Boolean?) {
-    if (isLoading == true) view.show() else view.hide()
+@BindingAdapter("url")
+fun loadCircularImage(view: ImageView, circularImg: String?) {
+    Glide.with(view)
+        .load(circularImg)
+        .apply(
+            RequestOptions
+                .circleCropTransform()
+                .placeholder(R.drawable.ic_placehoder)
+        )
+        .circleCrop()
+        .transition(DrawableTransitionOptions.withCrossFade())
+        .into(view)
 }
 
 @BindingAdapter("crossFadeIn", "duration", "isGone")
@@ -84,11 +88,6 @@ fun toggleRotate180(view: View, toggleRotate: Boolean?, duration: Int?, clockWis
         0F
     }
     view.animate().rotation(angle).setDuration(duration.toLong()).start()
-}
-
-@BindingAdapter("visible")
-fun setVisible(view: ContentLoadingProgressBar, visible: Boolean?) {
-    if (visible == true) view.show() else view.hide()
 }
 
 @BindingAdapter("tint")

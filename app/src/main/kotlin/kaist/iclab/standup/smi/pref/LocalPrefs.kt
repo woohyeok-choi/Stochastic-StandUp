@@ -22,6 +22,7 @@ object LocalPrefs : PreferenceHolder(BuildConfig.PREF_NAME) {
     var firstUsageTime: Long by ReadWriteLong(default = System.currentTimeMillis())
     var missionIdInProgress: String by ReadWriteString(default = "")
     var isMissionInProgress: Boolean by ReadWriteBoolean(default = false)
+    var lastStillTime: Long by ReadWriteLong(default = -1L)
     var doNotDisturbLastTimeSettingMillis: Long by ReadWriteLong(default = -1L)
     var doNotDisturbCount: Int by ReadWriteInt(default = 0)
 }

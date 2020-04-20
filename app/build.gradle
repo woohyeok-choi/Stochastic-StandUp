@@ -6,6 +6,7 @@ apply plugin: 'com.google.firebase.crashlytics'
 apply plugin: 'com.google.gms.google-services'
 
 android {
+
     packagingOptions {
         exclude 'META-INF/proguard/androidx-annotations.pro'
     }
@@ -227,7 +228,13 @@ dependencies {
     /**
      * Smile for machine learning
      */
-    implementation 'com.github.haifengl:smile-core:2.2.2'
+    implementation 'com.github.haifengl:smile-core:2.3.0'
+
+    /**
+     * Glide for image loading
+     */
+    implementation 'com.github.bumptech.glide:glide:4.11.0'
+    kapt 'com.github.bumptech.glide:compiler:4.11.0'
 
     /**
      * Test

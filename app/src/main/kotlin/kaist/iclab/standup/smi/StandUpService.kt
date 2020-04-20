@@ -9,6 +9,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
+import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.AlarmManagerCompat
 import androidx.core.content.ContextCompat
@@ -30,49 +31,49 @@ class StandUpService : BaseService() {
     override fun onCreate() {
         super.onCreate()
 
+        StandUpIntentService.enterIntoStill(applicationContext)
+
+        if (LocalPrefs.lastStillTime < 0) {
+            LocalPrefs.lastStillTime = System.currentTimeMillis()
+        }
+
         locationTracker.startTracking()
         activityTracker.startTracking()
-
-        StandUpIntentService.enterIntoStill(applicationContext)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
 
-        val currentTime = System.currentTimeMillis()
+        val curTime = System.currentTimeMillis()
 
         if (intent?.action == ACTION_CANCEL_DO_NOT_DISTURB) {
-            LocalPrefs.doNotDisturbUntil = 0
+            LocalPrefs.doNotDisturbUntil = -1
         }
 
-        val cancelIntent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            PendingIntent.getForegroundService(
-                applicationContext,
-                REQUEST_CODE_CANCEL_DO_NOT_DISTURB,
-                Intent(applicationContext, StandUpService::class.java).apply {
-                    action = ACTION_CANCEL_DO_NOT_DISTURB
-                },
-                PendingIntent.FLAG_UPDATE_CURRENT
-            )
-        } else {
-            PendingIntent.getService(
-                applicationContext,
-                REQUEST_CODE_CANCEL_DO_NOT_DISTURB,
-                Intent(applicationContext, StandUpService::class.java).apply {
-                    action = ACTION_CANCEL_DO_NOT_DISTURB
-                },
-                PendingIntent.FLAG_UPDATE_CURRENT
-            )
+        if (intent?.action == ACTION_ACTIVITY_UPDATE) {
+            if (activityTracker.isEnteredIntoStill(intent) && LocalPrefs.lastStillTime < 0) {
+                LocalPrefs.lastStillTime = curTime
+            } else {
+                LocalPrefs.lastStillTime = -1
+            }
         }
+
+        val cancelIntent = getPendingIntent(
+            context = applicationContext,
+            code = REQUEST_CODE_CANCEL_DO_NOT_DISTURB,
+            action = ACTION_CANCEL_DO_NOT_DISTURB
+        )
 
         val notification = Notifications.buildForegroundNotification(
             context = this,
             cancelIntent = cancelIntent,
-            countDownUntil = LocalPrefs.doNotDisturbUntil
+            lastStillTime = LocalPrefs.lastStillTime,
+            doNotDisturbUntil = LocalPrefs.doNotDisturbUntil
         )
+
         startForeground(Notifications.NOTIFICATION_ID_FOREGROUND, notification)
 
-        if (LocalPrefs.doNotDisturbUntil > currentTime) {
+        if (LocalPrefs.doNotDisturbUntil > curTime) {
             val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
             AlarmManagerCompat.setExactAndAllowWhileIdle(
                 alarmManager,
@@ -90,7 +91,8 @@ class StandUpService : BaseService() {
         locationTracker.stopTracking()
         activityTracker.stopTracking()
 
-        StandUpIntentService.cancelMission(applicationContext)
+        StandUpIntentService.exitFromStill(applicationContext)
+        LocalPrefs.lastStillTime = -1
 
         stopForeground(true)
     }
@@ -141,21 +143,11 @@ class StandUpService : BaseService() {
         private fun handleRestartService(context: Context) {
             val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
             val currentTime = System.currentTimeMillis()
-            val intent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                PendingIntent.getForegroundService(
-                    context,
-                    REQUEST_CODE_RESTART_SERVICE,
-                    Intent(context, StandUpService::class.java),
-                    PendingIntent.FLAG_UPDATE_CURRENT
-                )
-            } else {
-                PendingIntent.getService(
-                    context,
-                    REQUEST_CODE_RESTART_SERVICE,
-                    Intent(context, StandUpService::class.java),
-                    PendingIntent.FLAG_UPDATE_CURRENT
-                )
-            }
+            val intent = getPendingIntent(
+                context = context,
+                code = REQUEST_CODE_RESTART_SERVICE
+            )
+
             AlarmManagerCompat.setExactAndAllowWhileIdle(
                 alarmManager,
                 AlarmManager.RTC_WAKEUP,
@@ -168,6 +160,7 @@ class StandUpService : BaseService() {
     class AvoidSmartManagerActivity : AppCompatActivity() {
         override fun onCreate(savedInstanceState: Bundle?) {
             super.onCreate(savedInstanceState)
+            startService(this)
             overridePendingTransition(0, 0)
             finish()
         }
@@ -176,6 +169,9 @@ class StandUpService : BaseService() {
     companion object {
         const val ACTION_CANCEL_DO_NOT_DISTURB =
             "${BuildConfig.APPLICATION_ID}.ACTION_CANCEL_DO_NOT_DISTURB"
+        const val ACTION_ACTIVITY_UPDATE =
+            "${BuildConfig.APPLICATION_ID}.ACTION_ACTIVITY_UPDATE"
+        const val REQUEST_CODE_ACTIVITY_UPDATE = 0x09
         const val REQUEST_CODE_CANCEL_DO_NOT_DISTURB = 0x10
         const val REQUEST_CODE_SMART_MANAGER_AVOID = 0x11
         const val REQUEST_CODE_RESTART_SERVICE = 0x12
@@ -187,6 +183,37 @@ class StandUpService : BaseService() {
 
         fun stopService(context: Context) {
             context.stopService(Intent(context, StandUpService::class.java))
+        }
+
+        fun intentForActivity(context: Context) = getPendingIntent(
+            context = context,
+            code = REQUEST_CODE_ACTIVITY_UPDATE,
+            action = ACTION_ACTIVITY_UPDATE
+        )
+
+        private fun getPendingIntent(
+            context: Context,
+            code: Int,
+            action: String? = null,
+            flags: Int = PendingIntent.FLAG_UPDATE_CURRENT
+        ): PendingIntent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            PendingIntent.getForegroundService(
+                context,
+                code,
+                Intent(context, StandUpService::class.java).apply {
+                    if (!action.isNullOrBlank()) setAction(action)
+                },
+                flags
+            )
+        } else {
+            PendingIntent.getService(
+                context,
+                REQUEST_CODE_RESTART_SERVICE,
+                Intent(context, StandUpService::class.java).apply {
+                    if (!action.isNullOrBlank()) setAction(action)
+                },
+                flags
+            )
         }
     }
 }

@@ -7,19 +7,21 @@
     <string name="general_range" translatable="false">%1s - %2s</string>
     <string name="general_points_abbrev">%1d pts.</string>
     <string name="general_minute_abbrev">%1d min.</string>
-    <string name="general_hours_abbrev">%1d hrs.</string>
+    <string name="general_hours">%1d hour(s)</string>
     <string name="general_weeks">%1d week(s)</string>
     <string name="general_days">%1d day(s)</string>
     <string name="general_months">%1d month(s)</string>
     <string name="general_years_abbrev">%1d yrs.</string>
     <string name="general_about_minute_abbrev">About %1d min.</string>
     <string name="general_times">%1d time(s)</string>
-    <string name="general_plus_points" translatable="false">(+ %1d)</string>
-    <string name="general_minus_points" translatable="false">(- %1d)</string>
+    <string name="general_plus_points" translatable="false">(+%1d pts.)</string>
+    <string name="general_minus_points" translatable="false">(-%1d pts.)</string>
     <string name="general_load_failed">Fail to load contents</string>
     <string name="general_visited_places">%1d places</string>
     <string name="general_retry">Retry</string>
-
+    <string name="general_plus_or_minus" translatable="false">(\u00B1 %d)</string>
+    <string name="general_switch_on">On</string>
+    <string name="general_switch_off">Off</string>
 
     <!-- Error -->
     <string name="error_general">Error</string>
@@ -52,24 +54,22 @@
     <string name="title_config">Config</string>
 
     <!-- Texts for Dashboard -->
-    <string name="dashboard_overview_incentives_unit">points</string>
-    <string name="dashboard_stat_total_sedentary_time">Total sitting time (min.)</string>
-    <string name="dashboard_stat_avg_sedentary_time">Avg. sitting time (min.)</string>
-    <string name="dashboard_stat_prolonged_sedentariness"># Prolonged sitting</string>
+    <string name="dashboard_stat_mission"># Successes</string>
+    <string name="dashboard_stat_incentive">Points obtained</string>
 
-    <string name="dashboard_stat_num_missions_received"># Missions received</string>
-    <string name="dashboard_stat_num_missions_adhered"># Missions succeeded</string>
-    <string name="dashboard_stat_missions_rate">Success rates (%)</string>
+    <string name="dashboard_stat_total_sedentary_time_label">Daily sedentary time (min.)</string>
+    <string name="dashboard_stat_avg_sedentary_time_label">Avg. sedentary time (min.)</string>
+    <string name="dashboard_stat_num_stand_up_label"># Stand-up</string>
 
-    <string name="dashboard_chart_label_incentives">Incentives</string>
-    <string name="dashboard_chart_label_total_sedentary_time">Total sitting time in minutes</string>
-    <string name="dashboard_chart_label_avg_sedentary_time">Avg. sitting time in minutes</string>
-    <string name="dashboard_chart_label_num_prolonged_sedentariness">Num. prolonged sitting sessions</string>
+    <string name="dashboard_chart_title">Avg. sedentary time and points</string>
 
     <!-- Texts for Timeline -->
     <string name="timeline_title_place">Places Visited</string>
     <string name="timeline_tab_item_daily">Daily</string>
     <string name="timeline_tab_item_place">Place</string>
+    <string name="timeline_list_panel_mission_stat">%1d / %2d time(s)</string>
+    <string name="timeline_list_panel_avg_sedentary_stat">%1d (±%2d) min.</string>
+
     <string name="timeline_list_item_mission_success">Success!</string>
     <string name="timeline_list_item_mission_failure">Failure!</string>
     <string name="timeline_list_item_mission_bid_positive_success">Got %1d pts.</string>
@@ -128,6 +128,9 @@
     <string name="config_incentive_mode_stochastic">Stochastic mode</string>
     <string name="config_incentive_mode_fixed">Fixed mode</string>
     <string name="config_incentive_mode_none">Non-incentive mode</string>
+    <string name="config_incentive_gain_or_loss">Incentive Gain/Loss</string>
+    <string name="config_incentive_gain_or_loss_gain">Gain</string>
+    <string name="config_incentive_gain_or_loss_loss">Loss</string>
     <string name="config_mock_still_event">Mock Still Event</string>
     <string name="config_mock_still_event_desc">Generate mock still event and start a mission</string>
     <string name="config_mock_stand_up_event">Mock Stand-up Event</string>
@@ -145,9 +148,11 @@
     <string name="ntf_channel_name_mission_failure">Mission failure</string>
 
     <!-- Notification texts -->
-    <string name="ntf_foreground_title">Stand Up</string>
-    <string name="ntf_foreground_text_normal">Running in the background…</string>
-    <string name="ntf_foreground_text_do_not_disturb">Do-not-disturb until %s</string>
+    <string name="ntf_foreground_title_sedentary">You\'re Sitting Still</string>
+    <string name="ntf_foreground_title_stand_up">You\'ve Stood Up</string>
+    <string name="ntf_foreground_text_default">Activity tracking in progress…</string>
+    <string name="ntf_foreground_title_do_not_disturb">Do-not-disturb Mode</string>
+    <string name="ntf_foreground_text_do_not_disturb">Suspend missions until %s</string>
     <string name="ntf_foreground_action_cancel">Cancel</string>
 
     <string name="ntf_mission_start_title">Time to stand up!</string>

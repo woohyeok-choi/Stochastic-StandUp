@@ -213,21 +213,21 @@ class TimelineFragment : BaseFragment<FragmentTimelineBinding, TimelineViewModel
     override fun onBind(item: SedentaryMissionEvent) {
         lifecycleScope.launch {
             addMarker(
-                latitude = item.latitude,
-                longitude = item.longitude
+                latitude = item.event.latitude,
+                longitude = item.event.longitude
             )
         }
     }
 
     override fun onClick(item: SedentaryMissionEvent) {
         lifecycleScope.launch {
-            selectPlace(latitude = item.latitude, longitude = item.longitude)
+            selectPlace(latitude = item.event.latitude, longitude = item.event.longitude)
         }
     }
 
     override fun onLongClick(item: SedentaryMissionEvent) {
         lifecycleScope.launch {
-            renamePlace(placeName = item.placeName ?: "", latitude = item.latitude, longitude = item.longitude)
+            renamePlace(placeName = item.place.name, latitude = item.event.latitude, longitude = item.event.longitude)
         }
     }
 
@@ -387,7 +387,7 @@ class TimelineFragment : BaseFragment<FragmentTimelineBinding, TimelineViewModel
             MarkerOptions().position(
                 LatLng(latitude, longitude)
             ).icon(
-                BitmapDescriptorFactory.fromResource(R.drawable.marker)
+                BitmapDescriptorFactory.fromResource(R.drawable.ic_marker)
             )
         ) ?: return
         markers[(latitude to longitude)] = marker
@@ -417,9 +417,9 @@ class TimelineFragment : BaseFragment<FragmentTimelineBinding, TimelineViewModel
         markers.keys.forEach { (curLat, curLng) ->
             val isSame = curLat == latitude && curLng == longitude
             val icon = if (isSame) {
-                BitmapDescriptorFactory.fromResource(R.drawable.marker_selected)
+                BitmapDescriptorFactory.fromResource(R.drawable.ic_marker_selected)
             } else {
-                BitmapDescriptorFactory.fromResource(R.drawable.marker)
+                BitmapDescriptorFactory.fromResource(R.drawable.ic_marker)
             }
             val zIndex = if (isSame) {
                 Float.MAX_VALUE

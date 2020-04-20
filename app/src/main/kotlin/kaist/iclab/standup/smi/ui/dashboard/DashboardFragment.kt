@@ -50,8 +50,6 @@ class DashboardFragment : BaseFragment<FragmentDashboardBinding, DashboardViewMo
             }
         })
         dataBinding.containerPager.setCurrentItem(adapter.itemCount - 1, false)
-
-        viewModel.loadChart(CHART_TYPE_TOTAL_SEDENTARY_TIME)
     }
 
     private fun loadDailyData(position: Int) {
@@ -80,14 +78,7 @@ class DashboardFragment : BaseFragment<FragmentDashboardBinding, DashboardViewMo
         loadDailyData(dataBinding.containerPager.currentItem)
     }
 
-    override fun navigateChartType(chartType: Int) {
-        viewModel.loadChart(chartType)
-    }
-
     companion object {
-        const val CHART_TYPE_TOTAL_SEDENTARY_TIME = 0x00
-        const val CHART_TYPE_AVG_SEDENTARY_TIME = 0x01
-        const val CHART_TYPE_NUM_PROLONGED_SEDENTARINESS = 0x02
         const val ARG_HAS_NEXT = "${BuildConfig.APPLICATION_ID}.ARG_HAS_NEXT"
         const val ARG_HAS_PREVIOUS = "${BuildConfig.APPLICATION_ID}.ARG_HAS_PREVIOUS"
     }

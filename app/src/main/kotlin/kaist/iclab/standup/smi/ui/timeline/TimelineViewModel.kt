@@ -8,6 +8,7 @@ import com.google.firebase.firestore.Query
 import kaist.iclab.standup.smi.R
 import kaist.iclab.standup.smi.base.BaseViewModel
 import kaist.iclab.standup.smi.common.Status
+import kaist.iclab.standup.smi.common.confidenceInterval
 import kaist.iclab.standup.smi.common.sumByLong
 import kaist.iclab.standup.smi.common.throwError
 import kaist.iclab.standup.smi.data.PlaceStat
@@ -29,7 +30,6 @@ class TimelineViewModel (
     private val placeReference: () -> CollectionReference?
 ): BaseViewModel<TimelineNavigator>() {
     private val ioContext = viewModelScope.coroutineContext + Dispatchers.IO
-
     /**
      * Data relevant to Daily-mode
      */
@@ -37,24 +37,25 @@ class TimelineViewModel (
 
     val dailyStats: MutableLiveData<List<SedentaryMissionEvent>> = MutableLiveData()
 
-    val dailyTotalSedentaryMinutes = dailyStats.map { data ->
-        data?.sumByLong { it.duration }?.let { TimeUnit.MILLISECONDS.toMinutes(it) } ?: 0
+    val dailyMissionsTriggered = dailyStats.map { data ->
+        data?.sumBy { datum -> datum.missions.size } ?: 0
     }
 
-    val dailyAvgSedentaryMinutes = dailyStats.map { data ->
-        data?.map { it.duration }?.average()?.toLong()?.let { TimeUnit.MILLISECONDS.toMinutes(it)} ?: 0
+    val dailyMissionsSuccess = dailyStats.map { data ->
+        data?.sumBy { datum -> datum.missions.filter { it.isSucceeded() }.size } ?: 0
     }
 
-    val dailyNumProlongedSedentariness = dailyStats.map { data ->
-        data?.filter { it.duration >= RemotePrefs.maxProlongedSedentaryTime }?.size ?: 0
+    val dailyAvgSedentaryMillis = dailyStats.map { data ->
+        data?.map { datum -> datum.event.duration }?.average()?.toLong() ?: 0
     }
 
-    val dailyTotalIncentives = dailyStats.map { data ->
-        val incentive = data?.sumBy { it.incentives } ?: 0
-        if (incentive >= 0) {
-            incentive.coerceAtMost(RemotePrefs.maxDailyBudget)
+    val dailyIncentiveObtained = dailyStats.map { data ->
+        val incentive = data?.sumBy { datum -> datum.missions.sumIncentives() } ?: 0
+
+        if (RemotePrefs.isGainIncentive) {
+            incentive.coerceIn(0, RemotePrefs.maxDailyBudget)
         } else {
-            (RemotePrefs.maxDailyBudget - abs(incentive)).coerceAtLeast(0)
+            (RemotePrefs.maxDailyBudget - abs(incentive)).coerceIn(0, RemotePrefs.maxDailyBudget)
         }
     }
 
@@ -84,7 +85,7 @@ class TimelineViewModel (
             }
 
             val events = eventRepository.getEvents(from, to)
-            val missions = missionRepository.getCompletedMissions(from, to)
+            val missions = missionRepository.getTriggeredMissions(from, to)
             val places = events.distinctBy { it.geoHash }.mapNotNull {
                 statRepository.getPlaceStat(it.latitude, it.longitude)
             }
@@ -93,9 +94,10 @@ class TimelineViewModel (
                 fromTime = from,
                 toTime = to,
                 missions = missions,
-                places = places,
-                prolongedSedentaryTimeMillis = RemotePrefs.maxProlongedSedentaryTime
-            ).sortedByDescending { it.startTime ?: 0 }
+                places = places
+            ).sortedByDescending {
+                it.event.startTime
+            }
 
             dailyStats.postValue(missionEvents)
             dailyLoadStatus.postValue(Status.success())

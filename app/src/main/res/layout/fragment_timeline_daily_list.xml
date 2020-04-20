@@ -5,7 +5,7 @@
     <data>
 
         <import type="android.view.View" />
-
+        <import type="java.util.concurrent.TimeUnit"/>
         <variable
             name="viewModel"
             type="kaist.iclab.standup.smi.ui.timeline.TimelineViewModel" />
@@ -48,72 +48,53 @@
                 android:layout_height="match_parent">
 
                 <TextView
-                    android:id="@+id/txt_stat_total_sedentary_minutes"
+                    android:id="@+id/txt_stat_avg_sedentary_time"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:drawableStart="@drawable/ic_sedentariness_24"
-                    android:drawablePadding="@dimen/drawable_padding_default"
-                    android:drawableTint="@color/blue"
-                    android:gravity="center_vertical"
-                    android:text="@{@string/general_minute_abbrev(viewModel.dailyTotalSedentaryMinutes)}"
-                    android:textColor="@color/grey"
-                    android:textSize="@dimen/txt_size_default"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toStartOf="@+id/txt_stat_avg_sedentary_minutes"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:layout_constraintWidth_percent="0.25" />
-
-                <TextView
-                    android:id="@+id/txt_stat_avg_sedentary_minutes"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:drawableStart="@drawable/ic_avg_sedentariness_24"
-                    android:drawablePadding="@dimen/drawable_padding_default"
-                    android:drawableTint="@color/violet"
-                    android:gravity="center_vertical"
-                    android:text="@{@string/general_minute_abbrev(viewModel.dailyAvgSedentaryMinutes)}"
-                    android:textColor="@color/grey"
-                    android:textSize="@dimen/txt_size_default"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toStartOf="@+id/txt_stat_prolonged_sedentariness"
-                    app:layout_constraintStart_toEndOf="@+id/txt_stat_total_sedentary_minutes"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:layout_constraintWidth_percent="0.25" />
-
-                <TextView
-                    android:id="@+id/txt_stat_prolonged_sedentariness"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:drawableStart="@drawable/ic_prolonged_sedentariness_24"
+                    android:drawableStart="@drawable/ic_avg_sedentariness"
                     android:drawablePadding="@dimen/drawable_padding_default"
                     android:drawableTint="@color/magenta"
                     android:gravity="center_vertical"
-                    android:text="@{@string/general_times(viewModel.dailyNumProlongedSedentariness)}"
+                    android:text="@{@string/general_minute_abbrev(TimeUnit.MILLISECONDS.toMinutes(viewModel.dailyAvgSedentaryMillis))}"
                     android:textColor="@color/grey"
                     android:textSize="@dimen/txt_size_default"
                     app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toStartOf="@+id/txt_stat_total_incentives"
-                    app:layout_constraintStart_toEndOf="@+id/txt_stat_avg_sedentary_minutes"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:layout_constraintWidth_percent="0.25" />
+                    app:layout_constraintLeft_toLeftOf="parent"
+                    app:layout_constraintRight_toLeftOf="@id/txt_stat_mission"
+                    app:layout_constraintTop_toTopOf="parent"/>
 
                 <TextView
-                    android:id="@+id/txt_stat_total_incentives"
+                    android:id="@+id/txt_stat_mission"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:drawableStart="@drawable/baseline_attach_money_24"
+                    android:drawableStart="@drawable/ic_mission"
+                    android:drawablePadding="@dimen/drawable_padding_default"
+                    android:drawableTint="@color/blue"
+                    android:gravity="center_vertical"
+                    android:text="@{@string/timeline_list_panel_mission_stat(viewModel.dailyMissionsSuccess, viewModel.dailyMissionsTriggered)}"
+                    android:textColor="@color/grey"
+                    android:textSize="@dimen/txt_size_default"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintLeft_toRightOf="@id/txt_stat_avg_sedentary_time"
+                    app:layout_constraintRight_toLeftOf="@id/txt_stat_incentive"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <TextView
+                    android:id="@+id/txt_stat_incentive"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:drawableStart="@drawable/ic_coin"
                     android:drawablePadding="@dimen/drawable_padding_default"
                     android:drawableTint="@color/dark_yellow"
                     android:gravity="center_vertical"
-                    android:text="@{@string/general_points_abbrev(viewModel.dailyTotalIncentives)}"
+                    android:text="@{@string/general_points_abbrev(viewModel.dailyIncentiveObtained)}"
                     android:textColor="@color/grey"
                     android:textSize="@dimen/txt_size_default"
                     app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toEndOf="@+id/txt_stat_prolonged_sedentariness"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:layout_constraintWidth_percent="0.25" />
+                    app:layout_constraintRight_toRightOf="parent"
+                    app:layout_constraintLeft_toRightOf="@id/txt_stat_mission"
+                    app:layout_constraintTop_toTopOf="parent" />
+
             </androidx.constraintlayout.widget.ConstraintLayout>
         </FrameLayout>
 

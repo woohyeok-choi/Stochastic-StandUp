@@ -10,11 +10,7 @@ import com.google.android.libraries.places.api.Places
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.maps.GeoApiContext
-import kaist.iclab.standup.smi.data.Mission
-import kaist.iclab.standup.smi.repository.EventRepository
-import kaist.iclab.standup.smi.repository.IncentiveRepository
-import kaist.iclab.standup.smi.repository.MissionRepository
-import kaist.iclab.standup.smi.repository.StatRepository
+import kaist.iclab.standup.smi.repository.*
 import kaist.iclab.standup.smi.tracker.ActivityTracker
 import kaist.iclab.standup.smi.tracker.LocationTracker
 import kaist.iclab.standup.smi.ui.config.ConfigViewModel
@@ -110,11 +106,15 @@ val firebaseModules = module {
 
 val trackerModule = module {
     factory(named("activityIntent")) {
-        StandUpIntentService.intentForLocation(androidContext())
+        StandUpIntentService.intentForActivity(androidContext())
+    }
+
+    factory(named("activityIntentForForeground")) {
+        StandUpService.intentForActivity(androidContext())
     }
 
     factory(named("locationIntent")) {
-        StandUpIntentService.intentForActivity(androidContext())
+        StandUpIntentService.intentForLocation(androidContext())
     }
 
     single(createdAtStart = false) {
@@ -132,7 +132,10 @@ val trackerModule = module {
                         .build()
                 )
             ),
-            pendingIntent = get(named("activityIntent"))
+            pendingIntents = listOf(
+                get(named("activityIntent")),
+                get(named("activityIntentForForeground"))
+            )
         )
     }
 
@@ -176,16 +179,7 @@ val repositoryModules = module {
     }
 
     single<IncentiveRepository>(createdAtStart = false) {
-        object : IncentiveRepository {
-            override fun calculateStochasticIncentive(
-                missions: List<Mission>,
-                timestamp: Long,
-                latitude: Double,
-                longitude: Double
-            ): Int? {
-                return 150
-            }
-        }
+        StochasticIncentiveRepository()
     }
 
     single(createdAtStart = false) {
@@ -218,6 +212,7 @@ val viewModelModules = module {
 
     viewModel {
         DashboardViewModel(
+            context = androidContext(),
             eventRepository = get(),
             missionRepository = get()
         )

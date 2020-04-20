@@ -30,14 +30,12 @@
 
             <TextView
                 android:id="@+id/txt_chart_name"
-                tint="@{viewModel.currentChartType == DashboardFragment.CHART_TYPE_NUM_PROLONGED_SEDENTARINESS ? @color/magenta : (viewModel.currentChartType == DashboardFragment.CHART_TYPE_AVG_SEDENTARY_TIME ? @color/violet : @color/blue)}"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:drawableStart="@{viewModel.currentChartType == DashboardFragment.CHART_TYPE_NUM_PROLONGED_SEDENTARINESS ? @drawable/ic_prolonged_sedentariness_24 : (viewModel.currentChartType == DashboardFragment.CHART_TYPE_AVG_SEDENTARY_TIME ? @drawable/ic_avg_sedentariness_24 : @drawable/ic_sedentariness_24)}"
-                android:gravity="center_vertical"
-                android:text="@{viewModel.currentChartType == DashboardFragment.CHART_TYPE_NUM_PROLONGED_SEDENTARINESS ? @string/dashboard_chart_label_num_prolonged_sedentariness : (viewModel.currentChartType == DashboardFragment.CHART_TYPE_AVG_SEDENTARY_TIME ? @string/dashboard_chart_label_avg_sedentary_time : @string/dashboard_chart_label_total_sedentary_time)}"
+                android:gravity="center_horizontal"
+                android:text="@string/dashboard_chart_title"
                 android:textColor="@color/grey"
-                android:textSize="@dimen/txt_size_default"
+                android:textSize="@dimen/txt_size_medium"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />

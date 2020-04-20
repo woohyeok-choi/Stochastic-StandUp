@@ -5,6 +5,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
 import android.media.AudioAttributes
 import android.media.AudioManager
 import android.os.Build
@@ -17,6 +18,8 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import kaist.iclab.standup.smi.BuildConfig
 import kaist.iclab.standup.smi.R
+import kaist.iclab.standup.smi.ui.splash.SplashActivity
+import kotlin.math.abs
 
 object Notifications {
     private const val CHANNEL_ID_FOREGROUND = "${BuildConfig.APPLICATION_ID}.CHANNEL_ID_FOREGROUND"
@@ -148,43 +151,82 @@ object Notifications {
         }
     }
 
+    /**
+     * TODO:
+     * ENTER_STILL W/O DO-NOT-DISTURB
+     * EXIT_STILL W/O DO-NOT-DISTURB
+     * ENTER_STILL W/ DO-NOT-DISTURB
+     * EXIT_STILL W/ DO-NOT-DISTURB
+     */
+
     fun buildForegroundNotification(
         context: Context,
-        cancelIntent: PendingIntent,
-        countDownUntil: Long
-    ): Notification {
-        val currentTime = System.currentTimeMillis()
+        lastStillTime: Long,
+        doNotDisturbUntil: Long,
+        cancelIntent: PendingIntent
+    ) : Notification {
         val builder =
             getNotificationBuilder(context, CHANNEL_ID_FOREGROUND) ?: NotificationCompat.Builder(
                 context,
                 CHANNEL_ID_FOREGROUND
             )
 
+        val curTime = System.currentTimeMillis()
+
         return builder.apply {
             setOngoing(true)
             setLocalOnly(true)
             setAutoCancel(false)
-            setContentTitle(context.getString(R.string.ntf_foreground_title))
             setShowWhen(false)
-            setSmallIcon(R.drawable.mission_24)
+            setSmallIcon(R.drawable.ic_mission)
             color = context.getColor(R.color.blue)
-            if (countDownUntil > currentTime) {
+            setContentIntent(PendingIntent.getActivity(
+                context,
+                0xff,
+                Intent(context, SplashActivity::class.java)
+                    .setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK),
+                PendingIntent.FLAG_UPDATE_CURRENT
+            ))
+
+            if (doNotDisturbUntil > curTime) {
+                setContentTitle(
+                    context.getString(R.string.ntf_foreground_title_do_not_disturb)
+                )
+                setContentText(context.getString(
+                    R.string.ntf_foreground_text_do_not_disturb,
+                    DateUtils.formatDateTime(context, doNotDisturbUntil, DateUtils.FORMAT_SHOW_DATE or DateUtils.FORMAT_SHOW_TIME)
+                ))
                 addAction(
-                    R.drawable.baseline_close_24,
+                    R.drawable.ic_close,
                     context.getString(R.string.ntf_foreground_action_cancel),
                     cancelIntent
                 )
-                setContentText(
-                    context.getString(
-                        R.string.ntf_foreground_text_do_not_disturb,
-                        DateUtils.formatDateTime(context, countDownUntil, DateUtils.FORMAT_SHOW_DATE or DateUtils.FORMAT_SHOW_TIME)
-                    )
-                )
             } else {
-                setContentText(context.getString(R.string.ntf_foreground_text_normal))
+                if (lastStillTime > 0) {
+                    extras = Bundle()
+                    setShowWhen(true)
+                    setWhen(lastStillTime)
+                    setUsesChronometer(true)
+                    setContentTitle(
+                        context.getString(R.string.ntf_foreground_title_sedentary)
+                    )
+                } else {
+                    setContentTitle(
+                        context.getString(R.string.ntf_foreground_title_stand_up)
+                    )
+                }
+                setContentText(
+                    context.getString(R.string.ntf_foreground_text_default)
+                )
+            }
+
+            if (lastStillTime > 0) {
+                extras = Bundle()
+
             }
         }.build()
     }
+
 
     private fun buildMissionStartNotification(
         context: Context,
@@ -205,16 +247,16 @@ object Notifications {
             setWhen(countDownUntil)
             setUsesChronometer(true)
             setChronometerCountDown(true)
-            setSmallIcon(R.drawable.mission_24)
+            setSmallIcon(R.drawable.ic_mission)
             color = context.getColor(R.color.blue)
             setContentTitle(context.getString(R.string.ntf_mission_start_title))
             setStyle(NotificationCompat.BigTextStyle().bigText(
                 when {
                     incentives > 0 -> context.getString(
-                        R.string.ntf_mission_start_text_gain, durationMinutes, incentives
+                        R.string.ntf_mission_start_text_gain, durationMinutes, abs(incentives)
                     )
                     incentives < 0 -> context.getString(
-                        R.string.ntf_mission_start_text_loss, durationMinutes, incentives
+                        R.string.ntf_mission_start_text_loss, durationMinutes, abs(incentives)
                     )
                     else -> context.getString(
                         R.string.ntf_mission_start_text_none, durationMinutes
@@ -238,7 +280,7 @@ object Notifications {
             setOngoing(false)
             setLocalOnly(false)
             setAutoCancel(true)
-            setSmallIcon(R.drawable.mission_24)
+            setSmallIcon(R.drawable.ic_mission)
             color = context.getColor(R.color.blue)
             setContentTitle(context.getString(R.string.ntf_mission_success_title))
             setStyle(NotificationCompat.BigTextStyle().bigText(
@@ -271,7 +313,7 @@ object Notifications {
             setOngoing(false)
             setLocalOnly(false)
             setAutoCancel(true)
-            setSmallIcon(R.drawable.mission_24)
+            setSmallIcon(R.drawable.ic_mission)
             color = context.getColor(R.color.blue)
             setContentTitle(context.getString(R.string.ntf_mission_failure_title))
             setStyle(NotificationCompat.BigTextStyle().bigText(

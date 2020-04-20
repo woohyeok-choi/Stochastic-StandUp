@@ -12,7 +12,7 @@ class MissionRepository(
     suspend fun getMission(id: String): Mission? =
         reference.invoke()?.let { reference -> Mission.get(reference, id) }
 
-    suspend fun getCompletedMissions(
+    suspend fun getTriggeredMissions(
         fromTime: Long,
         toTime: Long
     ): List<Mission> =
@@ -23,7 +23,11 @@ class MissionRepository(
             ) {
                 Missions.triggerTime greaterThanOrEqualTo fromTime
                 Missions.triggerTime lessThan toTime
-                Missions.state isOneOf listOf(Mission.STATE_FAILURE, Mission.STATE_SUCCESS)
+                Missions.state isOneOf listOf(
+                    Mission.STATE_FAILURE,
+                    Mission.STATE_SUCCESS,
+                    Mission.STATE_TRIGGERED
+                )
             }
         } ?: listOf()
 
@@ -49,7 +53,7 @@ class MissionRepository(
         Mission.create(reference, timestamp.toISODateTime()) {
             this.offsetMs = TimeZone.getDefault().rawOffset
             this.prepareTime = timestamp
-            this.state = Mission.STATE_IN_PROGRESS
+            this.state = Mission.STATE_PREPARED
 
             if (!latitude.isNaN() && !longitude.isNaN()) {
                 this.latitude = latitude
@@ -64,6 +68,7 @@ class MissionRepository(
     ) = reference.invoke()?.let { reference ->
         Mission.update(reference, id) {
             this.standByTime = timestamp
+            this.state = Mission.STATE_STAND_BY
         }
     }
 
@@ -74,6 +79,7 @@ class MissionRepository(
     ) = reference.invoke()?.let { reference ->
         Mission.update(reference, id) {
             this.triggerTime = timestamp
+            this.state = Mission.STATE_TRIGGERED
             this.incentive = incentive
         }
     }
@@ -81,11 +87,17 @@ class MissionRepository(
     suspend fun completeMission(
         id: String,
         timestamp: Long,
-        isSucceeded: Boolean
+        isSucceeded: Boolean? = null
     ) = reference.invoke()?.let { reference ->
-        Mission.update(reference, id) {
-            this.reactionTime = timestamp
-            this.state = if (isSucceeded) Mission.STATE_SUCCESS else Mission.STATE_FAILURE
+        if (isSucceeded != null) {
+            Mission.update(reference, id) {
+                this.reactionTime = timestamp
+                this.state = if (isSucceeded) Mission.STATE_SUCCESS else Mission.STATE_FAILURE
+            }
+        } else {
+            Mission.update(reference, id) {
+                this.reactionTime = timestamp
+            }
         }
     }
 }

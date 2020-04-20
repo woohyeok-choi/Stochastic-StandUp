@@ -25,7 +25,7 @@ class ConfigSingleChoiceDialogFragment : BaseBottomSheetDialogFragment<FragmentC
         val optionsToView = options.associate { option ->
             val button = RadioButton(requireContext()).apply {
                 id = View.generateViewId()
-                background = resources.getDrawable(R.drawable.text_radio_button, null)
+                background = resources.getDrawable(R.drawable.bg_text_radio_button, null)
                 setButtonDrawable(android.R.color.transparent)
                 setPadding(
                     resources.getDimensionPixelSize(R.dimen.space_horizontal_large),
@@ -33,7 +33,11 @@ class ConfigSingleChoiceDialogFragment : BaseBottomSheetDialogFragment<FragmentC
                     resources.getDimensionPixelSize(R.dimen.space_horizontal_large),
                     resources.getDimensionPixelSize(R.dimen.space_vertical_default)
                 )
-                text = (item?.valueFormatter?.invoke(option) ?: "")
+                text = if (item?.valueFormatter == null) {
+                    item?.formatter?.invoke(option)
+                } else {
+                    item.valueFormatter?.invoke(option)
+                } ?: option.toString()
                 setTextSize(TypedValue.COMPLEX_UNIT_PX, resources.getDimension(R.dimen.txt_size_default))
                 setTextColor(resources.getColor(R.color.grey, null))
             }

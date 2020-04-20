@@ -19,6 +19,7 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>(){
         lifecycleScope.launchWhenCreated {
             RemotePrefs.sync()
         }
+
         StandUpService.startService(applicationContext)
 
         val navController = findNavController(R.id.fragment_nav_host)

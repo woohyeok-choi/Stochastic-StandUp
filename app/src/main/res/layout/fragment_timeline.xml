@@ -118,7 +118,7 @@
                         toggleRotate="@{isExpanded}"
                         android:layout_width="wrap_content"
                         android:layout_height="match_parent"
-                        android:src="@drawable/baseline_expand_more_24"
+                        android:src="@drawable/ic_expand_more"
                         android:tint="@color/light_grey"
                         android:visibility="@{isDailyMode ? View.VISIBLE : View.INVISIBLE}" />
 
