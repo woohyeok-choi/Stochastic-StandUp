@@ -134,9 +134,9 @@ class StandUpMissionHandler(
         statRepository.updateStayDuration(
             latitude = latitude,
             longitude = longitude,
-            duration = mission.triggerTime.let {
+            duration = listOf(mission.prepareTime, mission.standByTime, mission.triggerTime).filter { it > 0 }.max()?.let {
                 (timestamp - it).coerceAtLeast(0)
-            }
+            } ?: 0
         )
 
         missionRepository.completeMission(

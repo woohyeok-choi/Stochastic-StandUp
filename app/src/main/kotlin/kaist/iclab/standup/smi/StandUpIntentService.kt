@@ -129,6 +129,10 @@ class StandUpIntentService : IntentService(StandUpIntentService::class.java.simp
             latitude = latitude,
             longitude = longitude
         )
+
+        if (LocalPrefs.lastStillTime < 0) {
+            LocalPrefs.lastStillTime = timestamp
+        }
     }
 
     private suspend fun handleExitFromStill(timestamp: Long, latitude: Double, longitude: Double) {
@@ -158,6 +162,9 @@ class StandUpIntentService : IntentService(StandUpIntentService::class.java.simp
         cancelAlarm(
             intent = intent
         )
+
+        LocalPrefs.lastStillTime = -1
+
     }
 
     private suspend fun handlePrepareMission(timestamp: Long, latitude: Double, longitude: Double) {
