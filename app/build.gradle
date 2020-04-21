@@ -32,16 +32,21 @@ android {
         setProperty('archivesBaseName', "StandUp v." + versionName)
         buildConfigField("String", "PREF_NAME", "\"${config.pref_name}\"")
         buildConfigField("String", "REMOTE_PREF_NAME", "\"${config.remote_pref_name}\"")
+        buildConfigField("Boolean", "FIREBASE_TEST_MODE", "true")
+        buildConfigField("Boolean", "IS_LOCAL_CONFIG", "true")
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        signingConfig signingConfigs.debug
     }
 
     buildTypes {
         release {
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            buildConfigField("Boolean", "FIREBASE_TEST_MODE", "false")
+            buildConfigField("Boolean", "IS_LOCAL_CONFIG", "false")
         }
         debug {
-            buildConfigField("Boolean", "FIREBASE_TEST_MODE", "true")
+            debuggable = true
         }
         internal {
             buildConfigField("Boolean", "FIREBASE_TEST_MODE", "false")
@@ -49,7 +54,8 @@ android {
         }
         experiment {
             buildConfigField("Boolean", "FIREBASE_TEST_MODE", "false")
-            debuggable = false
+            buildConfigField("Boolean", "IS_LOCAL_CONFIG", "false")
+            debuggable = true
         }
     }
 

@@ -8,7 +8,10 @@ import android.content.Context
 import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.location.Location
+import android.net.ConnectivityManager
+import android.net.Network
 import android.net.Uri
+import android.os.Build
 import android.os.PowerManager
 import android.util.Log
 import android.view.View
@@ -402,3 +405,29 @@ fun Collection<Number>.confidenceInterval(
 
 suspend fun <R> tryCatch(block: suspend () -> R) = try { block.invoke() } catch (e: Exception) { null }
 
+suspend fun Context.checkNetworkConnection() : Boolean = suspendCoroutine { continuation ->
+    val manager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+        Log.d("checkNetworkConnection()", "Using activeNetworkInfo")
+        val activeNetwork = manager.activeNetworkInfo
+        continuation.resume(activeNetwork?.isConnectedOrConnecting == true)
+    } else {
+        Log.d("checkNetworkConnection()", "Using networkCallback")
+        val callback = object : ConnectivityManager.NetworkCallback() {
+            override fun onAvailable(network: Network) {
+                super.onAvailable(network)
+                Log.d("checkNetworkConnection()", "onAvailable")
+                manager.unregisterNetworkCallback(this)
+                continuation.resume(true)
+            }
+
+            override fun onLost(network: Network) {
+                super.onLost(network)
+                Log.d("checkNetworkConnection()", "onLost")
+                manager.unregisterNetworkCallback(this)
+                continuation.resume(false)
+            }
+        }
+        manager.registerDefaultNetworkCallback(callback)
+    }
+}

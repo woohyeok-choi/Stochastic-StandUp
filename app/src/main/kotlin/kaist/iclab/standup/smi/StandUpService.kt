@@ -51,12 +51,16 @@ class StandUpService : BaseService() {
         }
 
         if (intent?.action == ACTION_ACTIVITY_UPDATE) {
-            if (activityTracker.isEnteredIntoStill(intent) && LocalPrefs.lastStillTime < 0) {
-                LocalPrefs.lastStillTime = curTime
+            if (activityTracker.isEnteredIntoStill(intent)) {
+                if (LocalPrefs.lastStillTime < 0) {
+                    LocalPrefs.lastStillTime = curTime
+                }
             } else {
                 LocalPrefs.lastStillTime = -1
             }
         }
+
+        Log.d(javaClass.name, "lastStillTime = ${LocalPrefs.lastStillTime}")
 
         val cancelIntent = getPendingIntent(
             context = applicationContext,

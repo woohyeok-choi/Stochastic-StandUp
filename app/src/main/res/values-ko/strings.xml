@@ -131,4 +131,5 @@
     <string name="timeline_list_panel_mission_stat">%1d / %2d 회</string>
     <string name="general_switch_on">선택됨</string>
     <string name="general_switch_off">취소됨</string>
+    <string name="error_no_internect_connection">인터넷 연결 안 됨</string>
 </resources>

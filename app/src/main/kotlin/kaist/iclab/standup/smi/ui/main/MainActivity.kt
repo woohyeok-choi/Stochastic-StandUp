@@ -1,10 +1,12 @@
 package kaist.iclab.standup.smi.ui.main
 
+import android.util.Log
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.findNavController
 import androidx.navigation.ui.setupWithNavController
 import kaist.iclab.standup.smi.*
 import kaist.iclab.standup.smi.base.BaseActivity
+import kaist.iclab.standup.smi.common.AppLog
 import kaist.iclab.standup.smi.databinding.ActivityMainBinding
 import kaist.iclab.standup.smi.pref.RemotePrefs
 import org.koin.android.ext.android.inject
@@ -18,6 +20,7 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>(){
     override fun beforeExecutePendingBindings() {
         lifecycleScope.launchWhenCreated {
             RemotePrefs.sync()
+            AppLog.d(MainActivity::class.java, "${RemotePrefs.getRemoteConfig().mapValues { it.value.asString() }}")
         }
 
         StandUpService.startService(applicationContext)

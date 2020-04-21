@@ -202,17 +202,17 @@ object Notifications {
                     cancelIntent
                 )
             } else {
-                if (lastStillTime > 0) {
+                if (lastStillTime < 0) {
+                    setContentTitle(
+                        context.getString(R.string.ntf_foreground_title_stand_up)
+                    )
+                } else {
                     extras = Bundle()
                     setShowWhen(true)
                     setWhen(lastStillTime)
                     setUsesChronometer(true)
                     setContentTitle(
                         context.getString(R.string.ntf_foreground_title_sedentary)
-                    )
-                } else {
-                    setContentTitle(
-                        context.getString(R.string.ntf_foreground_title_stand_up)
                     )
                 }
                 setContentText(

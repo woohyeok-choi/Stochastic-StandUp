@@ -3,6 +3,7 @@ package kaist.iclab.standup.smi.ui.config
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.provider.Settings
 import androidx.annotation.StringRes
 import androidx.lifecycle.liveData
@@ -158,190 +159,193 @@ class ConfigViewModel(
                     }
                 }
 
-                header {
-                    id = "$PREFIX.DEBUG"
-                    title = resStr(R.string.config_header_debug)
+                if (BuildConfig.IS_LOCAL_CONFIG) {
+                    header {
+                        id = "$PREFIX.DEBUG"
+                        title = resStr(R.string.config_header_debug)
 
-                    number {
-                        id = "$PREFIX.MIN_STAY_TIME"
-                        title = resStr(R.string.config_item_min_stay_time)
-                        value = { TimeUnit.MILLISECONDS.toMinutes(RemotePrefs.minTimeForStayEvent) }
-                        formatter = { resStr(R.string.general_minute_abbrev, it) }
-                        onSave = { RemotePrefs.minTimeForStayEvent = TimeUnit.MINUTES.toMillis(it) }
-                        valueFormatter = { resStr(R.string.general_minute_abbrev, it) }
-                        min = 1L
-                        max = 40L
-                    }
-
-                    number {
-                        id = "$PREFIX.MIN_MISSION_TRIGGER_TIME"
-                        title = resStr(R.string.config_item_min_mission_trigger_time)
-                        value =
-                            { TimeUnit.MILLISECONDS.toMinutes(RemotePrefs.minTimeForMissionTrigger) }
-                        formatter = { resStr(R.string.general_minute_abbrev, it) }
-                        isSavable = { it in min..max }
-                        onSave =
-                            { RemotePrefs.minTimeForMissionTrigger = TimeUnit.MINUTES.toMillis(it) }
-                        valueFormatter = { resStr(R.string.general_minute_abbrev, it) }
-                        min = 2L
-                        max = 150L
-                    }
-
-                    number {
-                        id = "$PREFIX.MISSION_TIMEOUT"
-                        title = resStr(R.string.config_item_mission_timeout)
-                        value =
-                            { TimeUnit.MILLISECONDS.toMinutes(RemotePrefs.timeoutForMissionExpired) }
-                        formatter = { resStr(R.string.general_minute_abbrev, it) }
-                        isSavable = { it in min..max }
-                        onSave =
-                            { RemotePrefs.timeoutForMissionExpired = TimeUnit.MINUTES.toMillis(it) }
-                        valueFormatter = { resStr(R.string.general_minute_abbrev, it) }
-                        min = 1L
-                        max = 20L
-                    }
-
-                    number {
-                        id = "$PREFIX.MAX_DAILY_BUDGET"
-                        title = resStr(R.string.config_max_daily_budget)
-                        value = { RemotePrefs.maxDailyBudget.toLong() }
-                        formatter = { resStr(R.string.general_points_abbrev, it) }
-                        isSavable = { it in min..max }
-                        onSave = { RemotePrefs.maxDailyBudget = it.toInt() }
-                        valueFormatter = { resStr(R.string.general_points_abbrev, it) }
-                        min = 500
-                        max = 2000
-                    }
-
-                    number {
-                        id = "$PREFIX.MAX_DO_NOT_DISTURB"
-                        title = resStr(R.string.config_max_daily_do_not_disturb)
-                        value = { RemotePrefs.maxDoNotDisturb.toLong() }
-                        formatter = { resStr(R.string.general_times, it) }
-                        isSavable = { it in min..max }
-                        onSave = { RemotePrefs.maxDoNotDisturb = it.toInt() }
-                        valueFormatter = { resStr(R.string.general_times, it) }
-                        min = 0
-                        max = 10
-                    }
-
-                    choice {
-                        id = "$PREFIX.INCENTIVE_MODE"
-                        title = resStr(R.string.config_incentive_mode)
-                        value = { RemotePrefs.incentiveMode }
-                        onSave = { RemotePrefs.incentiveMode = it }
-                        formatter = { value ->
-                            when (value) {
-                                RemotePrefs.INCENTIVE_MODE_FIXED -> resStr(R.string.config_incentive_mode_fixed)
-                                RemotePrefs.INCENTIVE_MODE_STOCHASTIC -> resStr(R.string.config_incentive_mode_stochastic)
-                                else -> resStr(R.string.config_incentive_mode_none)
-                            }
+                        number {
+                            id = "$PREFIX.MIN_STAY_TIME"
+                            title = resStr(R.string.config_item_min_stay_time)
+                            value = { TimeUnit.MILLISECONDS.toMinutes(RemotePrefs.minTimeForStayEvent) }
+                            formatter = { resStr(R.string.general_minute_abbrev, it) }
+                            onSave = { RemotePrefs.minTimeForStayEvent = TimeUnit.MINUTES.toMillis(it) }
+                            valueFormatter = { resStr(R.string.general_minute_abbrev, it) }
+                            min = 1L
+                            max = 40L
                         }
-                        options = intArrayOf(
-                            RemotePrefs.INCENTIVE_MODE_NONE,
-                            RemotePrefs.INCENTIVE_MODE_FIXED,
-                            RemotePrefs.INCENTIVE_MODE_STOCHASTIC
-                        )
-                    }
 
-                    boolean {
-                        id = "$PREFIX.INCENTIVE_GAIN_OR_LOSS"
-                        title = resStr(R.string.config_incentive_gain_or_loss)
-                        value = { RemotePrefs.isGainIncentive }
-                        onSave = { RemotePrefs.isGainIncentive = it}
-                        formatter = {
-                            if (it) {
-                                resStr(R.string.config_incentive_gain_or_loss_gain)
-                            } else {
-                                resStr(R.string.config_incentive_gain_or_loss_loss)
-                            }
+                        number {
+                            id = "$PREFIX.MIN_MISSION_TRIGGER_TIME"
+                            title = resStr(R.string.config_item_min_mission_trigger_time)
+                            value =
+                                { TimeUnit.MILLISECONDS.toMinutes(RemotePrefs.minTimeForMissionTrigger) }
+                            formatter = { resStr(R.string.general_minute_abbrev, it) }
+                            isSavable = { it in min..max }
+                            onSave =
+                                { RemotePrefs.minTimeForMissionTrigger = TimeUnit.MINUTES.toMillis(it) }
+                            valueFormatter = { resStr(R.string.general_minute_abbrev, it) }
+                            min = 2L
+                            max = 150L
                         }
-                    }
 
-                    number {
-                        id = "$PREFIX.WIN_SIZE_IN_MILLIS"
-                        title = resStr(R.string.config_win_size_incentive_calc)
-                        value = { TimeUnit.MILLISECONDS.toDays(RemotePrefs.winSizeInMillis) }
-                        formatter = { resStr(R.string.general_days, it) }
-                        isSavable = { it in min..max }
-                        onSave = { RemotePrefs.winSizeInMillis = TimeUnit.DAYS.toMillis(it) }
-                        valueFormatter = { resStr(R.string.general_days, it) }
-                        min = 1
-                        max = 14
-                    }
+                        number {
+                            id = "$PREFIX.MISSION_TIMEOUT"
+                            title = resStr(R.string.config_item_mission_timeout)
+                            value =
+                                { TimeUnit.MILLISECONDS.toMinutes(RemotePrefs.timeoutForMissionExpired) }
+                            formatter = { resStr(R.string.general_minute_abbrev, it) }
+                            isSavable = { it in min..max }
+                            onSave =
+                                { RemotePrefs.timeoutForMissionExpired = TimeUnit.MINUTES.toMillis(it) }
+                            valueFormatter = { resStr(R.string.general_minute_abbrev, it) }
+                            min = 1L
+                            max = 20L
+                        }
 
-                    number {
-                        id = "$PREFIX.WIN_SIZE_IN_NUMBER"
-                        title = resStr(R.string.config_num_data_incentive_calc)
-                        value = { RemotePrefs.winSizeInNumber.toLong() }
-                        formatter = { RemotePrefs.winSizeInNumber.toString() }
-                        isSavable = { it in min..max }
-                        onSave = { RemotePrefs.winSizeInNumber = it.toInt() }
-                        min = 10
-                        max = 500
-                    }
+                        number {
+                            id = "$PREFIX.MAX_DAILY_BUDGET"
+                            title = resStr(R.string.config_max_daily_budget)
+                            value = { RemotePrefs.maxDailyBudget.toLong() }
+                            formatter = { resStr(R.string.general_points_abbrev, it) }
+                            isSavable = { it in min..max }
+                            onSave = { RemotePrefs.maxDailyBudget = it.toInt() }
+                            valueFormatter = { resStr(R.string.general_points_abbrev, it) }
+                            min = 500
+                            max = 2000
+                        }
 
-                    numberRange {
-                        id = "$PREFIX.INCENTIVE_RANGE"
-                        title = resStr(R.string.config_range_incentive)
-                        value =
-                            { RemotePrefs.minIncentives.toLong() to RemotePrefs.maxIncentives.toLong() }
-                        formatter = { (from, to) ->
-                            resStr(
-                                R.string.general_range,
-                                resStr(R.string.general_points_abbrev, from),
-                                resStr(R.string.general_points_abbrev, to)
+                        number {
+                            id = "$PREFIX.MAX_DO_NOT_DISTURB"
+                            title = resStr(R.string.config_max_daily_do_not_disturb)
+                            value = { RemotePrefs.maxDoNotDisturb.toLong() }
+                            formatter = { resStr(R.string.general_times, it) }
+                            isSavable = { it in min..max }
+                            onSave = { RemotePrefs.maxDoNotDisturb = it.toInt() }
+                            valueFormatter = { resStr(R.string.general_times, it) }
+                            min = 0
+                            max = 10
+                        }
+
+                        choice {
+                            id = "$PREFIX.INCENTIVE_MODE"
+                            title = resStr(R.string.config_incentive_mode)
+                            value = { RemotePrefs.incentiveMode }
+                            onSave = { RemotePrefs.incentiveMode = it }
+                            formatter = { value ->
+                                when (value) {
+                                    RemotePrefs.INCENTIVE_MODE_FIXED -> resStr(R.string.config_incentive_mode_fixed)
+                                    RemotePrefs.INCENTIVE_MODE_STOCHASTIC -> resStr(R.string.config_incentive_mode_stochastic)
+                                    else -> resStr(R.string.config_incentive_mode_none)
+                                }
+                            }
+                            options = intArrayOf(
+                                RemotePrefs.INCENTIVE_MODE_NONE,
+                                RemotePrefs.INCENTIVE_MODE_FIXED,
+                                RemotePrefs.INCENTIVE_MODE_STOCHASTIC
                             )
                         }
-                        isSavable =
-                            { (from, to) -> from in (min..max) && to in (min..max) && from <= to }
-                        onSave = { (from, to) ->
-                            RemotePrefs.minIncentives = from.toInt()
-                            RemotePrefs.maxIncentives = to.toInt()
+
+                        boolean {
+                            id = "$PREFIX.INCENTIVE_GAIN_OR_LOSS"
+                            title = resStr(R.string.config_incentive_gain_or_loss)
+                            value = { RemotePrefs.isGainIncentive }
+                            onSave = { RemotePrefs.isGainIncentive = it}
+                            formatter = {
+                                if (it) {
+                                    resStr(R.string.config_incentive_gain_or_loss_gain)
+                                } else {
+                                    resStr(R.string.config_incentive_gain_or_loss_loss)
+                                }
+                            }
                         }
-                        valueFormatter = { resStr(R.string.general_points_abbrev, it) }
-                        min = 10
-                        max = 1000
-                    }
 
-                    number {
-                        id = "$PREFIX.INCENTIVE_DEFAULT"
-                        title = resStr(R.string.config_default_incentive)
-                        value = { RemotePrefs.defaultIncentives.toLong() }
-                        formatter = { resStr(R.string.general_points_abbrev, it) }
-                        isSavable = { it in min..max }
-                        onSave = { RemotePrefs.defaultIncentives = it.toInt() }
-                        valueFormatter = { resStr(R.string.general_points_abbrev, it) }
-                        min = 10
-                        max = 1000
-                    }
+                        number {
+                            id = "$PREFIX.WIN_SIZE_IN_MILLIS"
+                            title = resStr(R.string.config_win_size_incentive_calc)
+                            value = { TimeUnit.MILLISECONDS.toDays(RemotePrefs.winSizeInMillis) }
+                            formatter = { resStr(R.string.general_days, it) }
+                            isSavable = { it in min..max }
+                            onSave = { RemotePrefs.winSizeInMillis = TimeUnit.DAYS.toMillis(it) }
+                            valueFormatter = { resStr(R.string.general_days, it) }
+                            min = 1
+                            max = 14
+                        }
 
-                    number {
-                        id = "$PREFIX.INCENTIVE_UNIT"
-                        title = resStr(R.string.config_unit_incentive)
-                        value = { RemotePrefs.unitIncentives.toLong() }
-                        formatter = { resStr(R.string.general_points_abbrev, it) }
-                        isSavable = { it in min..max }
-                        onSave = { RemotePrefs.unitIncentives = it.toInt() }
-                        valueFormatter = { resStr(R.string.general_points_abbrev, it) }
-                        min = 10
-                        max = 100
-                    }
+                        number {
+                            id = "$PREFIX.WIN_SIZE_IN_NUMBER"
+                            title = resStr(R.string.config_num_data_incentive_calc)
+                            value = { RemotePrefs.winSizeInNumber.toLong() }
+                            formatter = { RemotePrefs.winSizeInNumber.toString() }
+                            isSavable = { it in min..max }
+                            onSave = { RemotePrefs.winSizeInNumber = it.toInt() }
+                            min = 10
+                            max = 500
+                        }
 
-                    readOnly {
-                        id = "$PREFIX.MOCK_ENTER_STILL"
-                        title = resStr(R.string.config_mock_still_event)
-                        formatter = { resStr(R.string.config_mock_still_event_desc) }
-                        onAction = { StandUpIntentService.enterIntoStill(it) }
-                    }
+                        numberRange {
+                            id = "$PREFIX.INCENTIVE_RANGE"
+                            title = resStr(R.string.config_range_incentive)
+                            value =
+                                { RemotePrefs.minIncentives.toLong() to RemotePrefs.maxIncentives.toLong() }
+                            formatter = { (from, to) ->
+                                resStr(
+                                    R.string.general_range,
+                                    resStr(R.string.general_points_abbrev, from),
+                                    resStr(R.string.general_points_abbrev, to)
+                                )
+                            }
+                            isSavable =
+                                { (from, to) -> from in (min..max) && to in (min..max) && from <= to }
+                            onSave = { (from, to) ->
+                                RemotePrefs.minIncentives = from.toInt()
+                                RemotePrefs.maxIncentives = to.toInt()
+                            }
+                            valueFormatter = { resStr(R.string.general_points_abbrev, it) }
+                            min = 10
+                            max = 1000
+                        }
 
-                    readOnly {
-                        id = "$PREFIX.MOCK_EXIT_STILL"
-                        title = resStr(R.string.config_mock_stand_up_event)
-                        formatter = { resStr(R.string.config_mock_stand_up_event_desc) }
-                        onAction = { StandUpIntentService.exitFromStill(it) }
+                        number {
+                            id = "$PREFIX.INCENTIVE_DEFAULT"
+                            title = resStr(R.string.config_default_incentive)
+                            value = { RemotePrefs.defaultIncentives.toLong() }
+                            formatter = { resStr(R.string.general_points_abbrev, it) }
+                            isSavable = { it in min..max }
+                            onSave = { RemotePrefs.defaultIncentives = it.toInt() }
+                            valueFormatter = { resStr(R.string.general_points_abbrev, it) }
+                            min = 10
+                            max = 1000
+                        }
+
+                        number {
+                            id = "$PREFIX.INCENTIVE_UNIT"
+                            title = resStr(R.string.config_unit_incentive)
+                            value = { RemotePrefs.unitIncentives.toLong() }
+                            formatter = { resStr(R.string.general_points_abbrev, it) }
+                            isSavable = { it in min..max }
+                            onSave = { RemotePrefs.unitIncentives = it.toInt() }
+                            valueFormatter = { resStr(R.string.general_points_abbrev, it) }
+                            min = 10
+                            max = 100
+                        }
+
+                        readOnly {
+                            id = "$PREFIX.MOCK_ENTER_STILL"
+                            title = resStr(R.string.config_mock_still_event)
+                            formatter = { resStr(R.string.config_mock_still_event_desc) }
+                            onAction = { StandUpIntentService.enterIntoStill(it) }
+                        }
+
+                        readOnly {
+                            id = "$PREFIX.MOCK_EXIT_STILL"
+                            title = resStr(R.string.config_mock_stand_up_event)
+                            formatter = { resStr(R.string.config_mock_stand_up_event_desc) }
+                            onAction = { StandUpIntentService.exitFromStill(it) }
+                        }
                     }
                 }
+
 
                 header {
                     id = "$PREFIX.OTHERS"

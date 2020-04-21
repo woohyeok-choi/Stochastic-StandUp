@@ -25,6 +25,7 @@
 
     <!-- Error -->
     <string name="error_general">Error</string>
+    <string name="error_no_internect_connection">No internet connection</string>
     <string name="error_google_play_service_outdated">Outdated version of Google Play service</string>
     <string name="error_google_api">Google Api error</string>
     <string name="error_no_google_account">No signed Google account</string>

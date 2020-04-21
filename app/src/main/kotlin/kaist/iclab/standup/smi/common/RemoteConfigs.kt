@@ -25,6 +25,8 @@ open class FirebaseRemoteConfigHolder(name: String,
         get() = mLocalMode.get()
         set(value) { mLocalMode.set(value) }
 
+    fun getRemoteConfig() = FirebaseRemoteConfig.getInstance().all
+
     suspend fun sync() {
         val instance = FirebaseRemoteConfig.getInstance()
         val setting = FirebaseRemoteConfigSettings.Builder()

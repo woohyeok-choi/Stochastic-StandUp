@@ -1,22 +1,20 @@
 package kaist.iclab.standup.smi.ui.dashboard
 
 import android.content.Context
-import android.util.Log
 import androidx.lifecycle.*
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import kaist.iclab.standup.smi.base.BaseViewModel
-import kaist.iclab.standup.smi.common.*
+import kaist.iclab.standup.smi.common.Status
+import kaist.iclab.standup.smi.common.confidenceInterval
+import kaist.iclab.standup.smi.common.sumByLong
 import kaist.iclab.standup.smi.data.Event
-import kaist.iclab.standup.smi.data.Mission
 import kaist.iclab.standup.smi.pref.LocalPrefs
 import kaist.iclab.standup.smi.pref.RemotePrefs
 import kaist.iclab.standup.smi.repository.*
-import kaist.iclab.standup.smi.ui.config.config
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.joda.time.DateTime
 import org.joda.time.DateTimeZone
-import java.util.concurrent.TimeUnit
 import kotlin.math.abs
 
 class DashboardViewModel(
@@ -58,46 +56,39 @@ class DashboardViewModel(
     val currentDateTime: MutableLiveData<DateTime> = MutableLiveData()
 
     private val dailyEvents: MutableLiveData<List<Event>> = MutableLiveData()
-    private val dailySedentaryEvents: MutableLiveData<List<SedentaryDurationEvent>> =
+    private val dailyMissionEvents: MutableLiveData<List<SedentaryMissionEvent>> =
         MutableLiveData()
-    private val dailyMissions: MutableLiveData<List<Mission>> = MutableLiveData()
 
-    private val weeklySedentaryEvents: MutableLiveData<Map<DateTime, List<SedentaryDurationEvent>>> =
+    private val weeklyMissionEvents: MutableLiveData<Map<DateTime, List<SedentaryMissionEvent>>> =
         MutableLiveData()
-    private val weeklyMissions: MutableLiveData<Map<DateTime, List<Mission>>> = MutableLiveData()
 
     val dailyLoadStatus: MutableLiveData<Status> = MutableLiveData(Status.init())
     val weeklyLoadStatus: MutableLiveData<Status> = MutableLiveData(Status.init())
 
     private suspend fun loadDailyData(dateTime: DateTime) {
         val (from, to) = dateTime.let { curTime ->
-            val timestamp = System.currentTimeMillis()
             val dayStart = curTime.withTimeAtStartOfDay().millis
             val start = dayStart + LocalPrefs.activeStartTimeMs
-            val end = (dayStart + LocalPrefs.activeEndTimeMs).coerceAtMost(timestamp)
+            val end = (dayStart + LocalPrefs.activeEndTimeMs)
             start to end
         }
 
         val events = eventRepository.getEvents(from, to)
-        val durationEvents = events.toDurationEvents(from ,to)
         val missions = missionRepository.getTriggeredMissions(
             fromTime = from,
             toTime = to
         )
-
-        AppLog.d(javaClass, "events = $events / duration = $durationEvents")
+        val mergedEvents = events.toSedentaryMissionEvent(fromTime = from, toTime = to, missions = missions)
 
         dailyEvents.postValue(events)
-        dailySedentaryEvents.postValue(durationEvents)
-        dailyMissions.postValue(missions)
+        dailyMissionEvents.postValue(mergedEvents)
     }
 
     private suspend fun loadWeeklyData(dateTime: DateTime) {
         val timeRanges = (0..7).map { len ->
-            val curTimestamp = System.currentTimeMillis()
             val dayStart = dateTime.withTimeAtStartOfDay().minusDays(len).millis
             val start = dayStart + LocalPrefs.activeStartTimeMs
-            val end = (dayStart + LocalPrefs.activeEndTimeMs).coerceAtMost(curTimestamp)
+            val end = (dayStart + LocalPrefs.activeEndTimeMs)
             start to end
         }
 
@@ -105,23 +96,17 @@ class DashboardViewModel(
         val toTime = timeRanges.maxBy { it.second }?.second
 
         if (fromTime == null || toTime == null) {
-            weeklySedentaryEvents.postValue(mapOf())
-            weeklyMissions.postValue(mapOf())
+            weeklyMissionEvents.postValue(mapOf())
         } else {
             val timeZone = DateTimeZone.getDefault()
-            val events = eventRepository.getEvents(fromTime, toTime).let { events ->
-                timeRanges.associate { (from, to) ->
-                    DateTime(from, timeZone) to events.toDurationEvents(from, to)
-                }
-            }
-            val missions = missionRepository.getTriggeredMissions(fromTime, toTime).let { missions ->
-                timeRanges.associate { (from, to) ->
-                    DateTime(from, timeZone) to missions.filter { it.triggerTime in (from until to) }
-                }
+            val events = eventRepository.getEvents(fromTime, toTime)
+            val missions = missionRepository.getTriggeredMissions(fromTime, toTime)
+
+            val mergedEvents = timeRanges.associate { (from, to) ->
+                DateTime(from, timeZone) to events.toSedentaryMissionEvent(fromTime = from, toTime = to, missions = missions)
             }
 
-            weeklySedentaryEvents.postValue(events)
-            weeklyMissions.postValue(missions)
+            weeklyMissionEvents.postValue(mergedEvents)
         }
     }
 
@@ -150,49 +135,50 @@ class DashboardViewModel(
      *
      */
 
-    val dailyNumMissionsTriggered = dailyMissions.map { data -> data?.size ?: 0 }
-    val dailyNumMissionsSuccess = dailyMissions.map { data ->
-        data?.filter { it.isSucceeded() }?.size ?: 0
+    val dailyNumMissionsTriggered = dailyMissionEvents.map { data ->
+        data?.sumBy { it.missions.size } ?: 0
     }
-    val dailyMissionSuccessRate = dailyMissions.map { data ->
-        val nSuccess = data?.filter { it.isSucceeded() } ?.size ?: 0
-        val nMission = data.size
+    val dailyNumMissionsSuccess = dailyMissionEvents.map { data ->
+        data?.sumBy { datum -> datum.missions.filter { it.isSucceeded() }.size } ?: 0
+    }
+    val dailyMissionSuccessRate = dailyMissionEvents.map { data ->
+        val nSuccess = data?.sumBy { datum -> datum.missions.filter { it.isSucceeded() }.size } ?: 0
+        val nMission = data?.sumBy { it.missions.size } ?: 0
         if (nMission == 0) 0F else nSuccess.toFloat() / nMission
     }
 
     val dailyIncentiveTotal = liveData(ioContext) { emit(RemotePrefs.maxDailyBudget) }
-    val dailyIncentiveObtained = dailyMissions.map { data ->
+    val dailyIncentiveObtained = dailyMissionEvents.map { data ->
         val isGainMode = RemotePrefs.isGainIncentive
         val maxBudget = RemotePrefs.maxDailyBudget
 
-        val incentives = data?.sumIncentives() ?: 0
+        val incentives = data?.sumBy { it.missions.sumIncentives() } ?: 0
 
         if (isGainMode) {
             incentives.coerceIn(0, maxBudget)
         } else {
-            (maxBudget - incentives).coerceIn(0, maxBudget)
+            (maxBudget - abs(incentives)).coerceIn(0, maxBudget)
         }
     }
-    val dailyIncentiveRate = dailyIncentiveObtained.map { it.toFloat() / RemotePrefs.maxDailyBudget }
+    val dailyIncentiveRate =
+        dailyIncentiveObtained.map { it.toFloat() / RemotePrefs.maxDailyBudget }
 
-    val dailyTotalSedentaryMillis = dailySedentaryEvents.map { data ->
-            data?.sumByLong { it.duration } ?: 0
-        }
-    val dailyAvgSedentaryMillis = dailySedentaryEvents.map { data ->
-        data?.map { it.duration }?.average()?.toLong() ?: 0
+    val dailyTotalSedentaryMillis = dailyMissionEvents.map { data ->
+        data?.sumByLong { it.event.duration } ?: 0
+    }
+    val dailyAvgSedentaryMillis = dailyMissionEvents.map { data ->
+        data?.map { it.event.duration }?.average()?.toLong() ?: 0
     }
     val dailyTotalNumStandUp = dailyEvents.map { data ->
-        data?.map { !it.isEntered }?.size ?: 0
+        data?.filter { !it.isEntered }?.size ?: 0
     }
 
     /**
      * Weekly Stats
      */
-    private val weeklyAvgSedentaryMillis = weeklySedentaryEvents.map { data ->
+    private val weeklyAvgSedentaryMillis = weeklyMissionEvents.map { data ->
         data?.mapValues { (_, events) ->
-            val durations = events.map { it.duration }.filter {
-                it > RemotePrefs.minTimeForStayEvent
-            }
+            val durations = events.map { it.event.duration }
             val mean = durations.average().toLong()
             val confInt = durations.confidenceInterval(alpha = 0.05, isSample = true).toLong()
             val (lower, upper) = (mean - confInt).coerceAtLeast(0) to (mean + confInt)
@@ -200,46 +186,46 @@ class DashboardViewModel(
         } ?: mapOf()
     }
 
-    private val weeklyIncentiveObtained =
-        weeklyMissions.map { data ->
-            data?.mapValues { (_, missions) ->
+    private val weeklyIncentiveObtained = weeklyMissionEvents.map { data ->
+            data?.mapValues { (_, events) ->
                 val isGainMode = RemotePrefs.isGainIncentive
                 val maxBudget = RemotePrefs.maxDailyBudget
-                val incentives = missions.sumIncentives()
+                val incentives = events.sumBy { it.missions.sumIncentives() }
 
                 if (isGainMode) {
                     incentives.coerceIn(0, maxBudget)
                 } else {
-                    (maxBudget - incentives).coerceIn(0, maxBudget)
+                    (maxBudget - abs(incentives)).coerceIn(0, maxBudget)
                 }
             } ?: mapOf()
         }
 
-    val weeklyChartData = MediatorLiveData<Map<DateTime, Pair<Triple<Long, Long, Long>, Int>>>().apply {
-        addSource(weeklyAvgSedentaryMillis) { millis ->
-            val incentives = weeklyIncentiveObtained.value
-            if (millis != null && incentives != null) {
-                val keys = millis.keys.union(incentives.keys)
-                val mergedData = keys.associateWith { time ->
-                    val sedentaryMillis = millis[time] ?: Triple(0L, 0L, 0L)
-                    val incentive = incentives[time] ?: 0
-                    sedentaryMillis to incentive
+    val weeklyChartData =
+        MediatorLiveData<Map<DateTime, Pair<Triple<Long, Long, Long>, Int>>>().apply {
+            addSource(weeklyAvgSedentaryMillis) { millis ->
+                val incentives = weeklyIncentiveObtained.value
+                if (millis != null && incentives != null) {
+                    val keys = millis.keys.union(incentives.keys)
+                    val mergedData = keys.associateWith { time ->
+                        val sedentaryMillis = millis[time] ?: Triple(0L, 0L, 0L)
+                        val incentive = incentives[time] ?: 0
+                        sedentaryMillis to incentive
+                    }
+                    postValue(mergedData)
                 }
-                postValue(mergedData)
             }
-        }
 
-        addSource(weeklyIncentiveObtained) { incentives ->
-            val millis = weeklyAvgSedentaryMillis.value
-            if (millis != null && incentives != null) {
-                val keys = millis.keys.union(incentives.keys)
-                val mergedData = keys.associateWith { time ->
-                    val sedentaryMillis = millis[time] ?: Triple(0L, 0L, 0L)
-                    val incentive = incentives[time] ?: 0
-                    sedentaryMillis to incentive
+            addSource(weeklyIncentiveObtained) { incentives ->
+                val millis = weeklyAvgSedentaryMillis.value
+                if (millis != null && incentives != null) {
+                    val keys = millis.keys.union(incentives.keys)
+                    val mergedData = keys.associateWith { time ->
+                        val sedentaryMillis = millis[time] ?: Triple(0L, 0L, 0L)
+                        val incentive = incentives[time] ?: 0
+                        sedentaryMillis to incentive
+                    }
+                    postValue(mergedData)
                 }
-                postValue(mergedData)
             }
         }
-    }
 }

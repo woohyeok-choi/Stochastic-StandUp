@@ -19,7 +19,7 @@ class StandUpApplication : Application() {
         super.onCreate()
 
         Koap.bind(this, LocalPrefs, RemotePrefs)
-        RemotePrefs.localMode = BuildConfig.DEBUG
+        RemotePrefs.localMode = BuildConfig.IS_LOCAL_CONFIG
         JodaTimeAndroid.init(this)
         Places.initialize(this, getString(R.string.google_api_key), Locale.getDefault())
         MapsInitializer.initialize(this)

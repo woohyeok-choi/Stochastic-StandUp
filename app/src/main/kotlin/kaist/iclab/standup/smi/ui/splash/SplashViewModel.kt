@@ -31,17 +31,27 @@ class SplashViewModel(
     }
 
     fun doSignIn(activity: Activity) = tryLaunch {
-        GoogleApiAvailability.getInstance()
-            .makeGooglePlayServicesAvailable(activity)
-            .asSuspend(throwable = error(R.string.error_google_play_service_outdated))
+        if (context.checkNetworkConnection()) {
+            GoogleApiAvailability.getInstance()
+                .makeGooglePlayServicesAvailable(activity)
+                .asSuspend(throwable = error(R.string.error_google_play_service_outdated))
 
-        val options = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-            .requestIdToken(activity.getString(R.string.default_web_client_id))
-            .requestEmail()
-            .build()
-        val client = GoogleSignIn.getClient(activity, options)
+            val options = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestIdToken(activity.getString(R.string.default_web_client_id))
+                .requestEmail()
+                .build()
+            val client = GoogleSignIn.getClient(activity, options)
 
-        ui { navigator?.navigateSignIn(client.signInIntent) }
+            ui { navigator?.navigateSignIn(client.signInIntent) }
+        } else {
+            val currentUser = FirebaseAuth.getInstance().currentUser
+
+            if (currentUser != null) {
+                ui { navigator?.navigateAuth(currentUser)}
+            } else {
+                ui { navigator?.navigateError(error(R.string.error_no_internect_connection)) }
+            }
+        }
     }
 
     fun doAuth(intent: Intent?) = tryLaunch {

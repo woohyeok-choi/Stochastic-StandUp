@@ -1,5 +1,6 @@
 package kaist.iclab.standup.smi.repository
 
+import kaist.iclab.standup.smi.common.toGeoHash
 import kaist.iclab.standup.smi.data.Event
 import kaist.iclab.standup.smi.data.Mission
 import kaist.iclab.standup.smi.data.PlaceStat
@@ -14,7 +15,7 @@ data class SedentaryDurationEvent(
 )
 
 data class SedentaryMissionEvent(
-    val place: PlaceStat,
+    val place: PlaceStat?,
     val event: SedentaryDurationEvent,
     val missions: List<Mission> = listOf()
 )
@@ -38,15 +39,22 @@ fun Collection<Mission>.sumIncentives() = sumBy { mission ->
 }
 
 
-fun Collection<Event>.toDurationEvents(fromTime: Long, toTime: Long) : List<SedentaryDurationEvent> {
+private fun Collection<Event>.toDurationEvents(fromTime: Long, toTime: Long, curTime: Long) : List<SedentaryDurationEvent> {
+    val adjustToTime = toTime.coerceAtMost(curTime)
+    val curTimeIsAfterToTime = curTime >= toTime
+
     val subEvents = filter { event ->
         val timestamp = event.timestamp
-        timestamp in (fromTime until toTime)
+        timestamp in (fromTime until adjustToTime)
     }.sortedBy { it.timestamp }
 
     val originalEvents: List<SedentaryDurationEvent> = subEvents.foldIndexed(mutableListOf()) { index, acc, event ->
         val timestamp = event.timestamp
         if (timestamp < 0) return@foldIndexed acc
+
+        val latitude = event.latitude
+        val longitude = event.longitude
+        val geoHash = (latitude to longitude).toGeoHash() ?: ""
         /**
          * If the first item is an exiting event,
          * it means that an entering event is before the fromTime.
@@ -56,11 +64,11 @@ fun Collection<Event>.toDurationEvents(fromTime: Long, toTime: Long) : List<Sede
             acc.add(
                 SedentaryDurationEvent(
                     startTime = fromTime,
-                    endTime = timestamp.coerceIn(fromTime, toTime),
+                    endTime = timestamp.coerceIn(fromTime, adjustToTime),
                     duration = duration,
-                    latitude = event.latitude,
-                    longitude = event.longitude,
-                    geoHash = event.geoHash
+                    latitude = latitude,
+                    longitude = longitude,
+                    geoHash = geoHash
                 )
             )
         }
@@ -70,15 +78,15 @@ fun Collection<Event>.toDurationEvents(fromTime: Long, toTime: Long) : List<Sede
          * it means that an exiting event is after the toTime (or, not existed)
          */
         if (index == subEvents.lastIndex && event.isEntered) {
-            val duration = toTime - timestamp
+            val duration = adjustToTime - timestamp
             acc.add(
                 SedentaryDurationEvent(
-                    startTime = timestamp.coerceIn(fromTime, toTime),
-                    endTime = null,
+                    startTime = timestamp.coerceIn(fromTime, adjustToTime),
+                    endTime = if (curTimeIsAfterToTime) toTime else Long.MAX_VALUE,
                     duration = duration,
-                    latitude = event.latitude,
-                    longitude = event.longitude,
-                    geoHash = event.geoHash
+                    latitude = latitude,
+                    longitude = longitude,
+                    geoHash = geoHash
                 )
             )
         }
@@ -93,12 +101,12 @@ fun Collection<Event>.toDurationEvents(fromTime: Long, toTime: Long) : List<Sede
             (nextEvent.timestamp - timestamp).also { duration ->
                 acc.add(
                     SedentaryDurationEvent(
-                        startTime = timestamp.coerceIn(fromTime, toTime),
-                        endTime = (timestamp + duration).coerceIn(fromTime, toTime),
+                        startTime = timestamp.coerceIn(fromTime, adjustToTime),
+                        endTime = (timestamp + duration).coerceIn(fromTime, adjustToTime),
                         duration = duration,
-                        latitude = event.latitude,
-                        longitude = event.longitude,
-                        geoHash = event.geoHash
+                        latitude = latitude,
+                        longitude = longitude,
+                        geoHash = geoHash
                     )
                 )
             }
@@ -111,58 +119,64 @@ fun Collection<Event>.toDurationEvents(fromTime: Long, toTime: Long) : List<Sede
         if (event.isEntered && nextEvent?.isEntered == true) {
             acc.add(
                 SedentaryDurationEvent(
-                    startTime = timestamp.coerceIn(fromTime, toTime),
+                    startTime = timestamp.coerceIn(fromTime, adjustToTime),
                     endTime = null,
                     duration = 0,
-                    latitude = event.latitude,
-                    longitude = event.longitude,
-                    geoHash = event.geoHash
+                    latitude = latitude,
+                    longitude = longitude,
+                    geoHash = geoHash
                 )
             )
         }
 
         return@foldIndexed acc
     }
-    val adjustedEvents = mutableListOf<SedentaryDurationEvent>()
-    var startTime = -1L
 
-    originalEvents.sortedBy { it.startTime }.forEach { event ->
-        if (event.endTime == null) {
-            if (startTime < 0) startTime = event.startTime.coerceIn(fromTime, toTime)
+    val adjustedEvents = mutableListOf<SedentaryDurationEvent>()
+
+    var adjEvent: SedentaryDurationEvent? = null
+    for (event in originalEvents.sortedBy { it.startTime }) {
+        if (event.endTime == null && adjEvent == null) {
+            adjEvent = event
         }
 
         if (event.endTime != null) {
-            if (startTime > 0) {
-                val adjustedEvent = SedentaryDurationEvent(
+            if (adjEvent != null) {
+                val startTime = adjEvent.startTime
+                val newEvent = event.copy(
                     startTime = startTime,
-                    endTime = event.endTime,
-                    duration = event.endTime - startTime,
-                    latitude = event.latitude,
-                    longitude = event.longitude,
-                    geoHash = event.geoHash
+                    duration = event.endTime.coerceAtMost(adjustToTime) - startTime
                 )
-                adjustedEvents.add(adjustedEvent)
-                startTime = -1L
+                adjustedEvents.add(newEvent)
+                adjEvent = null
             } else {
                 adjustedEvents.add(event)
             }
         }
     }
+    if (adjEvent != null) {
+        adjustedEvents.add(adjEvent.copy(
+            endTime = Long.MAX_VALUE,
+            duration = adjustToTime - adjEvent.startTime
+        ))
+    }
 
-    return adjustedEvents
+    return adjustedEvents.filter { it.duration > 0 }
 }
 
 fun Collection<Event>.toSedentaryMissionEvent(
     fromTime: Long,
     toTime: Long,
-    missions: List<Mission>,
-    places: List<PlaceStat>
+    missions: List<Mission> = listOf(),
+    places: List<PlaceStat> = listOf()
 ) : List<SedentaryMissionEvent> {
+    val curTime = System.currentTimeMillis()
     val placesMap = places.associateBy { it.id }
-    return toDurationEvents(fromTime, toTime).mapNotNull {  event ->
-        val place = placesMap[event.geoHash] ?: return@mapNotNull null
+
+    return toDurationEvents(fromTime, toTime, curTime).map { event ->
+        val place = placesMap[event.geoHash]
         val includedMissions = missions.filter { mission ->
-            mission.triggerTime in (event.startTime until (event.endTime ?: toTime))
+            mission.triggerTime in (event.startTime until (event.endTime ?: toTime.coerceAtMost(curTime)))
         }
         SedentaryMissionEvent(
             event = event,

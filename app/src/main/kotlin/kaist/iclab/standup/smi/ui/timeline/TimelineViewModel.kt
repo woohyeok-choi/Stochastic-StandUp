@@ -50,12 +50,15 @@ class TimelineViewModel (
     }
 
     val dailyIncentiveObtained = dailyStats.map { data ->
+        val isGainMode = RemotePrefs.isGainIncentive
+        val maxBudget = RemotePrefs.maxDailyBudget
+
         val incentive = data?.sumBy { datum -> datum.missions.sumIncentives() } ?: 0
 
-        if (RemotePrefs.isGainIncentive) {
-            incentive.coerceIn(0, RemotePrefs.maxDailyBudget)
+        if (isGainMode) {
+            incentive.coerceIn(0, maxBudget)
         } else {
-            (RemotePrefs.maxDailyBudget - abs(incentive)).coerceIn(0, RemotePrefs.maxDailyBudget)
+            (maxBudget - abs(incentive)).coerceIn(0, RemotePrefs.maxDailyBudget)
         }
     }
 
@@ -76,11 +79,10 @@ class TimelineViewModel (
         dailyLoadStatus.postValue(Status.loading())
 
         try {
-            val currentTime = System.currentTimeMillis()
             val (from, to) = dateTime.let { curTime ->
                 val dayStart = curTime.withTimeAtStartOfDay().millis
                 val start = dayStart + LocalPrefs.activeStartTimeMs
-                val end = (dayStart + LocalPrefs.activeEndTimeMs).coerceAtMost(currentTime)
+                val end = (dayStart + LocalPrefs.activeEndTimeMs)
                 start to end
             }
 

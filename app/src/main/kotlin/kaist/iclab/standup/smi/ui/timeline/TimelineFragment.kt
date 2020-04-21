@@ -227,7 +227,7 @@ class TimelineFragment : BaseFragment<FragmentTimelineBinding, TimelineViewModel
 
     override fun onLongClick(item: SedentaryMissionEvent) {
         lifecycleScope.launch {
-            renamePlace(placeName = item.place.name, latitude = item.event.latitude, longitude = item.event.longitude)
+            renamePlace(placeName = item.place?.name ?: "", latitude = item.event.latitude, longitude = item.event.longitude)
         }
     }
 

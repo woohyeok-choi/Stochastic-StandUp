@@ -52,12 +52,4 @@ object RemotePrefs : FirebaseRemoteConfigHolder(BuildConfig.REMOTE_PREF_NAME) {
 
     var incentiveMode: Int by FirebaseRemoteConfigInt(default = INCENTIVE_MODE_NONE)
     var isGainIncentive: Boolean by FirebaseRemoteConfigBoolean(default = true)
-
-    val maxProlongedSedentaryTime: Long by lazy { minTimeForMissionTrigger + timeoutForMissionExpired }
-
-    /**
-     * Belows are used only for UI only. Do not change.
-     */
-    var maxStayTimePerSession: Long by FirebaseRemoteConfigLong(default = TimeUnit.HOURS.toMillis(3))
-    var maxDailyNumProlongedSedentariness: Int by FirebaseRemoteConfigInt(default = 6)
 }

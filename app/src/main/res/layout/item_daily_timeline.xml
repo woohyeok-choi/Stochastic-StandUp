@@ -84,7 +84,7 @@
                 android:layout_height="wrap_content"
                 android:ellipsize="end"
                 android:gravity="top|start"
-                android:text="@{event.place.name}"
+                android:text='@{event.place.name ?? ""}'
                 android:paddingBottom="@dimen/txt_bottom_padding"
                 android:textColor="@color/black"
                 android:textSize="@dimen/txt_size_medium"
@@ -97,7 +97,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:gravity="top|start"
-                android:text='@{@string/general_range(DateUtils.formatDateTime(context, event.event.startTime, DateUtils.FORMAT_SHOW_TIME), (event.event.endTime == null ? "" : DateUtils.formatDateTime(context, event.event.endTime, DateUtils.FORMAT_SHOW_TIME)))}'
+                android:text='@{@string/general_range(DateUtils.formatDateTime(context, event.event.startTime, DateUtils.FORMAT_SHOW_TIME), (event.event.endTime > System.currentTimeMillis() ? "" : DateUtils.formatDateTime(context, event.event.endTime, DateUtils.FORMAT_SHOW_TIME)))}'
                 android:paddingBottom="@dimen/txt_bottom_padding"
                 android:textColor="@color/grey"
                 android:textSize="@dimen/txt_size_small"
@@ -111,7 +111,7 @@
                 android:gravity="top|start"
                 android:maxLines="2"
                 android:ellipsize="end"
-                android:text="@{event.place.address}"
+                android:text='@{event.place.address ?? ""}'
                 android:textColor="@color/grey"
                 android:textSize="@dimen/txt_size_default"
                 android:paddingBottom="@dimen/txt_bottom_padding"
