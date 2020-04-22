@@ -1,7 +1,11 @@
 package kaist.iclab.standup.smi.ui.splash
 
+import android.app.Activity
 import android.content.Intent
 import android.os.SystemClock
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount
+import com.google.android.gms.fitness.FitnessOptions
 import com.google.firebase.auth.FirebaseUser
 import kaist.iclab.standup.smi.BR
 import kaist.iclab.standup.smi.R
@@ -26,8 +30,11 @@ class SplashActivity : BaseActivity<ActivitySplashBinding, SplashViewModel>(), S
         startActivityForResult(intent, REQUEST_CODE_GOOGLE_SIGN_IN)
     }
 
-    override fun navigateAuth(user: FirebaseUser) {
-        toast(R.string.toast_welcome, user.displayName ?: user.email ?: "")
+    override fun navigateFitnessAuth(account: GoogleSignInAccount, option: FitnessOptions) {
+        GoogleSignIn.requestPermissions(this, REQUEST_CODE_GOOGLE_FITNESS, account, option)
+    }
+
+    override fun navigateAuth() {
         viewModel.doPermission()
     }
 
@@ -61,8 +68,12 @@ class SplashActivity : BaseActivity<ActivitySplashBinding, SplashViewModel>(), S
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
+
         when (requestCode) {
             REQUEST_CODE_GOOGLE_SIGN_IN -> viewModel.doAuth(data)
+            REQUEST_CODE_GOOGLE_FITNESS -> {
+                if (resultCode == Activity.RESULT_OK) viewModel.doPermission()
+            }
             REQUEST_CODE_PERMISSION_SETTING -> viewModel.doPermissionAgain()
             REQUEST_CODE_WHITE_LIST -> viewModel.doWhitelistAgain()
         }
@@ -72,5 +83,6 @@ class SplashActivity : BaseActivity<ActivitySplashBinding, SplashViewModel>(), S
         const val REQUEST_CODE_PERMISSION_SETTING = 0x09
         const val REQUEST_CODE_WHITE_LIST = 0x10
         const val REQUEST_CODE_GOOGLE_SIGN_IN = 0x11
+        const val REQUEST_CODE_GOOGLE_FITNESS = 0x12
     }
 }

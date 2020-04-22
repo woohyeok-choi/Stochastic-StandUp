@@ -2,6 +2,8 @@ package kaist.iclab.standup.smi
 
 import android.Manifest
 import android.os.Build
+import com.google.android.gms.fitness.FitnessOptions
+import com.google.android.gms.fitness.data.DataType
 import com.google.android.gms.location.ActivityTransition
 import com.google.android.gms.location.ActivityTransitionRequest
 import com.google.android.gms.location.DetectedActivity
@@ -13,6 +15,7 @@ import com.google.maps.GeoApiContext
 import kaist.iclab.standup.smi.repository.*
 import kaist.iclab.standup.smi.tracker.ActivityTracker
 import kaist.iclab.standup.smi.tracker.LocationTracker
+import kaist.iclab.standup.smi.tracker.StepCountTracker
 import kaist.iclab.standup.smi.ui.config.ConfigViewModel
 import kaist.iclab.standup.smi.ui.dashboard.DashboardViewModel
 import kaist.iclab.standup.smi.ui.main.MainViewModel
@@ -26,6 +29,7 @@ import java.util.concurrent.TimeUnit
 
 private val DEFAULT_PERMISSIONS = arrayOf(
     Manifest.permission.INTERNET,
+    Manifest.permission.RECEIVE_BOOT_COMPLETED,
     Manifest.permission.ACCESS_WIFI_STATE,
     Manifest.permission.ACCESS_COARSE_LOCATION,
     Manifest.permission.ACCESS_FINE_LOCATION,
@@ -37,10 +41,16 @@ private val DEFAULT_PERMISSIONS = arrayOf(
 )
 
 private val PERMISSIONS =
-    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) DEFAULT_PERMISSIONS else DEFAULT_PERMISSIONS + arrayOf(
-        Manifest.permission.ACTIVITY_RECOGNITION,
-        Manifest.permission.ACCESS_BACKGROUND_LOCATION
-    )
+    when {
+        Build.VERSION.SDK_INT == Build.VERSION_CODES.P -> DEFAULT_PERMISSIONS + arrayOf(
+            Manifest.permission.FOREGROUND_SERVICE
+        )
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q -> DEFAULT_PERMISSIONS + arrayOf(
+                Manifest.permission.ACTIVITY_RECOGNITION,
+                Manifest.permission.ACCESS_BACKGROUND_LOCATION
+            )
+        else -> DEFAULT_PERMISSIONS
+    }
 private val COLLECTION_ROOT = if (BuildConfig.FIREBASE_TEST_MODE) "tests" else "users"
 private const val COLLECTION_EVENTS = "events"
 
@@ -48,6 +58,11 @@ private const val COLLECTION_MISSIONS = "missions"
 private const val COLLECTION_PLACES = "places"
 private const val COLLECTION_INTERACTIONS = "interactions"
 private const val DOCUMENT_USER = "user"
+
+private val FITNESS_OPTIONS = FitnessOptions.builder()
+    .addDataType(DataType.TYPE_STEP_COUNT_DELTA, FitnessOptions.ACCESS_READ)
+    .addDataType(DataType.TYPE_STEP_COUNT_DELTA, FitnessOptions.ACCESS_WRITE)
+    .build()
 
 val firebaseModules = module {
     factory(named(COLLECTION_EVENTS)) {
@@ -106,18 +121,6 @@ val firebaseModules = module {
 }
 
 val trackerModule = module {
-    factory(named("activityIntent")) {
-        StandUpIntentService.intentForActivity(androidContext())
-    }
-
-    factory(named("activityIntentForForeground")) {
-        StandUpService.intentForActivity(androidContext())
-    }
-
-    factory(named("locationIntent")) {
-        StandUpIntentService.intentForLocation(androidContext())
-    }
-
     single(createdAtStart = false) {
         ActivityTracker(
             context = androidContext(),
@@ -133,10 +136,7 @@ val trackerModule = module {
                         .build()
                 )
             ),
-            pendingIntents = listOf(
-                get(named("activityIntent")),
-                get(named("activityIntentForForeground"))
-            )
+            pendingIntent = StandUpIntentService.intentForActivity(androidContext())
         )
     }
 
@@ -147,7 +147,15 @@ val trackerModule = module {
                 .setInterval(TimeUnit.MINUTES.toMillis(3))
                 .setSmallestDisplacement(10.0F)
                 .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY),
-            pendingIntent = get(named("locationIntent"))
+            pendingIntent = StandUpIntentService.intentForLocation(androidContext())
+        )
+    }
+
+    single(createdAtStart = false) {
+        StepCountTracker(
+            context = androidContext(),
+            fitnessOptions = FITNESS_OPTIONS,
+            pendingIntent = StandUpIntentService.intentForActivity(androidContext())
         )
     }
 }
@@ -195,7 +203,7 @@ val repositoryModules = module {
 
 val viewModelModules = module {
     viewModel {
-        SplashViewModel(androidContext(), PERMISSIONS)
+        SplashViewModel(androidContext(), PERMISSIONS, FITNESS_OPTIONS)
     }
 
     viewModel {

@@ -10,6 +10,9 @@ import androidx.lifecycle.viewModelScope
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.GoogleApiAvailability
+import com.google.android.gms.fitness.Fitness
+import com.google.android.gms.fitness.FitnessOptions
+import com.google.android.gms.fitness.data.DataType
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import com.tedpark.tedpermission.rx2.TedRx2Permission
@@ -20,7 +23,9 @@ import kotlinx.coroutines.launch
 
 class SplashViewModel(
     private val context: Context,
-    private val permissions: Array<String>) : BaseViewModel<SplashNavigator>() {
+    private val permissions: Array<String>,
+    private val fitnessOptions: FitnessOptions
+) : BaseViewModel<SplashNavigator>() {
 
     private fun tryLaunch(call: suspend () -> Unit) = viewModelScope.launch {
         try {
@@ -47,7 +52,7 @@ class SplashViewModel(
             val currentUser = FirebaseAuth.getInstance().currentUser
 
             if (currentUser != null) {
-                ui { navigator?.navigateAuth(currentUser)}
+                ui { navigator?.navigateAuth()}
             } else {
                 ui { navigator?.navigateError(error(R.string.error_no_internect_connection)) }
             }
@@ -55,14 +60,19 @@ class SplashViewModel(
     }
 
     fun doAuth(intent: Intent?) = tryLaunch {
-        val account = GoogleSignIn.getSignedInAccountFromIntent(intent).asSuspend()
+        val signInAccount = GoogleSignIn.getSignedInAccountFromIntent(intent).asSuspend()
             ?: throwError(R.string.error_no_google_account)
 
-        val credential = GoogleAuthProvider.getCredential(account.idToken, null)
-        val user = FirebaseAuth.getInstance().signInWithCredential(credential).asSuspend()?.user
+        val credential = GoogleAuthProvider.getCredential(signInAccount.idToken, null)
+        FirebaseAuth.getInstance().signInWithCredential(credential).asSuspend()?.user
             ?: throwError(R.string.error_firebase_invalid_credential)
 
-        ui { navigator?.navigateAuth(user) }
+        val fitnessAccount = GoogleSignIn.getAccountForExtension(context, fitnessOptions)
+        if (GoogleSignIn.hasPermissions(fitnessAccount, fitnessOptions)){
+            ui { navigator?.navigateAuth() }
+        } else {
+            ui { navigator?.navigateFitnessAuth(fitnessAccount, fitnessOptions) }
+        }
     }
 
     fun doPermission() = tryLaunch {

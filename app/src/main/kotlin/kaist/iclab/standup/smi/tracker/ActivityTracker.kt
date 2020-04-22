@@ -9,7 +9,7 @@ import com.google.android.gms.location.*
 class ActivityTracker(
     private val context: Context,
     private val request: ActivityTransitionRequest,
-    private val pendingIntents: List<PendingIntent>
+    private val pendingIntent: PendingIntent
 ) {
     private val activityClient: ActivityRecognitionClient by lazy {
         ActivityRecognition.getClient(
@@ -18,15 +18,11 @@ class ActivityTracker(
     }
 
     fun startTracking() {
-        pendingIntents.forEach {
-            activityClient.requestActivityTransitionUpdates(request, it)
-        }
+        activityClient.requestActivityTransitionUpdates(request, pendingIntent)
     }
 
     fun stopTracking() {
-        pendingIntents.forEach {
-            activityClient.removeActivityTransitionUpdates(it)
-        }
+        activityClient.removeActivityTransitionUpdates(pendingIntent)
     }
 
     fun extract(intent: Intent?): List<ActivityTransitionEvent> {

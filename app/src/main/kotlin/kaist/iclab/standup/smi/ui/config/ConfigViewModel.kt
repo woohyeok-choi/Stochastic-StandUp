@@ -3,27 +3,19 @@ package kaist.iclab.standup.smi.ui.config
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.os.Build
 import android.provider.Settings
 import androidx.annotation.StringRes
 import androidx.lifecycle.liveData
-import androidx.lifecycle.viewModelScope
-import com.google.android.gms.auth.api.signin.GoogleSignIn
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.firebase.auth.FirebaseAuth
 import kaist.iclab.standup.smi.BuildConfig
 import kaist.iclab.standup.smi.R
 import kaist.iclab.standup.smi.StandUpIntentService
-import kaist.iclab.standup.smi.StandUpService
 import kaist.iclab.standup.smi.base.BaseViewModel
-import kaist.iclab.standup.smi.common.asSuspend
 import kaist.iclab.standup.smi.common.checkPermissions
 import kaist.iclab.standup.smi.common.hourMinuteToString
 import kaist.iclab.standup.smi.common.millisToHourMinute
 import kaist.iclab.standup.smi.pref.LocalPrefs
 import kaist.iclab.standup.smi.pref.RemotePrefs
-import kaist.iclab.standup.smi.ui.splash.SplashActivity
-import kotlinx.coroutines.launch
 import org.joda.time.DateTime
 import org.joda.time.DateTimeZone
 import java.util.concurrent.TimeUnit
@@ -152,7 +144,7 @@ class ConfigViewModel(
                             LocalPrefs.doNotDisturbUntil =
                                 curTime + TimeUnit.MINUTES.toMillis(value)
                             LocalPrefs.doNotDisturbCount--
-                            StandUpService.startService(context)
+                            StandUpIntentService.doNotDisturb(context)
                         }
                         min = 30
                         max = 120
@@ -334,14 +326,14 @@ class ConfigViewModel(
                             id = "$PREFIX.MOCK_ENTER_STILL"
                             title = resStr(R.string.config_mock_still_event)
                             formatter = { resStr(R.string.config_mock_still_event_desc) }
-                            onAction = { StandUpIntentService.enterIntoStill(it) }
+                            onAction = { StandUpIntentService.sendEnterIntoStill(it) }
                         }
 
                         readOnly {
                             id = "$PREFIX.MOCK_EXIT_STILL"
                             title = resStr(R.string.config_mock_stand_up_event)
                             formatter = { resStr(R.string.config_mock_stand_up_event_desc) }
-                            onAction = { StandUpIntentService.exitFromStill(it) }
+                            onAction = { StandUpIntentService.sendExitFromStill(it) }
                         }
                     }
                 }

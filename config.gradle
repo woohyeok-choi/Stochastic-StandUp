@@ -1,7 +1,7 @@
 def config = [:]
 
-config.version_code = 11
-config.version_name = "0.1.1"
+config.version_code = 14
+config.version_name = "0.1.4"
 
 config.pref_name = "stand-up-pref"
 config.remote_pref_name = "stand-up-pref-remote"

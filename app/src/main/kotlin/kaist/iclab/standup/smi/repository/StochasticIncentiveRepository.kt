@@ -90,7 +90,6 @@ class StochasticIncentiveRepository : IncentiveRepository {
         val coefficients = model.coefficients
         val intercept = model.intercept
 
-        val betaIncentive = coefficients.first()
         val betaContext = coefficients.copyOfRange(1, coefficients.count())
 
         if (encodedCurContext.size != betaContext.size) throwError(
@@ -104,19 +103,30 @@ class StochasticIncentiveRepository : IncentiveRepository {
             acc + betaContext[index] * d
         }
 
-        val numerator = dotProduct + intercept
+        var numerator = dotProduct + intercept
+        var denominator = coefficients.first()
 
-        return if ( (numerator >= 0 && betaIncentive >= 0) || betaIncentive < 0) {
-            AppLog.d(javaClass, "calculateStochasticIncentive(): Incentive does not related for $curContext ($latitude, $longitude); " +
-                    "intercept = $intercept, coefficients = ${coefficients.joinToString(", ")}")
-            RemotePrefs.minIncentives
-        } else {
-            val estimatedReward = - (numerator / betaIncentive)
+        val resultStr = "Context = $curContext (${encodedCurContext.joinToString(", ")}); " +
+                "B_incentive. = $denominator; B_context = ${betaContext.joinToString(",")};" +
+                "Numerator = $numerator (= $dotProduct + $intercept)"
+
+        if (abs(denominator) < 1e-3) {
+            denominator = 1e-3
+        }
+
+        if (abs(numerator) < 1e-3) {
+            numerator = -1e-3
+        }
+
+        return if (numerator < 0 && denominator > 0) {
+            val estimatedReward = - (numerator / denominator)
             val adjustedReward = (estimatedReward / RemotePrefs.unitIncentives).toInt() * RemotePrefs.unitIncentives
-            AppLog.d(javaClass, "calculateStochasticIncentive(): Incentive calculated for $curContext ($latitude, $longitude); " +
-                    "intercept = $intercept, coefficients = ${coefficients.joinToString(", ")};" +
-                    "estimated = $estimatedReward, adjusted = $adjustedReward")
+            AppLog.d(javaClass, "calculateStochasticIncentive(): Incentive calculated for $curContext ($latitude, $longitude);" +
+                    "estimated = $estimatedReward, adjusted = $adjustedReward; $resultStr")
             adjustedReward.coerceIn(RemotePrefs.minIncentives, RemotePrefs.maxIncentives)
+        } else {
+            AppLog.d(javaClass, "calculateStochasticIncentive(): Incentive does not related for $curContext ($latitude, $longitude); $resultStr")
+            RemotePrefs.minIncentives
         }
     }
 
