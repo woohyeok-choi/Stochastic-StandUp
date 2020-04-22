@@ -14,89 +14,48 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.AlarmManagerCompat
 import androidx.core.content.ContextCompat
 import kaist.iclab.standup.smi.base.BaseService
+import kaist.iclab.standup.smi.common.AppLog
 import kaist.iclab.standup.smi.common.Notifications
 import kaist.iclab.standup.smi.pref.LocalPrefs
 import kaist.iclab.standup.smi.tracker.ActivityTracker
 import kaist.iclab.standup.smi.tracker.LocationTracker
+import kaist.iclab.standup.smi.tracker.StepCountTracker
 import org.koin.android.ext.android.inject
 import java.util.*
 import kotlin.random.Random
 
 class StandUpService : BaseService() {
     private val locationTracker: LocationTracker by inject()
-    private val activityTracker: ActivityTracker by inject()
+    private val stepCountTracker: StepCountTracker by inject()
 
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onCreate() {
         super.onCreate()
 
-        StandUpIntentService.enterIntoStill(applicationContext)
-
-        if (LocalPrefs.lastStillTime < 0) {
-            LocalPrefs.lastStillTime = System.currentTimeMillis()
-        }
-
         locationTracker.startTracking()
-        activityTracker.startTracking()
+        stepCountTracker.startTracking()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
 
-        val curTime = System.currentTimeMillis()
-
-        if (intent?.action == ACTION_CANCEL_DO_NOT_DISTURB) {
-            LocalPrefs.doNotDisturbUntil = -1
-        }
-
-        if (intent?.action == ACTION_ACTIVITY_UPDATE) {
-            if (activityTracker.isEnteredIntoStill(intent)) {
-                if (LocalPrefs.lastStillTime < 0) {
-                    LocalPrefs.lastStillTime = curTime
-                }
-            } else {
-                LocalPrefs.lastStillTime = -1
-            }
-        }
-
-        Log.d(javaClass.name, "lastStillTime = ${LocalPrefs.lastStillTime}")
-
-        val cancelIntent = getPendingIntent(
-            context = applicationContext,
-            code = REQUEST_CODE_CANCEL_DO_NOT_DISTURB,
-            action = ACTION_CANCEL_DO_NOT_DISTURB
-        )
-
-        val notification = Notifications.buildForegroundNotification(
+        Notifications.notifyForegroundStatus(
             context = this,
-            cancelIntent = cancelIntent,
             lastStillTime = LocalPrefs.lastStillTime,
-            doNotDisturbUntil = LocalPrefs.doNotDisturbUntil
+            doNotDisturbUntil = LocalPrefs.doNotDisturbUntil,
+            cancelIntent = StandUpIntentService.intentForCancelDoNotDisturb(this),
+            callFromForegroundService = true
         )
-
-        startForeground(Notifications.NOTIFICATION_ID_FOREGROUND, notification)
-
-        if (LocalPrefs.doNotDisturbUntil > curTime) {
-            val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
-            AlarmManagerCompat.setExactAndAllowWhileIdle(
-                alarmManager,
-                AlarmManager.RTC_WAKEUP,
-                LocalPrefs.doNotDisturbUntil,
-                cancelIntent
-            )
-        }
 
         return START_STICKY
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        locationTracker.stopTracking()
-        activityTracker.stopTracking()
 
-        StandUpIntentService.exitFromStill(applicationContext)
-        LocalPrefs.lastStillTime = -1
+        locationTracker.stopTracking()
+        stepCountTracker.stopTracking()
 
         stopForeground(true)
     }
@@ -164,36 +123,25 @@ class StandUpService : BaseService() {
     class AvoidSmartManagerActivity : AppCompatActivity() {
         override fun onCreate(savedInstanceState: Bundle?) {
             super.onCreate(savedInstanceState)
-            startService(this)
             overridePendingTransition(0, 0)
             finish()
         }
     }
 
     companion object {
-        const val ACTION_CANCEL_DO_NOT_DISTURB =
-            "${BuildConfig.APPLICATION_ID}.ACTION_CANCEL_DO_NOT_DISTURB"
-        const val ACTION_ACTIVITY_UPDATE =
-            "${BuildConfig.APPLICATION_ID}.ACTION_ACTIVITY_UPDATE"
-        const val REQUEST_CODE_ACTIVITY_UPDATE = 0x09
-        const val REQUEST_CODE_CANCEL_DO_NOT_DISTURB = 0x10
         const val REQUEST_CODE_SMART_MANAGER_AVOID = 0x11
         const val REQUEST_CODE_RESTART_SERVICE = 0x12
         const val PACKAGE_NAME_SMART_MANAGER = "com.samsung.android.sm"
 
         fun startService(context: Context) {
+            AppLog.d(StandUpService::class.java, "startService")
             ContextCompat.startForegroundService(context, Intent(context, StandUpService::class.java))
         }
 
         fun stopService(context: Context) {
+            AppLog.d(StandUpService::class.java, "stopService")
             context.stopService(Intent(context, StandUpService::class.java))
         }
-
-        fun intentForActivity(context: Context) = getPendingIntent(
-            context = context,
-            code = REQUEST_CODE_ACTIVITY_UPDATE,
-            action = ACTION_ACTIVITY_UPDATE
-        )
 
         private fun getPendingIntent(
             context: Context,

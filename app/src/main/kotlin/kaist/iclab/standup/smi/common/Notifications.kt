@@ -6,6 +6,7 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.content.pm.ServiceInfo
 import android.media.AudioAttributes
 import android.media.AudioManager
 import android.os.Build
@@ -18,6 +19,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import kaist.iclab.standup.smi.BuildConfig
 import kaist.iclab.standup.smi.R
+import kaist.iclab.standup.smi.StandUpService
 import kaist.iclab.standup.smi.ui.splash.SplashActivity
 import kotlin.math.abs
 
@@ -151,15 +153,15 @@ object Notifications {
         }
     }
 
-    /**
-     * TODO:
-     * ENTER_STILL W/O DO-NOT-DISTURB
-     * EXIT_STILL W/O DO-NOT-DISTURB
-     * ENTER_STILL W/ DO-NOT-DISTURB
-     * EXIT_STILL W/ DO-NOT-DISTURB
-     */
+    private fun getSplashActivityIntent(context: Context) = PendingIntent.getActivity(
+        context,
+        0xff,
+        Intent(context, SplashActivity::class.java)
+            .setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK),
+        PendingIntent.FLAG_UPDATE_CURRENT
+    )
 
-    fun buildForegroundNotification(
+    private fun buildForegroundNotification(
         context: Context,
         lastStillTime: Long,
         doNotDisturbUntil: Long,
@@ -177,16 +179,8 @@ object Notifications {
             setOngoing(true)
             setLocalOnly(true)
             setAutoCancel(false)
-            setShowWhen(false)
-            setSmallIcon(R.drawable.ic_mission)
             color = context.getColor(R.color.blue)
-            setContentIntent(PendingIntent.getActivity(
-                context,
-                0xff,
-                Intent(context, SplashActivity::class.java)
-                    .setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK),
-                PendingIntent.FLAG_UPDATE_CURRENT
-            ))
+            setContentIntent(getSplashActivityIntent(context))
 
             if (doNotDisturbUntil > curTime) {
                 setContentTitle(
@@ -196,33 +190,38 @@ object Notifications {
                     R.string.ntf_foreground_text_do_not_disturb,
                     DateUtils.formatDateTime(context, doNotDisturbUntil, DateUtils.FORMAT_SHOW_DATE or DateUtils.FORMAT_SHOW_TIME)
                 ))
+                setSmallIcon(R.drawable.ic_do_not_disturb)
                 addAction(
                     R.drawable.ic_close,
                     context.getString(R.string.ntf_foreground_action_cancel),
                     cancelIntent
                 )
+                extras = Bundle()
+                setShowWhen(true)
+                setWhen(doNotDisturbUntil)
+                setUsesChronometer(true)
+                setChronometerCountDown(true)
             } else {
-                if (lastStillTime < 0) {
-                    setContentTitle(
-                        context.getString(R.string.ntf_foreground_title_stand_up)
-                    )
-                } else {
-                    extras = Bundle()
-                    setShowWhen(true)
-                    setWhen(lastStillTime)
-                    setUsesChronometer(true)
-                    setContentTitle(
-                        context.getString(R.string.ntf_foreground_title_sedentary)
-                    )
-                }
                 setContentText(
                     context.getString(R.string.ntf_foreground_text_default)
                 )
-            }
-
-            if (lastStillTime > 0) {
-                extras = Bundle()
-
+                if (lastStillTime < 0) {
+                    setSmallIcon(R.drawable.ic_walk)
+                    setContentTitle(
+                        context.getString(R.string.ntf_foreground_title_stand_up)
+                    )
+                    setShowWhen(false)
+                } else {
+                    extras = Bundle()
+                    setSmallIcon(R.drawable.ic_sedentariness)
+                    setContentTitle(
+                        context.getString(R.string.ntf_foreground_title_sedentary)
+                    )
+                    setShowWhen(true)
+                    setWhen(lastStillTime)
+                    setUsesChronometer(true)
+                    setChronometerCountDown(false)
+                }
             }
         }.build()
     }
@@ -246,8 +245,9 @@ object Notifications {
             setAutoCancel(false)
             setWhen(countDownUntil)
             setUsesChronometer(true)
+            setContentIntent(getSplashActivityIntent(context))
             setChronometerCountDown(true)
-            setSmallIcon(R.drawable.ic_mission)
+            setSmallIcon(R.drawable.ic_coin)
             color = context.getColor(R.color.blue)
             setContentTitle(context.getString(R.string.ntf_mission_start_title))
             setStyle(NotificationCompat.BigTextStyle().bigText(
@@ -280,16 +280,17 @@ object Notifications {
             setOngoing(false)
             setLocalOnly(false)
             setAutoCancel(true)
-            setSmallIcon(R.drawable.ic_mission)
+            setContentIntent(getSplashActivityIntent(context))
+            setSmallIcon(R.drawable.ic_coin)
             color = context.getColor(R.color.blue)
             setContentTitle(context.getString(R.string.ntf_mission_success_title))
             setStyle(NotificationCompat.BigTextStyle().bigText(
                 when {
                     incentives > 0 -> context.getString(
-                        R.string.ntf_mission_success_text_gain, incentives
+                        R.string.ntf_mission_success_text_gain, abs(incentives)
                     )
                     incentives < 0 -> context.getString(
-                        R.string.ntf_mission_success_text_loss, incentives
+                        R.string.ntf_mission_success_text_loss, abs(incentives)
                     )
                     else -> context.getString(
                         R.string.ntf_mission_success_text_none
@@ -313,16 +314,17 @@ object Notifications {
             setOngoing(false)
             setLocalOnly(false)
             setAutoCancel(true)
-            setSmallIcon(R.drawable.ic_mission)
+            setContentIntent(getSplashActivityIntent(context))
+            setSmallIcon(R.drawable.ic_coin)
             color = context.getColor(R.color.blue)
             setContentTitle(context.getString(R.string.ntf_mission_failure_title))
             setStyle(NotificationCompat.BigTextStyle().bigText(
                 when {
                     incentives > 0 -> context.getString(
-                        R.string.ntf_mission_failure_text_gain, incentives
+                        R.string.ntf_mission_failure_text_gain, abs(incentives)
                     )
                     incentives < 0 -> context.getString(
-                        R.string.ntf_mission_failure_text_loss, incentives
+                        R.string.ntf_mission_failure_text_loss, abs(incentives)
                     )
                     else -> context.getString(
                         R.string.ntf_mission_failure_text_none
@@ -330,6 +332,34 @@ object Notifications {
                 }
             ))
         }.build()
+    }
+
+    fun notifyForegroundStatus(
+        context: Context,
+        lastStillTime: Long,
+        doNotDisturbUntil: Long,
+        cancelIntent: PendingIntent,
+        callFromForegroundService: Boolean
+    ) {
+        val notification = buildForegroundNotification(
+            context = context,
+            lastStillTime = lastStillTime,
+            doNotDisturbUntil = doNotDisturbUntil,
+            cancelIntent = cancelIntent
+        )
+        AppLog.d(javaClass, "notifyForegroundStatus(): $context")
+
+        if (callFromForegroundService && context is StandUpService) {
+            AppLog.d(javaClass, "notifyForegroundStatus(): From foreground")
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+                context.startForeground(NOTIFICATION_ID_FOREGROUND, notification)
+            } else {
+                context.startForeground(NOTIFICATION_ID_FOREGROUND, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_MANIFEST)
+            }
+        } else {
+            AppLog.d(javaClass, "notifyForegroundStatus(): From default")
+            NotificationManagerCompat.from(context).notify(NOTIFICATION_ID_FOREGROUND, notification)
+        }
     }
 
     fun notifyMissionStart(

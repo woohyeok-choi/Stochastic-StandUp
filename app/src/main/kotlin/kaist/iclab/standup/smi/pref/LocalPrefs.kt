@@ -25,4 +25,5 @@ object LocalPrefs : PreferenceHolder(BuildConfig.PREF_NAME) {
     var lastStillTime: Long by ReadWriteLong(default = -1L)
     var doNotDisturbLastTimeSettingMillis: Long by ReadWriteLong(default = -1L)
     var doNotDisturbCount: Int by ReadWriteInt(default = 0)
+    var isSedentary: Boolean by ReadWriteBoolean(default = true)
 }

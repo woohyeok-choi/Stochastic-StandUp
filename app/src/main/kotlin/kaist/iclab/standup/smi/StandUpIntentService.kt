@@ -7,13 +7,11 @@ import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import androidx.core.os.bundleOf
-import com.google.android.gms.location.ActivityTransition
-import com.google.android.gms.location.DetectedActivity
 import kaist.iclab.standup.smi.common.*
 import kaist.iclab.standup.smi.pref.LocalPrefs
 import kaist.iclab.standup.smi.pref.RemotePrefs
-import kaist.iclab.standup.smi.tracker.ActivityTracker
 import kaist.iclab.standup.smi.tracker.LocationTracker
+import kaist.iclab.standup.smi.tracker.StepCountTracker
 import kotlinx.coroutines.*
 import org.joda.time.DateTime
 import org.joda.time.DateTimeZone
@@ -26,7 +24,7 @@ class StandUpIntentService : IntentService(StandUpIntentService::class.java.simp
     override val coroutineContext: CoroutineContext = Dispatchers.IO + job
 
     private val locationTracker: LocationTracker by inject()
-    private val activityTracker: ActivityTracker by inject()
+    private val stepCountTracker: StepCountTracker by inject()
     private val standUpRepository: StandUpMissionHandler by inject()
 
     override fun onHandleIntent(intent: Intent?) = runBlocking(coroutineContext) {
@@ -43,16 +41,16 @@ class StandUpIntentService : IntentService(StandUpIntentService::class.java.simp
 
             when (intent?.action) {
                 ACTION_ACTIVITY_UPDATE -> {
-                    if (activityTracker.isExitedFromStill(intent)) {
-                        handleExitFromStill(
-                            timestamp = timestamp,
+                    val (isSedentary, eventTime) = stepCountTracker.extract(intent)
+                    if (isSedentary) {
+                        handleEnterIntoStill(
+                            timestamp = eventTime,
                             latitude = latitude,
                             longitude = longitude
                         )
-                    }
-                    if (activityTracker.isEnteredIntoStill(intent)) {
-                        handleEnterIntoStill(
-                            timestamp = timestamp,
+                    } else {
+                        handleExitFromStill(
+                            timestamp = eventTime,
                             latitude = latitude,
                             longitude = longitude
                         )
@@ -102,6 +100,12 @@ class StandUpIntentService : IntentService(StandUpIntentService::class.java.simp
                         )
                     }
                 }
+                ACTION_SET_DO_NOT_DISTURB -> {
+                    handleSetDoNotDisturb(timestamp)
+                }
+                ACTION_CANCEL_DO_NOT_DISTURB -> {
+                    handleCancelDoNotDisturb()
+                }
             }
         } catch (e: Exception) {
             AppLog.ee(clazz, "onHandleIntent()", e)
@@ -115,6 +119,14 @@ class StandUpIntentService : IntentService(StandUpIntentService::class.java.simp
 
     private suspend fun handleEnterIntoStill(timestamp: Long, latitude: Double, longitude: Double) {
         Log.d(javaClass.simpleName, "handleEnterIntoStill(timestamp = $timestamp, latitude = $latitude, longitude = $longitude)")
+
+        if (latitude.isNaN() || longitude.isNaN()) {
+            scheduleAlarm(
+                triggerAt = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(10),
+                intent = intentForActivity(applicationContext, stepCountTracker.fillExtra(Bundle(), true, timestamp))
+            )
+            return
+        }
 
         tryCatch {
             standUpRepository.enterIntoStill(
@@ -133,10 +145,26 @@ class StandUpIntentService : IntentService(StandUpIntentService::class.java.simp
         if (LocalPrefs.lastStillTime < 0) {
             LocalPrefs.lastStillTime = timestamp
         }
+
+        Notifications.notifyForegroundStatus(
+            context = applicationContext,
+            lastStillTime = LocalPrefs.lastStillTime,
+            doNotDisturbUntil = LocalPrefs.doNotDisturbUntil,
+            cancelIntent = intentForCancelDoNotDisturb(this),
+            callFromForegroundService = false
+        )
     }
 
     private suspend fun handleExitFromStill(timestamp: Long, latitude: Double, longitude: Double) {
         Log.d(javaClass.simpleName, "handleExitFromStill(timestamp = $timestamp, latitude = $latitude, longitude = $longitude)")
+
+        if (latitude.isNaN() || longitude.isNaN()) {
+            scheduleAlarm(
+                triggerAt = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(10),
+                intent = intentForActivity(applicationContext, stepCountTracker.fillExtra(Bundle(), false, timestamp))
+            )
+            return
+        }
 
         tryCatch {
             standUpRepository.exitFromStill(
@@ -165,6 +193,41 @@ class StandUpIntentService : IntentService(StandUpIntentService::class.java.simp
 
         LocalPrefs.lastStillTime = -1
 
+        Notifications.notifyForegroundStatus(
+            context = applicationContext,
+            lastStillTime = LocalPrefs.lastStillTime,
+            doNotDisturbUntil = LocalPrefs.doNotDisturbUntil,
+            cancelIntent = intentForCancelDoNotDisturb(this),
+            callFromForegroundService = false
+        )
+    }
+
+    private fun handleSetDoNotDisturb(timestamp: Long) {
+        if (LocalPrefs.doNotDisturbUntil > timestamp) {
+            scheduleAlarm(
+                triggerAt = LocalPrefs.doNotDisturbUntil,
+                intent = intentForCancelDoNotDisturb(applicationContext)
+            )
+            Notifications.notifyForegroundStatus(
+                context = applicationContext,
+                lastStillTime = LocalPrefs.lastStillTime,
+                doNotDisturbUntil = LocalPrefs.doNotDisturbUntil,
+                cancelIntent = intentForCancelDoNotDisturb(this),
+                callFromForegroundService = false
+            )
+        }
+    }
+
+    private fun handleCancelDoNotDisturb() {
+        LocalPrefs.doNotDisturbUntil = -1
+
+        Notifications.notifyForegroundStatus(
+            context = applicationContext,
+            lastStillTime = LocalPrefs.lastStillTime,
+            doNotDisturbUntil = LocalPrefs.doNotDisturbUntil,
+            cancelIntent = intentForCancelDoNotDisturb(this),
+            callFromForegroundService = false
+        )
     }
 
     private suspend fun handlePrepareMission(timestamp: Long, latitude: Double, longitude: Double) {
@@ -337,9 +400,16 @@ class StandUpIntentService : IntentService(StandUpIntentService::class.java.simp
         private const val ACTION_MOCK_EXIT_FROM_STILL =
             "${BuildConfig.APPLICATION_ID}.ACTION_MOCK_EXIT_FROM_STILL"
 
+        private const val ACTION_SET_DO_NOT_DISTURB =
+            "${BuildConfig.APPLICATION_ID}.ACTION_SET_DO_NOT_DISTURB"
+
+        private const val ACTION_CANCEL_DO_NOT_DISTURB =
+            "${BuildConfig.APPLICATION_ID}.ACTION_CANCEL_DO_NOT_DISTURB"
+
         private const val REQUEST_CODE_MISSION = 0x01
         private const val REQUEST_CODE_LOCATION_UPDATE = 0x02
         private const val REQUEST_CODE_ACTIVITY_UPDATE = 0x03
+        private const val REQUEST_CODE_CANCEL_DO_NOT_DISTURB = 0x05
 
         private const val EXTRA_MISSION_STATE = "${BuildConfig.APPLICATION_ID}.EXTRA_MISSION_STATE"
         private const val EXTRA_TIMESTAMP = "${BuildConfig.APPLICATION_ID}.EXTRA_TIMESTAMP"
@@ -375,15 +445,23 @@ class StandUpIntentService : IntentService(StandUpIntentService::class.java.simp
                 PendingIntent.FLAG_UPDATE_CURRENT
             )
 
-        fun intentForActivity(context: Context) =
+        fun intentForActivity(context: Context, extras: Bundle? = null) =
             getPendingIntent(
                 context,
                 REQUEST_CODE_ACTIVITY_UPDATE,
                 ACTION_ACTIVITY_UPDATE,
-                PendingIntent.FLAG_UPDATE_CURRENT
+                PendingIntent.FLAG_UPDATE_CURRENT,
+                extras
             )
 
-        fun enterIntoStill(context: Context) {
+        fun intentForCancelDoNotDisturb(context: Context) = getPendingIntent(
+            context = context,
+            code = REQUEST_CODE_CANCEL_DO_NOT_DISTURB,
+            action = ACTION_CANCEL_DO_NOT_DISTURB,
+            flag = PendingIntent.FLAG_UPDATE_CURRENT
+        )
+
+        fun sendEnterIntoStill(context: Context) {
             Intent(context, clazz).apply {
                 action = ACTION_MOCK_ENTER_INTO_STILL
             }.let { intent ->
@@ -391,9 +469,17 @@ class StandUpIntentService : IntentService(StandUpIntentService::class.java.simp
             }
         }
 
-        fun exitFromStill(context: Context) {
+        fun sendExitFromStill(context: Context) {
             Intent(context, clazz).apply {
                 action = ACTION_MOCK_EXIT_FROM_STILL
+            }.let { intent ->
+                context.startService(intent)
+            }
+        }
+
+        fun doNotDisturb(context: Context) {
+            Intent(context, clazz).apply {
+                action = ACTION_SET_DO_NOT_DISTURB
             }.let { intent ->
                 context.startService(intent)
             }

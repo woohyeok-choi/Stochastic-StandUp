@@ -147,21 +147,12 @@ class StandUpMissionHandler(
 
         if (isMissionInProgress && isSucceeded != null) {
             val incentive = mission.incentive
-            val triggerTime = mission.triggerTime
-            val fromTime = DateTime(triggerTime, DateTimeZone.getDefault()).withTimeAtStartOfDay().millis
-            val dailyIncentives = missionRepository.getTriggeredMissions(
-                fromTime = fromTime,
-                toTime = triggerTime
-            ).sumIncentives()
-
-            val availableBudget = (RemotePrefs.maxDailyBudget - abs(dailyIncentives)).coerceAtLeast(0)
-            val actualIncentive = abs(incentive).coerceIn(0, availableBudget) * if(incentive >= 0) 1 else -1
 
             statRepository.updateMissionResult(
                 latitude = latitude,
                 longitude = longitude,
                 isSucceeded = isSucceeded,
-                incentives = actualIncentive
+                incentives = incentive
             )
         }
 
