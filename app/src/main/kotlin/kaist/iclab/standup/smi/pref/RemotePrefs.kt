@@ -8,10 +8,6 @@ import kaist.iclab.standup.smi.common.FirebaseRemoteConfigLong
 import java.util.concurrent.TimeUnit
 
 object RemotePrefs : FirebaseRemoteConfigHolder(BuildConfig.REMOTE_PREF_NAME) {
-    const val INCENTIVE_MODE_NONE = 0
-    const val INCENTIVE_MODE_FIXED = 1
-    const val INCENTIVE_MODE_STOCHASTIC = 2
-
     /**
      * Minimum duration of staying event.
      * If stay duration is larger than it, the event is regarded as stay event which
@@ -49,7 +45,4 @@ object RemotePrefs : FirebaseRemoteConfigHolder(BuildConfig.REMOTE_PREF_NAME) {
     var maxIncentives: Int by FirebaseRemoteConfigInt(default = 500)
     var defaultIncentives: Int by FirebaseRemoteConfigInt(default = 300)
     var unitIncentives: Int by FirebaseRemoteConfigInt(default = 20)
-
-    var incentiveMode: Int by FirebaseRemoteConfigInt(default = INCENTIVE_MODE_NONE)
-    var isGainIncentive: Boolean by FirebaseRemoteConfigBoolean(default = true)
 }

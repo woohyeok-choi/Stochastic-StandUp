@@ -4,11 +4,15 @@ import android.util.Log
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.findNavController
 import androidx.navigation.ui.setupWithNavController
+import com.google.firebase.analytics.FirebaseAnalytics
+import com.google.firebase.iid.FirebaseInstanceId
 import kaist.iclab.standup.smi.*
 import kaist.iclab.standup.smi.base.BaseActivity
 import kaist.iclab.standup.smi.common.AppLog
+import kaist.iclab.standup.smi.common.asSuspend
 import kaist.iclab.standup.smi.databinding.ActivityMainBinding
 import kaist.iclab.standup.smi.pref.RemotePrefs
+import kaist.iclab.standup.smi.repository.StatRepository
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 

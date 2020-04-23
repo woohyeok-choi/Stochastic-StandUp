@@ -8,6 +8,8 @@
             name="viewModel"
             type="kaist.iclab.standup.smi.ui.dashboard.DashboardViewModel" />
 
+        <import type="android.view.View"/>
+
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout

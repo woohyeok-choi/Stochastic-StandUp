@@ -5,6 +5,7 @@ import androidx.paging.LivePagedListBuilder
 import androidx.paging.PagedList
 import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.Query
+import kaist.iclab.standup.smi.BuildConfig
 import kaist.iclab.standup.smi.R
 import kaist.iclab.standup.smi.base.BaseViewModel
 import kaist.iclab.standup.smi.common.Status
@@ -50,7 +51,9 @@ class TimelineViewModel (
     }
 
     val dailyIncentiveObtained = dailyStats.map { data ->
-        val isGainMode = RemotePrefs.isGainIncentive
+        if (!LocalPrefs.isMissionOn) return@map null
+
+        val isGainMode = BuildConfig.IS_GAIN_INCENTIVE
         val maxBudget = RemotePrefs.maxDailyBudget
 
         val incentive = data?.sumBy { datum -> datum.missions.sumIncentives() } ?: 0
@@ -143,7 +146,9 @@ class TimelineViewModel (
 
     val totalVisitedPlaces = overallStats.map { it?.numPlaces ?: 0 }
 
-    val totalIncentives = overallStats.map { it?.incentive ?: 0 }
+    val totalIncentives = overallStats.map {
+        if (!LocalPrefs.isMissionOn) null else (it?.incentive ?: 0)
+    }
 
     val placeLoadStatus = placeDataSourceFactory.sourceLiveData.switchMap { it.initStatus }
 

@@ -7,6 +7,7 @@ import androidx.recyclerview.widget.RecyclerView
 import kaist.iclab.standup.smi.R
 import kaist.iclab.standup.smi.databinding.ItemDailyTimelineBinding
 import kaist.iclab.standup.smi.databinding.SubItemDailyTimelineDetailBinding
+import kaist.iclab.standup.smi.pref.LocalPrefs
 import kaist.iclab.standup.smi.repository.SedentaryMissionEvent
 import kaist.iclab.standup.smi.repository.sumIncentives
 

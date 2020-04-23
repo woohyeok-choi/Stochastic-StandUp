@@ -119,7 +119,7 @@
                             android:id="@+id/img_stat_mission"
                             android:layout_width="36dp"
                             android:layout_height="0dp"
-                            android:src="@drawable/ic_mission"
+                            android:src="@drawable/ic_launcher"
                             android:tint="@color/blue"
                             app:layout_constraintLeft_toLeftOf="parent"
                             app:layout_constraintBottom_toBottomOf="parent"
@@ -186,7 +186,8 @@
                             android:textColor="@color/black"
                             android:textSize="@dimen/txt_size_large"
                             android:textStyle="bold"
-                            android:text="@{viewModel.dailyIncentiveObtained.toString()}"                            app:layout_constraintLeft_toRightOf="@id/img_stat_incentive"
+                            android:text='@{viewModel.dailyIncentiveObtained.toString() ?? "-"}'
+                            app:layout_constraintLeft_toRightOf="@id/img_stat_incentive"
                             app:layout_constraintTop_toTopOf="parent" />
 
                         <TextView
@@ -196,7 +197,8 @@
                             android:textColor="@color/light_grey"
                             android:textSize="@dimen/txt_size_medium"
                             android:textStyle="bold"
-                            android:text="@{'/' + viewModel.dailyIncentiveTotal.toString()}"                            app:layout_constraintBottom_toBottomOf="@id/txt_stat_incentive_obtained"
+                            android:text='@{"/" + (viewModel.dailyIncentiveTotal.toString() ?? "-")}'
+                            app:layout_constraintBottom_toBottomOf="@id/txt_stat_incentive_obtained"
                             app:layout_constraintLeft_toRightOf="@id/txt_stat_incentive_obtained"/>
 
                         <TextView
