@@ -222,27 +222,27 @@ class ConfigViewModel(
                         choice {
                             id = "$PREFIX.INCENTIVE_MODE"
                             title = resStr(R.string.config_incentive_mode)
-                            value = { RemotePrefs.incentiveMode }
-                            onSave = { RemotePrefs.incentiveMode = it }
+                            value = { LocalPrefs.incentiveMode }
+                            onSave = { LocalPrefs.incentiveMode = it }
                             formatter = { value ->
                                 when (value) {
-                                    RemotePrefs.INCENTIVE_MODE_FIXED -> resStr(R.string.config_incentive_mode_fixed)
-                                    RemotePrefs.INCENTIVE_MODE_STOCHASTIC -> resStr(R.string.config_incentive_mode_stochastic)
+                                    BuildConfig.INCENTIVE_MODE_FIXED -> resStr(R.string.config_incentive_mode_fixed)
+                                    BuildConfig.INCENTIVE_MODE_STOCHASTIC -> resStr(R.string.config_incentive_mode_stochastic)
                                     else -> resStr(R.string.config_incentive_mode_none)
                                 }
                             }
                             options = intArrayOf(
-                                RemotePrefs.INCENTIVE_MODE_NONE,
-                                RemotePrefs.INCENTIVE_MODE_FIXED,
-                                RemotePrefs.INCENTIVE_MODE_STOCHASTIC
+                                BuildConfig.INCENTIVE_MODE_NONE,
+                                BuildConfig.INCENTIVE_MODE_FIXED,
+                                BuildConfig.INCENTIVE_MODE_STOCHASTIC
                             )
                         }
 
                         boolean {
                             id = "$PREFIX.INCENTIVE_GAIN_OR_LOSS"
                             title = resStr(R.string.config_incentive_gain_or_loss)
-                            value = { RemotePrefs.isGainIncentive }
-                            onSave = { RemotePrefs.isGainIncentive = it}
+                            value = { LocalPrefs.isGainIncentive }
+                            onSave = { LocalPrefs.isGainIncentive = it}
                             formatter = {
                                 if (it) {
                                     resStr(R.string.config_incentive_gain_or_loss_gain)

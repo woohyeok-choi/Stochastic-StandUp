@@ -16,6 +16,7 @@ object LocalPrefs : PreferenceHolder(BuildConfig.PREF_NAME) {
     var activeEndTimeMs: Long by ReadWriteLong(default = TimeUnit.HOURS.toMillis(21))
     var doNotDisturbUntil: Long by ReadWriteLong(default = -1)
     var isMissionOn: Boolean by ReadWriteBoolean(default = true)
+
     /**
      * Internal use
      */
@@ -26,4 +27,10 @@ object LocalPrefs : PreferenceHolder(BuildConfig.PREF_NAME) {
     var doNotDisturbLastTimeSettingMillis: Long by ReadWriteLong(default = -1L)
     var doNotDisturbCount: Int by ReadWriteInt(default = 0)
     var isSedentary: Boolean by ReadWriteBoolean(default = true)
+
+    /**
+     * Debug use
+     */
+    var incentiveMode: Int by ReadWriteInt(default = BuildConfig.INCENTIVE_MODE)
+    var isGainIncentive: Boolean by ReadWriteBoolean(default = BuildConfig.IS_GAIN_INCENTIVE)
 }

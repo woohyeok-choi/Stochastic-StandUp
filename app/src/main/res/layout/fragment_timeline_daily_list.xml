@@ -67,7 +67,7 @@
                     android:id="@+id/txt_stat_mission"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:drawableStart="@drawable/ic_mission"
+                    android:drawableStart="@drawable/ic_launcher"
                     android:drawablePadding="@dimen/drawable_padding_default"
                     android:drawableTint="@color/blue"
                     android:gravity="center_vertical"
@@ -87,7 +87,7 @@
                     android:drawablePadding="@dimen/drawable_padding_default"
                     android:drawableTint="@color/dark_yellow"
                     android:gravity="center_vertical"
-                    android:text="@{@string/general_points_abbrev(viewModel.dailyIncentiveObtained)}"
+                    android:text='@{viewModel.dailyIncentiveObtained == null ? "-" : @string/general_points_abbrev(viewModel.dailyIncentiveObtained)}'
                     android:textColor="@color/grey"
                     android:textSize="@dimen/txt_size_default"
                     app:layout_constraintBottom_toBottomOf="parent"

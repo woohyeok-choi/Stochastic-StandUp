@@ -83,9 +83,9 @@ class StandUpMissionHandler(
         AppLog.d(javaClass, "startMission(timestamp: $timestamp, latitude: $latitude, longitude: $longitude)")
 
         val incentive = try {
-            when (RemotePrefs.incentiveMode) {
-                RemotePrefs.INCENTIVE_MODE_FIXED -> RemotePrefs.defaultIncentives
-                RemotePrefs.INCENTIVE_MODE_STOCHASTIC -> incentiveRepository.calculateStochasticIncentive(
+            when (BuildConfig.INCENTIVE_MODE) {
+                BuildConfig.INCENTIVE_MODE_FIXED -> RemotePrefs.defaultIncentives
+                BuildConfig.INCENTIVE_MODE_STOCHASTIC -> incentiveRepository.calculateStochasticIncentive(
                     histories = getIncentiveHistories(timestamp),
                     timestamp = timestamp,
                     latitude = latitude,
@@ -100,7 +100,7 @@ class StandUpMissionHandler(
 
         AppLog.d(javaClass, "startMission(): incentive=$incentive")
 
-        val signedIncentive = if(RemotePrefs.isGainIncentive) abs(incentive) else -abs(incentive)
+        val signedIncentive = if(BuildConfig.IS_GAIN_INCENTIVE) abs(incentive) else -abs(incentive)
 
         missionRepository.startMission(
             id = id,

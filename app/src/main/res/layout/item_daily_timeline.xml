@@ -173,7 +173,7 @@
                 android:textSize="@dimen/txt_size_default"
                 android:textColor="@color/grey"
                 android:paddingBottom="@dimen/txt_bottom_padding"
-                android:drawableStart="@drawable/ic_mission"
+                android:drawableStart="@drawable/ic_launcher"
                 android:drawableTint="@color/light_grey"
                 android:layout_marginStart="@dimen/space_horizontal_default"/>
 

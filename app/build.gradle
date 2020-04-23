@@ -30,10 +30,18 @@ android {
         versionCode config.version_code
         versionName config.version_name
         setProperty('archivesBaseName', "StandUp v." + versionName)
+
         buildConfigField("String", "PREF_NAME", "\"${config.pref_name}\"")
         buildConfigField("String", "REMOTE_PREF_NAME", "\"${config.remote_pref_name}\"")
         buildConfigField("Boolean", "FIREBASE_TEST_MODE", "true")
         buildConfigField("Boolean", "IS_LOCAL_CONFIG", "true")
+        buildConfigField("Boolean", "IS_GAIN_INCENTIVE", "true")
+        buildConfigField("Integer", "INCENTIVE_MODE", "0")
+
+        buildConfigField("Integer", "INCENTIVE_MODE_NONE", "0")
+        buildConfigField("Integer", "INCENTIVE_MODE_FIXED", "1")
+        buildConfigField("Integer", "INCENTIVE_MODE_STOCHASTIC", "2")
+
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         signingConfig signingConfigs.debug
     }
@@ -52,9 +60,40 @@ android {
             buildConfigField("Boolean", "FIREBASE_TEST_MODE", "false")
             debuggable = true
         }
-        experiment {
+
+        experiment_gain_fixed {
+            versionNameSuffix = "-gf"
             buildConfigField("Boolean", "FIREBASE_TEST_MODE", "false")
             buildConfigField("Boolean", "IS_LOCAL_CONFIG", "false")
+            buildConfigField("Boolean", "IS_GAIN_INCENTIVE", "true")
+            buildConfigField("Integer", "INCENTIVE_MODE", "1")
+            debuggable = true
+        }
+
+        experiment_gain_stochastic {
+            versionNameSuffix = "-gs"
+            buildConfigField("Boolean", "FIREBASE_TEST_MODE", "false")
+            buildConfigField("Boolean", "IS_LOCAL_CONFIG", "false")
+            buildConfigField("Boolean", "IS_GAIN_INCENTIVE", "true")
+            buildConfigField("Integer", "INCENTIVE_MODE", "2")
+            debuggable = true
+        }
+
+        experiment_loss_fixed {
+            versionNameSuffix = "-lf"
+            buildConfigField("Boolean", "FIREBASE_TEST_MODE", "false")
+            buildConfigField("Boolean", "IS_LOCAL_CONFIG", "false")
+            buildConfigField("Boolean", "IS_GAIN_INCENTIVE", "false")
+            buildConfigField("Integer", "INCENTIVE_MODE", "1")
+            debuggable = true
+        }
+
+        experiment_loss_stochastic {
+            versionNameSuffix = "-ls"
+            buildConfigField("Boolean", "FIREBASE_TEST_MODE", "false")
+            buildConfigField("Boolean", "IS_LOCAL_CONFIG", "false")
+            buildConfigField("Boolean", "IS_GAIN_INCENTIVE", "false")
+            buildConfigField("Integer", "INCENTIVE_MODE", "2")
             debuggable = true
         }
     }

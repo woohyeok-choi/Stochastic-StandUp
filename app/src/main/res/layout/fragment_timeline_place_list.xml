@@ -72,7 +72,7 @@
                     android:drawablePadding="@dimen/drawable_padding_default"
                     android:drawableTint="@color/dark_yellow"
                     android:gravity="center_vertical"
-                    android:text="@{@string/general_points_abbrev(viewModel.totalIncentives)}"
+                    android:text='@{viewModel.totalIncentives == null ? "-" : @string/general_points_abbrev(viewModel.totalIncentives)}'
                     android:textColor="@color/grey"
                     android:textSize="@dimen/txt_size_default"
                     app:layout_constraintBottom_toBottomOf="parent"

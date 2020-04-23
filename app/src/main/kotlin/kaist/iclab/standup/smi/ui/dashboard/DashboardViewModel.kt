@@ -3,6 +3,7 @@ package kaist.iclab.standup.smi.ui.dashboard
 import android.content.Context
 import androidx.lifecycle.*
 import com.google.android.gms.auth.api.signin.GoogleSignIn
+import kaist.iclab.standup.smi.BuildConfig
 import kaist.iclab.standup.smi.base.BaseViewModel
 import kaist.iclab.standup.smi.common.Status
 import kaist.iclab.standup.smi.common.confidenceInterval
@@ -147,9 +148,13 @@ class DashboardViewModel(
         if (nMission == 0) 0F else nSuccess.toFloat() / nMission
     }
 
-    val dailyIncentiveTotal = liveData(ioContext) { emit(RemotePrefs.maxDailyBudget) }
+    val dailyIncentiveTotal = liveData(ioContext) {
+        emit(if (LocalPrefs.isMissionOn) RemotePrefs.maxDailyBudget else null)
+    }
     val dailyIncentiveObtained = dailyMissionEvents.map { data ->
-        val isGainMode = RemotePrefs.isGainIncentive
+        if (!LocalPrefs.isMissionOn) return@map null
+
+        val isGainMode = BuildConfig.IS_GAIN_INCENTIVE
         val maxBudget = RemotePrefs.maxDailyBudget
 
         val incentives = data?.sumBy { it.missions.sumIncentives() } ?: 0
@@ -161,7 +166,7 @@ class DashboardViewModel(
         }
     }
     val dailyIncentiveRate =
-        dailyIncentiveObtained.map { it.toFloat() / RemotePrefs.maxDailyBudget }
+        dailyIncentiveObtained.map { (it?.toFloat() ?: 0F) / RemotePrefs.maxDailyBudget }
 
     val dailyTotalSedentaryMillis = dailyMissionEvents.map { data ->
         data?.sumByLong { it.event.duration } ?: 0
@@ -187,8 +192,11 @@ class DashboardViewModel(
     }
 
     private val weeklyIncentiveObtained = weeklyMissionEvents.map { data ->
+        if (!LocalPrefs.isMissionOn) {
+            mapOf()
+        } else {
             data?.mapValues { (_, events) ->
-                val isGainMode = RemotePrefs.isGainIncentive
+                val isGainMode = BuildConfig.IS_GAIN_INCENTIVE
                 val maxBudget = RemotePrefs.maxDailyBudget
                 val incentives = events.sumBy { it.missions.sumIncentives() }
 
@@ -199,6 +207,7 @@ class DashboardViewModel(
                 }
             } ?: mapOf()
         }
+    }
 
     val weeklyChartData =
         MediatorLiveData<Map<DateTime, Pair<Triple<Long, Long, Long>, Int>>>().apply {
