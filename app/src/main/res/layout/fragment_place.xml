@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <androidx.coordinatorlayout.widget.CoordinatorLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <fragment
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:id="@+id/fragment_map"
+            android:fitsSystemWindows="true"
+            android:layout_marginTop="@dimen/small_action_bar_size_double"
+            android:layout_marginBottom="@dimen/bottom_sheet_peek_height"
+            android:name="com.google.android.libraries.maps.SupportMapFragment" />
+
+        <com.google.android.material.appbar.AppBarLayout
+            android:id="@+id/container_appbar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@android:color/white"
+            android:fitsSystemWindows="true"
+            android:theme="@style/AppTheme.AppBarOverlay"
+            app:expanded="false">
+
+            <androidx.appcompat.widget.Toolbar
+                android:id="@+id/toolbar"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/small_action_bar_size"
+                android:background="@android:color/white"
+                app:layout_collapseMode="pin"
+                app:popupTheme="@style/AppTheme.PopupOverlay"/>
+
+        </com.google.android.material.appbar.AppBarLayout>
+
+        <androidx.fragment.app.FragmentContainerView
+            android:id="@+id/container_mission"
+            android:background="@android:color/white"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:fitsSystemWindows="true"
+            app:behavior_hideable="false"
+            app:behavior_peekHeight="@dimen/bottom_sheet_peek_height"
+            app:elevation="4dp"
+            app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior" />
+
+    </androidx.coordinatorlayout.widget.CoordinatorLayout>
+
+</layout>
