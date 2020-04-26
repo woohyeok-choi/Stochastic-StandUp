@@ -22,7 +22,7 @@ class DashboardFragment : BaseFragment<FragmentDashboardBinding, DashboardViewMo
     override val layoutId: Int = R.layout.fragment_dashboard
 
     private val defaultTimeZone = DateTimeZone.getDefault()
-    private val firstDate = DateTime(if (BuildConfig.FIREBASE_TEST_MODE) 1536146147659 else LocalPrefs.firstUsageTime, defaultTimeZone).withTimeAtStartOfDay()
+    private val firstDate = DateTime(if (BuildConfig.FIREBASE_TEST_MODE) 1536146147659 else 0, defaultTimeZone).withTimeAtStartOfDay()
     private val nowDate = DateTime(if (BuildConfig.FIREBASE_TEST_MODE) 1540605842591 else System.currentTimeMillis(), defaultTimeZone).withTimeAtStartOfDay()
     private val nDays = Duration(firstDate, nowDate).toStandardDays().days + 1
 
@@ -33,22 +33,14 @@ class DashboardFragment : BaseFragment<FragmentDashboardBinding, DashboardViewMo
             nItemCount = nDays,
             fragment = this
         )
-
-        childFragmentManager.commit {
-            replace(R.id.container_daily_overview,
-                DashboardChildDailyOverviewFragment()
-            )
-            replace(R.id.container_weekly_chart,
-                DashboardChildWeeklyChartFragment()
-            )
-        }
-
         dataBinding.containerPager.adapter = adapter
+
         dataBinding.containerPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
             override fun onPageSelected(position: Int) {
                 loadDailyData(position)
             }
         })
+        
         dataBinding.containerPager.setCurrentItem(adapter.itemCount - 1, false)
     }
 

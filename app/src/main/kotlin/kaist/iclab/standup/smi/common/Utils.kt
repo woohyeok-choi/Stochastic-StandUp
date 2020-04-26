@@ -125,9 +125,16 @@ suspend fun <T : Any> Task<T?>.asSuspend(
     }
 }
 
-suspend fun SupportMapFragment.getMapAsSuspend(context: CoroutineContext = EmptyCoroutineContext) = withContext(context) {
-    suspendCoroutine<GoogleMap> { continuation ->
-        getMapAsync { continuation.resume(it) }
+fun SupportMapFragment.doMapOperation(op: (map: GoogleMap) -> Unit) {
+    getMapAsync {
+        op.invoke(it)
+    }
+}
+
+suspend fun SupportMapFragment.getMap(init: (map: GoogleMap) -> Unit) : GoogleMap = suspendCoroutine { continuation ->
+    getMapAsync {
+        init.invoke(it)
+        continuation.resume(it)
     }
 }
 

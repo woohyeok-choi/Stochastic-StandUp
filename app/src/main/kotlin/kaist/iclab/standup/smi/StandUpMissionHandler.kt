@@ -1,5 +1,6 @@
 package kaist.iclab.standup.smi
 
+import android.util.Log
 import kaist.iclab.standup.smi.common.AppLog
 import kaist.iclab.standup.smi.data.Mission
 import kaist.iclab.standup.smi.pref.LocalPrefs
@@ -65,13 +66,6 @@ class StandUpMissionHandler(
             id = id,
             timestamp = timestamp
         )
-        val mission = missionRepository.getMission(id)
-
-        statRepository.updateStayDuration(
-            latitude = latitude,
-            longitude = longitude,
-            duration = mission?.prepareTime?.let { (timestamp - it).coerceAtLeast(0) } ?: RemotePrefs.minTimeForStayEvent
-        )
     }
 
     suspend fun startMission(
@@ -108,17 +102,7 @@ class StandUpMissionHandler(
             incentive = signedIncentive
         )
 
-        val mission = missionRepository.getMission(id)
-
-        statRepository.updateStayDuration(
-            latitude = latitude,
-            longitude = longitude,
-            duration = mission?.standByTime?.let {
-                (timestamp - it).coerceAtLeast(0)
-            } ?: RemotePrefs.minTimeForMissionTrigger - RemotePrefs.minTimeForStayEvent
-        )
-
-        return mission
+        return missionRepository.getMission(id)
     }
 
     suspend fun completeMission(
@@ -129,32 +113,33 @@ class StandUpMissionHandler(
         isSucceeded: Boolean? = null
     ) : Mission? {
         val mission = missionRepository.getMission(id) ?: return null
+        val dayStart = DateTime(timestamp, DateTimeZone.getDefault()).withTimeAtStartOfDay().millis
         val isMissionInProgress = mission.state == Mission.STATE_TRIGGERED
 
-        statRepository.updateStayDuration(
-            latitude = latitude,
-            longitude = longitude,
-            duration = listOf(mission.prepareTime, mission.standByTime, mission.triggerTime).filter { it > 0 }.max()?.let {
-                (timestamp - it).coerceAtLeast(0)
-            } ?: 0
-        )
+        if (isMissionInProgress && isSucceeded != null) {
+            val incentive = mission.incentive
+            val isGainMode = BuildConfig.IS_GAIN_INCENTIVE
+            val triggeredMissions = missionRepository.getTriggeredMissions(dayStart, timestamp)
+            val totalIncentives = triggeredMissions.sumIncentives()
+            val maxBudget = RemotePrefs.maxDailyBudget
+            val availableBudget = (maxBudget - abs(totalIncentives)).coerceAtLeast(0)
+            val realIncentive = abs(incentive).coerceIn(0, availableBudget) * (if(isGainMode) 1 else -1)
+
+            Log.d(javaClass.name, "$totalIncentives, $maxBudget, $availableBudget, $realIncentive")
+
+            statRepository.updateMissionResult(
+                latitude = latitude,
+                longitude = longitude,
+                isSucceeded = isSucceeded,
+                incentives = realIncentive
+            )
+        }
 
         missionRepository.completeMission(
             id = id,
             timestamp = timestamp,
             isSucceeded = isSucceeded
         )
-
-        if (isMissionInProgress && isSucceeded != null) {
-            val incentive = mission.incentive
-
-            statRepository.updateMissionResult(
-                latitude = latitude,
-                longitude = longitude,
-                isSucceeded = isSucceeded,
-                incentives = incentive
-            )
-        }
 
         return mission
     }

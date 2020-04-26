@@ -2,7 +2,6 @@
 <navigation
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/navigation_main"
     app:startDestination="@id/fragment_dashboard">
 
@@ -10,40 +9,29 @@
         android:id="@+id/fragment_dashboard"
         android:name="kaist.iclab.standup.smi.ui.dashboard.DashboardFragment"
         android:label="@string/title_dashboard" >
-
-        <action
-            android:id="@+id/action_dashboard_to_daily_chart"
-            app:destination="@id/fragment_daily_chart" />
     </fragment>
 
     <fragment
         android:id="@+id/fragment_config"
         android:name="kaist.iclab.standup.smi.ui.config.ConfigFragment"
-        android:label="@string/title_config" >
-    </fragment>
+        android:label="@string/title_config" />
+
 
     <fragment
         android:id="@+id/fragment_timeline"
         android:name="kaist.iclab.standup.smi.ui.timeline.TimelineFragment"
-        android:label="TimelineFragment" />
-
-    <fragment
-        android:id="@+id/fragment_daily_chart"
-        android:name="kaist.iclab.standup.smi.ui.daily.DailyChartFragment"
-        android:label="DailyChartFragment" >
-        <argument
-            android:name="dataType"
-            app:argType="string"/>
-
-        <argument
-            android:name="year"
-            app:argType="integer" />
-        <argument
-            android:name="month"
-            app:argType="integer" />
-        <argument
-            android:name="day"
-            app:argType="integer" />
+        android:label="TimelineFragment" >
+        <action
+            android:id="@+id/action_place_detail"
+            app:destination="@id/place_detail_fragment" />
     </fragment>
 
+    <fragment
+        android:id="@+id/place_detail_fragment"
+        android:name="kaist.iclab.standup.smi.ui.place.PlaceDetailFragment"
+        android:label="PlaceDetailFragment" >
+        <argument
+            android:name="location"
+            app:argType="android.location.Location" />
+    </fragment>
 </navigation>

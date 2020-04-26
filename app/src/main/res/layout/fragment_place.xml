@@ -3,6 +3,14 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
+    <data>
+        <import type="android.view.View"/>
+        <import type="kaist.iclab.standup.smi.common.Formatter"/>
+        <variable
+            name="viewModel"
+            type="kaist.iclab.standup.smi.ui.place.PlaceDetailViewModel" />
+    </data>
+
     <androidx.coordinatorlayout.widget.CoordinatorLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
@@ -12,7 +20,7 @@
             android:layout_height="match_parent"
             android:id="@+id/fragment_map"
             android:fitsSystemWindows="true"
-            android:layout_marginTop="@dimen/small_action_bar_size_double"
+            android:layout_marginTop="@dimen/default_action_bar_size"
             android:layout_marginBottom="@dimen/bottom_sheet_peek_height"
             android:name="com.google.android.libraries.maps.SupportMapFragment" />
 
@@ -20,31 +28,140 @@
             android:id="@+id/container_appbar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@android:color/white"
             android:fitsSystemWindows="true"
+            android:background="@android:color/white"
             android:theme="@style/AppTheme.AppBarOverlay"
             app:expanded="false">
 
             <androidx.appcompat.widget.Toolbar
                 android:id="@+id/toolbar"
                 android:layout_width="match_parent"
-                android:layout_height="@dimen/small_action_bar_size"
-                android:background="@android:color/white"
-                app:layout_collapseMode="pin"
-                app:popupTheme="@style/AppTheme.PopupOverlay"/>
+                android:layout_height="@dimen/default_action_bar_size"
+                style="@style/AppTheme.ChildToolBar"
+                app:layout_collapseMode="pin">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingStart="0dp"
+                    android:paddingEnd="@dimen/space_horizontal_large"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:text="@{viewModel.placeStat.name}"
+                        android:textSize="@dimen/txt_size_medium"
+                        android:textColor="@color/black"
+                        android:paddingBottom="@dimen/txt_bottom_padding"
+                        android:hint="@string/general_unknown"
+                        android:textColorHint="@color/light_grey"
+                        android:ellipsize="end"/>
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:text="@{viewModel.placeStat.address}"
+                        android:textSize="@dimen/txt_size_default"
+                        android:hint="@string/general_unknown"
+                        android:textColorHint="@color/light_grey"
+                        android:textColor="@color/grey"
+                        android:ellipsize="end"/>
+                </LinearLayout>
+            </androidx.appcompat.widget.Toolbar>
 
         </com.google.android.material.appbar.AppBarLayout>
 
-        <androidx.fragment.app.FragmentContainerView
+        <LinearLayout
             android:id="@+id/container_mission"
             android:background="@android:color/white"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:orientation="vertical"
             android:fitsSystemWindows="true"
             app:behavior_hideable="false"
             app:behavior_peekHeight="@dimen/bottom_sheet_peek_height"
             app:elevation="4dp"
-            app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior" />
+            app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior">
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/bottom_sheet_peek_height">
+
+                <ProgressBar
+                    style="?android:progressBarStyleSmall"
+                    android:layout_width="@dimen/size_progress_bar"
+                    android:layout_height="@dimen/size_progress_bar"
+                    android:layout_gravity="center"
+                    android:indeterminateTint="@color/light_grey"
+                    android:visibility="@{viewModel.placeLoadStatus.loading ? View.VISIBLE : View.GONE}" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:gravity="center"
+                    android:text="@string/general_load_failed"
+                    android:textColor="@color/grey"
+                    android:textSize="@dimen/txt_size_default"
+                    android:visibility="@{viewModel.placeLoadStatus.failed ? View.VISIBLE : View.GONE}" />
+
+                <LinearLayout
+                    android:id="@+id/container_overall_stat"
+                    android:orientation="vertical"
+                    crossFadeIn="@{viewModel.placeLoadStatus.succeeded}"
+                    duration="@{250}"
+                    isGone="@{false}"
+                    android:paddingTop="@dimen/space_vertical_small"
+                    android:paddingBottom="@dimen/space_vertical_small"
+                    android:paddingStart="@dimen/space_horizontal_large"
+                    android:paddingEnd="@dimen/space_horizontal_large"
+                    android:layout_gravity="center"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="top|start"
+                        android:maxLines="2"
+                        android:ellipsize="end"
+                        android:hint="@string/general_unknown"
+                        android:textColorHint="@color/light_grey"
+                        android:paddingBottom="@dimen/txt_bottom_padding"
+                        android:text="@{@string/timeline_list_item_place_visit_stat(Formatter.getRelativeTimeSpanString(context, viewModel.placeStat.lastVisitTime), viewModel.placeStat.numVisit)}"
+                        android:textColor="@color/grey"
+                        android:textSize="@dimen/txt_size_default"/>
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="top|start"
+                        android:maxLines="2"
+                        android:ellipsize="end"
+                        android:hint="@string/general_unknown"
+                        android:textColorHint="@color/light_grey"
+                        android:text="@{@string/timeline_list_item_place_mission_stat(viewModel.placeStat.numSuccess, viewModel.placeStat.numMission, viewModel.placeStat.incentive)}"
+                        android:textColor="@color/grey"
+                        android:textSize="@dimen/txt_size_default"/>
+
+                </LinearLayout>
+            </FrameLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@color/light_grey" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/list_mission"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:scrollbars="vertical"
+                android:visibility="@{viewModel.missionLoadStatus.succeeded ? View.VISIBLE : View.GONE}"
+                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
+
+        </LinearLayout>
 
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
 

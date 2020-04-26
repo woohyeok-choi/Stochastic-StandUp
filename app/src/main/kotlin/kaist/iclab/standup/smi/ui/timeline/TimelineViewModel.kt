@@ -1,16 +1,15 @@
 package kaist.iclab.standup.smi.ui.timeline
 
+import android.util.Log
 import androidx.lifecycle.*
 import androidx.paging.LivePagedListBuilder
 import androidx.paging.PagedList
 import com.google.firebase.firestore.CollectionReference
-import com.google.firebase.firestore.Query
 import kaist.iclab.standup.smi.BuildConfig
 import kaist.iclab.standup.smi.R
 import kaist.iclab.standup.smi.base.BaseViewModel
+import kaist.iclab.standup.smi.common.DataField
 import kaist.iclab.standup.smi.common.Status
-import kaist.iclab.standup.smi.common.confidenceInterval
-import kaist.iclab.standup.smi.common.sumByLong
 import kaist.iclab.standup.smi.common.throwError
 import kaist.iclab.standup.smi.data.PlaceStat
 import kaist.iclab.standup.smi.data.PlaceStats
@@ -21,16 +20,18 @@ import kaist.iclab.standup.smi.view.DocumentDataSource
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.joda.time.DateTime
-import java.util.concurrent.TimeUnit
 import kotlin.math.abs
 
-class TimelineViewModel (
+class TimelineViewModel(
     private val eventRepository: EventRepository,
     private val missionRepository: MissionRepository,
     private val statRepository: StatRepository,
     private val placeReference: () -> CollectionReference?
-): BaseViewModel<TimelineNavigator>() {
+) : BaseViewModel<TimelineNavigator>() {
     private val ioContext = viewModelScope.coroutineContext + Dispatchers.IO
+
+    val isDailyMode: MutableLiveData<Boolean> = MutableLiveData(true)
+
     /**
      * Data relevant to Daily-mode
      */
@@ -68,15 +69,15 @@ class TimelineViewModel (
     val dailyLoadStatus: MutableLiveData<Status> = MutableLiveData(Status.init())
 
     fun loadDailyStat(dateTime: DateTime) = viewModelScope.launch(ioContext) {
-        loadDailyStat(dateTime, false)
+        loadDailyStatInternal(dateTime)
     }
 
     fun refreshDailyStat() = viewModelScope.launch(ioContext) {
-        currentDateTime.value?.let { loadDailyStat(it, true) }
+        currentDateTime.value?.let { loadDailyStatInternal(it) }
     }
 
-    private suspend fun loadDailyStat(dateTime: DateTime, isForced: Boolean) {
-        if (!isForced && currentDateTime.value == dateTime) return
+    private suspend fun loadDailyStatInternal(dateTime: DateTime) {
+        ui { navigator?.navigateBeforeDataLoad() }
 
         currentDateTime.postValue(dateTime)
         dailyLoadStatus.postValue(Status.loading())
@@ -107,7 +108,7 @@ class TimelineViewModel (
             dailyStats.postValue(missionEvents)
             dailyLoadStatus.postValue(Status.success())
         } catch (e: Exception) {
-            navigator?.navigateDailyStatError(e)
+            ui { navigator?.navigateDailyStatError(e) }
             dailyLoadStatus.postValue(Status.failure(e))
         }
     }
@@ -119,7 +120,9 @@ class TimelineViewModel (
         scope = viewModelScope,
         dispatcher = ioContext,
         query = null,
-        onError = { navigator?.navigatePlaceStatError(it) },
+        onError = {
+            ui { navigator?.navigatePlaceStatError(it) }
+        },
         entityClass = PlaceStat
     )
 
@@ -137,30 +140,56 @@ class TimelineViewModel (
     var currentOrderDescendingDirection = true
         private set
 
-    val placeStats= LivePagedListBuilder(placeDataSourceFactory, PagedList.Config.Builder()
-        .setPageSize(30)
-        .setEnablePlaceholders(true)
-        .setMaxSize(100)
-        .build()
+    val placeStats = LivePagedListBuilder(
+        placeDataSourceFactory, PagedList.Config.Builder()
+            .setPageSize(30)
+            .setEnablePlaceholders(true)
+            .setMaxSize(100)
+            .build()
     ).build()
 
     val totalVisitedPlaces = overallStats.map { it?.numPlaces ?: 0 }
 
-    val totalIncentives = overallStats.map {
-        if (!LocalPrefs.isMissionOn) null else (it?.incentive ?: 0)
+    val totalIncentives = overallStats.map { stat ->
+        if (!LocalPrefs.isMissionOn) {
+            null
+        } else {
+            val nDaysMission = stat?.numDaysMissions ?: 0
+            val maxIncentive = nDaysMission * RemotePrefs.maxDailyBudget
+            val curIncentive = stat?.incentive ?: 0
+            val isGainMode = BuildConfig.IS_GAIN_INCENTIVE
+            if (isGainMode) {
+                curIncentive.coerceIn(0, maxIncentive)
+            } else {
+                (maxIncentive - abs(curIncentive)).coerceIn(0, maxIncentive)
+            }
+        }
     }
 
     val placeLoadStatus = placeDataSourceFactory.sourceLiveData.switchMap { it.initStatus }
 
-    fun loadPlaceStats(isDescending: Boolean = true, field: Int = TimelineFragment.EXTRA_FIELD_VISIT_TIME) {
+    fun loadPlaceStats(
+        isDescending: Boolean = true,
+        field: Int = TimelineFragment.EXTRA_FIELD_VISIT_TIME
+    ) = viewModelScope.launch {
+        ui { navigator?.navigateBeforeDataLoad() }
+
         currentOrderField = field
         currentOrderDescendingDirection = isDescending
 
-        val query = placeReference.invoke()?.orderBy(fieldToString(field), if (isDescending) Query.Direction.DESCENDING else Query.Direction.ASCENDING)
+        val query = placeReference.invoke()?.let {
+            PlaceStat.buildQuery(
+                ref = it,
+                orderBy = extraToField(field),
+                isAscending = !isDescending
+            )
+        }
         placeDataSourceFactory.updateQuery(query)
     }
 
-    fun refreshPlaceStats() {
+    fun refreshPlaceStats() = viewModelScope.launch {
+        ui { navigator?.navigateBeforeDataLoad() }
+
         placeDataSourceFactory.refresh()
     }
 
@@ -171,23 +200,30 @@ class TimelineViewModel (
     /**
      * Data relevant rename place
      */
-    fun renamePlace(newName: String,
-                    latitude: Double,
-                    longitude: Double
+    fun renamePlace(
+        newName: String,
+        latitude: Double,
+        longitude: Double
     ) = viewModelScope.launch(ioContext) {
         try {
             if (newName.isBlank()) throwError(R.string.error_empty_input)
             statRepository.updatePlaceName(latitude, longitude, newName)
+
+            if (isDailyMode.value != false) {
+                refreshDailyStat()
+            } else {
+                refreshPlaceStats()
+            }
+
         } catch (e: Exception) {
-            navigator?.navigatePlaceRenameError(e)
+            ui { navigator?.navigatePlaceRenameError(e) }
         }
     }
 
-    private fun fieldToString(field: Int) : String = when(field) {
-        TimelineFragment.EXTRA_FIELD_VISITS -> PlaceStats.numVisit.name
-        TimelineFragment.EXTRA_FIELD_MISSIONS -> PlaceStats.numMission.name
-        TimelineFragment.EXTRA_FIELD_INCENTIVE -> PlaceStats.incentive.name
-        TimelineFragment.EXTRA_FIELD_DURATION -> PlaceStats.approximateDuration.name
-        else -> PlaceStats.lastVisitTime.name
+    private fun extraToField(field: Int): DataField<*> = when (field) {
+        TimelineFragment.EXTRA_FIELD_VISITS -> PlaceStats.numVisit
+        TimelineFragment.EXTRA_FIELD_MISSIONS -> PlaceStats.numMission
+        TimelineFragment.EXTRA_FIELD_INCENTIVE -> PlaceStats.incentive
+        else -> PlaceStats.lastVisitTime
     }
 }

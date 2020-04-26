@@ -6,19 +6,15 @@ import androidx.databinding.DataBindingUtil
 import androidx.paging.PagedListAdapter
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
+import com.fonfon.kgeohash.toGeoHash
 import kaist.iclab.standup.smi.R
 import kaist.iclab.standup.smi.data.PlaceStat
 import kaist.iclab.standup.smi.databinding.ItemPlaceTimelineBinding
 
 class TimelinePlaceListAdapter :
     PagedListAdapter<PlaceStat, TimelinePlaceListAdapter.ViewHolder>(DIFF_CALLBACK) {
-    interface OnAdapterListener {
-        fun onBind(item: PlaceStat)
-        fun onClick(item: PlaceStat)
-        fun onLongClick(item: PlaceStat)
-    }
 
-    var listener: OnAdapterListener? = null
+    var listener: OnTimelineItemListener? = null
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val binding: ItemPlaceTimelineBinding = DataBindingUtil.inflate(
@@ -32,14 +28,18 @@ class TimelinePlaceListAdapter :
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val item = getItem(position) ?: return
+        val location = item.id.toGeoHash().toLocation()
+        val latitude = location.latitude
+        val longitude = location.longitude
+        val name = item.name
 
         holder.bind(
             item = item,
-            onClick = { listener?.onClick(it) },
-            onLongClick = { listener?.onLongClick(it) }
+            onClick = { listener?.onItemClick(name, latitude, longitude) },
+            onLongClick = { listener?.onItemLongClick(name, latitude, longitude) }
         )
 
-        listener?.onBind(item)
+        listener?.onItemBind(name, latitude, longitude)
     }
 
     class ViewHolder(private val binding: ItemPlaceTimelineBinding) :

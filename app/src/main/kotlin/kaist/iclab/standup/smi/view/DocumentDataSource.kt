@@ -20,7 +20,7 @@ class DocumentDataSource<T : DocumentEntity>(
     private val scope: CoroutineScope,
     private val context: CoroutineContext = EmptyCoroutineContext,
     private var query: Query?,
-    private val onError: ((Exception) -> Unit)? = null,
+    private val onError: (suspend (Exception) -> Unit)? = null,
     private val entityClass: DocumentEntityClass<T>
 ) : PageKeyedDataSource<DocumentSnapshot, T>() {
 
@@ -91,7 +91,7 @@ class DocumentDataSource<T : DocumentEntity>(
         private val scope: CoroutineScope,
         private val dispatcher: CoroutineContext,
         var query: Query?,
-        private val onError: ((Exception) -> Unit)?,
+        private val onError: (suspend (Exception) -> Unit)?,
         private val entityClass: DocumentEntityClass<T>
     ) : DataSource.Factory<DocumentSnapshot, T>() {
         val sourceLiveData: MutableLiveData<DocumentDataSource<T>> = MutableLiveData()

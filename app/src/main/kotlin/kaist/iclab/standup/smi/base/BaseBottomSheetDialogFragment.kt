@@ -15,6 +15,7 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import kaist.iclab.standup.smi.R
 import kaist.iclab.standup.smi.common.AppLog
 import kaist.iclab.standup.smi.databinding.FragmentBaseDialogBinding
+import java.io.Serializable
 
 abstract class BaseBottomSheetDialogFragment<B : ViewDataBinding> : BottomSheetDialogFragment() {
     protected lateinit var dataBinding: B
@@ -30,17 +31,18 @@ abstract class BaseBottomSheetDialogFragment<B : ViewDataBinding> : BottomSheetD
     @StringRes
     protected open val textNegativeButton: Int = android.R.string.cancel
 
-    interface OnDismissListener {
-        fun onDismiss(requestCode: Int)
-    }
-
     abstract fun beforeExecutePendingBindings()
 
     abstract fun onClick(isPositive: Boolean)
 
     protected fun isSavable(isEnabled: Boolean) {
         rootBinding.btnPositive.isEnabled = isEnabled
+        rootBinding.btnPositive.setTextColor(
+            if (isEnabled) resources.getColor(R.color.dark_blue, null) else resources.getColor(R.color.light_grey, null)
+        )
     }
+
+    var onDismiss: (() -> Unit)? = null
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
@@ -142,10 +144,6 @@ abstract class BaseBottomSheetDialogFragment<B : ViewDataBinding> : BottomSheetD
     }
 
     override fun onDismiss(dialog: DialogInterface) {
-        if (targetFragment != null) {
-            (targetFragment as? OnDismissListener)?.onDismiss(targetRequestCode)
-        } else {
-            (activity as? OnDismissListener)?.onDismiss(targetRequestCode)
-        }
+       onDismiss?.invoke()
     }
 }

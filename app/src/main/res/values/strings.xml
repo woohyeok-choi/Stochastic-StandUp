@@ -77,7 +77,8 @@
     <string name="timeline_list_item_mission_bid_negative_success">Kept %1d pts.</string>
     <string name="timeline_list_item_mission_bid_positive_failure">Lost a chance to get %1d pts.</string>
     <string name="timeline_list_item_mission_bid_negative_failure">Lost %1d pts.</string>
-    <string name="timeline_list_item_place_visit_stat">%1s · %2d visits · %3s</string>
+    <string name="timeline_list_item_mission_bid_no_point">No incentive mission</string>
+    <string name="timeline_list_item_place_visit_stat">%1s · %2d visits</string>
     <string name="timeline_list_item_place_mission_stat">%1d / %2d successes · %3d pts.</string>
 
     <string name="timeline_place_order_menu">Sort</string>
@@ -92,8 +93,11 @@
     <string name="timeline_place_order_direction_ascending">Ascending</string>
     <string name="timeline_place_order_direction_descending">Descending</string>
 
-    <string name="timeline_place_rename_title">Rename</string>
+    <string name="timeline_place_rename">Rename</string>
     <string name="timeline_place_rename_hint">Type a place name you want.</string>
+
+    <string name="timeline_place_detail">Detail</string>
+
 
     <!-- Config -->
     <string name="config_header_general">General</string>
@@ -170,5 +174,7 @@
     <string name="ntf_mission_failure_text_gain">Unfortunately, you lost a chance for %d points.</string>
     <string name="ntf_mission_failure_text_loss">Unfortunately, you lost %d points.</string>
     <string name="ntf_mission_failure_text_none">Unfortunately, you failed this mission.</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
 
 </resources>

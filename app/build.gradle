@@ -4,6 +4,7 @@ apply plugin: 'kotlin-android-extensions'
 apply plugin: 'kotlin-kapt'
 apply plugin: 'com.google.firebase.crashlytics'
 apply plugin: 'com.google.gms.google-services'
+apply plugin: "androidx.navigation.safeargs.kotlin"
 
 android {
 
@@ -35,8 +36,8 @@ android {
         buildConfigField("String", "REMOTE_PREF_NAME", "\"${config.remote_pref_name}\"")
         buildConfigField("Boolean", "FIREBASE_TEST_MODE", "true")
         buildConfigField("Boolean", "IS_LOCAL_CONFIG", "true")
-        buildConfigField("Boolean", "IS_GAIN_INCENTIVE", "true")
-        buildConfigField("Integer", "INCENTIVE_MODE", "0")
+        buildConfigField("Boolean", "IS_GAIN_INCENTIVE", "false")
+        buildConfigField("Integer", "INCENTIVE_MODE", "2")
 
         buildConfigField("Integer", "INCENTIVE_MODE_NONE", "0")
         buildConfigField("Integer", "INCENTIVE_MODE_FIXED", "1")
@@ -279,6 +280,7 @@ dependencies {
      * Glide for image loading
      */
     implementation 'com.github.bumptech.glide:glide:4.11.0'
+    implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     kapt 'com.github.bumptech.glide:compiler:4.11.0'
 
     /**

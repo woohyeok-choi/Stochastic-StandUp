@@ -1,6 +1,7 @@
 package kaist.iclab.standup.smi.repository
 
 import com.google.firebase.firestore.CollectionReference
+import kaist.iclab.standup.smi.common.toGeoHash
 import kaist.iclab.standup.smi.common.toISODateTime
 import kaist.iclab.standup.smi.data.Mission
 import kaist.iclab.standup.smi.data.Missions
@@ -14,7 +15,8 @@ class MissionRepository(
 
     suspend fun getTriggeredMissions(
         fromTime: Long,
-        toTime: Long
+        toTime: Long,
+        geoHash: String? = null
     ): List<Mission> =
         reference.invoke()?.let { reference ->
             Mission.select(
@@ -28,6 +30,7 @@ class MissionRepository(
                     Mission.STATE_SUCCESS,
                     Mission.STATE_TRIGGERED
                 )
+                if (!geoHash.isNullOrBlank()) Missions.geoHash equalTo geoHash
             }
         } ?: listOf()
 
@@ -58,6 +61,7 @@ class MissionRepository(
             if (!latitude.isNaN() && !longitude.isNaN()) {
                 this.latitude = latitude
                 this.longitude = longitude
+                this.geoHash = (latitude to longitude).toGeoHash() ?: ""
             }
         }
     }

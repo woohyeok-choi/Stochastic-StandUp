@@ -101,10 +101,10 @@ fun setTint(view: TextView, tint: Int?) {
 fun setFormattedIncentiveString(view: TextView, incentive: Int?, succeeded: Boolean?) {
     if (incentive == null || succeeded == null) return
     val text = when {
-        incentive >= 0 && succeeded -> view.context.getString(
+        incentive > 0 && succeeded -> view.context.getString(
             R.string.timeline_list_item_mission_bid_positive_success, abs(incentive)
         )
-        incentive >= 0 && !succeeded -> view.context.getString(
+        incentive > 0 && !succeeded -> view.context.getString(
             R.string.timeline_list_item_mission_bid_positive_failure, abs(incentive)
         )
         incentive < 0 && succeeded -> view.context.getString(
@@ -113,7 +113,7 @@ fun setFormattedIncentiveString(view: TextView, incentive: Int?, succeeded: Bool
         incentive < 0 && !succeeded -> view.context.getString(
             R.string.timeline_list_item_mission_bid_negative_failure, abs(incentive)
         )
-        else -> ""
+        else -> view.context.getString(R.string.timeline_list_item_mission_bid_no_point)
     }
     view.text = text
 }

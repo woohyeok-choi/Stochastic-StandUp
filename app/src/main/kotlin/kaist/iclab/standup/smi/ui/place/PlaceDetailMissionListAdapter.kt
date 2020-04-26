@@ -10,7 +10,7 @@ import kaist.iclab.standup.smi.R
 import kaist.iclab.standup.smi.data.Mission
 import kaist.iclab.standup.smi.databinding.ItemMissionBinding
 
-class PlaceMissionListAdapter: PagedListAdapter<Mission, PlaceMissionListAdapter.ViewHolder>(
+class PlaceDetailMissionListAdapter: PagedListAdapter<Mission, PlaceDetailMissionListAdapter.ViewHolder>(
     DIFF_CALLBACK) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {

@@ -1,6 +1,5 @@
 package kaist.iclab.standup.smi.ui.place
 
-import android.content.Context
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.switchMap
 import androidx.lifecycle.viewModelScope
@@ -18,17 +17,17 @@ import kaist.iclab.standup.smi.view.DocumentDataSource
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-class PlaceViewModel(
+class PlaceDetailViewModel(
     private val statRepository: StatRepository,
     private val missionReference: () -> CollectionReference?
-) : BaseViewModel<PlaceNavigator>() {
+) : BaseViewModel<PlaceDetailNavigator>() {
     private val ioContext = viewModelScope.coroutineContext + Dispatchers.IO
 
-    fun loadData(placeId: String) = viewModelScope.launch(ioContext) {
+    fun loadData(latitude: Double, longitude: Double) = viewModelScope.launch(ioContext) {
         placeLoadStatus.postValue(Status.loading())
 
         try {
-            val place = statRepository.getPlaceStat(placeId) ?: throwError(0)
+            val place = statRepository.getPlaceStat(latitude, longitude) ?: throwError(0)
             placeStat.postValue(place)
 
             val query = missionReference.invoke()?.let {
@@ -37,10 +36,11 @@ class PlaceViewModel(
                     orderBy = Missions.triggerTime,
                     isAscending = false
                 ) {
-                    Missions.geoHash equalTo placeId
+                    Missions.geoHash equalTo place.id
                 }
             }
             missionDataSourceFactory.updateQuery(query)
+            placeLoadStatus.postValue(Status.success())
         } catch (e: Exception) {
             placeLoadStatus.postValue(Status.failure(e))
             navigator?.navigateError(e)

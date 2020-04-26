@@ -88,20 +88,6 @@
                 android:textSize="@dimen/txt_size_default" />
 
             <RadioButton
-                android:id="@+id/btn_place_order_field_duration"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="@drawable/bg_text_radio_button"
-                android:button="@android:color/transparent"
-                android:paddingStart="@dimen/space_horizontal_large"
-                android:paddingTop="@dimen/space_vertical_default"
-                android:paddingEnd="@dimen/space_horizontal_large"
-                android:paddingBottom="@dimen/space_vertical_default"
-                android:text="@string/timeline_place_order_field_duration"
-                android:textColor="@color/grey"
-                android:textSize="@dimen/txt_size_default" />
-
-            <RadioButton
                 android:id="@+id/btn_place_order_field_incentive"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

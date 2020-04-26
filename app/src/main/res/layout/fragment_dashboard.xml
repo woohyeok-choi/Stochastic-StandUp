@@ -17,20 +17,22 @@
             android:layout_height="match_parent"
             android:orientation="vertical">
 
-            <androidx.fragment.app.FragmentContainerView
-                android:id="@+id/container_daily_overview"
+            <fragment
+                android:id="@+id/fragment_dashboard_daily_overview"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content"
+                android:name="kaist.iclab.standup.smi.ui.dashboard.DashboardChildDailyOverviewFragment"/>
 
             <androidx.viewpager2.widget.ViewPager2
                 android:id="@+id/container_pager"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"/>
 
-            <androidx.fragment.app.FragmentContainerView
-                android:id="@+id/container_weekly_chart"
+            <fragment
+                android:id="@+id/fragment_dashboard_weekly_chart"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content"
+                android:name="kaist.iclab.standup.smi.ui.dashboard.DashboardChildWeeklyChartFragment"/>
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 </layout>

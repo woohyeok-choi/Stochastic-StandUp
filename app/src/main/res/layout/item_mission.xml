@@ -5,10 +5,15 @@
     <data>
 
         <import type="android.text.format.DateUtils" />
+        <import type="android.view.View"/>
         <import type="kaist.iclab.standup.smi.data.Mission"/>
         <variable
             name="mission"
             type="kaist.iclab.standup.smi.data.Mission" />
+
+        <variable
+            name="isSubItem"
+            type="Boolean" />
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -38,7 +43,7 @@
             android:gravity="top|start"
             android:textColor="@color/black"
             android:text="@{mission.succeeded ? @string/timeline_list_item_mission_success : @string/timeline_list_item_mission_failure}"
-            android:textSize="@dimen/txt_size_default"
+            android:textSize="@{@dimen/txt_size_default}"
             android:paddingBottom="@dimen/txt_bottom_padding"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintLeft_toRightOf="@id/img_result"
@@ -50,10 +55,9 @@
             android:layout_height="wrap_content"
             android:gravity="top|start"
             android:textColor="@color/grey"
-            android:textSize="@dimen/txt_size_small"
+            android:textSize="@{@dimen/txt_size_small}"
             incentive="@{mission.incentive}"
             succeeded="@{mission.succeeded}"
-            android:paddingBottom="@dimen/txt_bottom_padding"
             app:layout_constraintTop_toBottomOf="@id/txt_result"
             app:layout_constraintLeft_toRightOf="@id/img_result"
             app:layout_constraintRight_toLeftOf="@id/txt_delivered_time"/>
@@ -64,9 +68,8 @@
             android:layout_height="wrap_content"
             android:gravity="top|start"
             android:textColor="@color/grey"
-            android:textSize="@dimen/txt_size_small"
+            android:textSize="@{@dimen/txt_size_small}"
             android:text="@{DateUtils.formatDateTime(context, mission.triggerTime, DateUtils.FORMAT_SHOW_TIME)}"
-            android:paddingBottom="@dimen/txt_bottom_padding"
             app:layout_constraintRight_toRightOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
     </androidx.constraintlayout.widget.ConstraintLayout>
