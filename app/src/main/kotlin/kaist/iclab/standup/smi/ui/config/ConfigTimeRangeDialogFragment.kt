@@ -2,6 +2,8 @@ package kaist.iclab.standup.smi.ui.config
 
 import androidx.core.os.bundleOf
 import androidx.core.widget.doOnTextChanged
+import androidx.navigation.fragment.findNavController
+import androidx.navigation.fragment.navArgs
 import kaist.iclab.standup.smi.R
 import kaist.iclab.standup.smi.base.BaseBottomSheetDialogFragment
 import kaist.iclab.standup.smi.common.hourMinuteToMillis
@@ -11,17 +13,20 @@ import kaist.iclab.standup.smi.common.toHourMinutes
 import kaist.iclab.standup.smi.databinding.FragmentConfigDialogTimeRangeBinding
 import kaist.iclab.standup.smi.ui.dialog.TimePickerDialogFragment
 
-
 class ConfigTimeRangeDialogFragment :
-    BaseBottomSheetDialogFragment<FragmentConfigDialogTimeRangeBinding>(), TimePickerDialogFragment.OnTimeSetListener {
+    BaseBottomSheetDialogFragment<FragmentConfigDialogTimeRangeBinding>() {
     override val layoutId: Int = R.layout.fragment_config_dialog_time_range
     override val showPositiveButton: Boolean = true
     override val showNegativeButton: Boolean = true
 
+    @Suppress("UNCHECKED_CAST")
     override fun beforeExecutePendingBindings() {
-        val item = arguments?.getParcelable(ARG_ITEM) as? LocalTimeRangeConfigItem
+        onDismiss = arguments?.getSerializable(ARG_ON_DISMISS) as? () -> Unit
+
+        val item = arguments?.getParcelable<LocalTimeRangeConfigItem>(ARG_ITEM) ?: return
         dataBinding.item = item
-        val (from, to) = item?.value?.invoke() ?: (0L to 0L)
+
+        val (from, to) = item.value?.invoke() ?: (0L to 0L)
         val (fromHour, fromMinute) = from.millisToHourMinute()
         val (toHour, toMinute) = to.millisToHourMinute()
 
@@ -29,7 +34,7 @@ class ConfigTimeRangeDialogFragment :
             val fromMillis = text.toHourMinutes().hourMinuteToMillis()
             val toMillis = dataBinding.txtTimeConfigTo.text.toHourMinutes().hourMinuteToMillis()
             isSavable(
-                item?.isSavable?.invoke(fromMillis to toMillis) ?: true
+                item.isSavable?.invoke(fromMillis to toMillis) ?: true
             )
         }
 
@@ -37,7 +42,7 @@ class ConfigTimeRangeDialogFragment :
             val fromMillis = dataBinding.txtTimeConfigFrom.text.toHourMinutes().hourMinuteToMillis()
             val toMillis = text.toHourMinutes().hourMinuteToMillis()
             isSavable(
-                item?.isSavable?.invoke(fromMillis to toMillis) ?: true
+                item.isSavable?.invoke(fromMillis to toMillis) ?: true
             )
         }
 
@@ -46,16 +51,19 @@ class ConfigTimeRangeDialogFragment :
 
         dataBinding.txtTimeConfigFrom.setOnClickListener {
             val (hour, minute) = dataBinding.txtTimeConfigFrom.text.toHourMinutes()
-            val dialog = TimePickerDialogFragment.newInstance(hour.toInt(), minute.toInt())
-            dialog.setTargetFragment(this, REQUEST_CODE_FROM)
-            dialog.show(parentFragmentManager, javaClass.name)
+            val dialog = TimePickerDialogFragment.newInstance(hour.toInt(), minute.toInt()) { h, m ->
+                dataBinding.txtTimeConfigFrom.text = (h.toLong() to m.toLong()).hourMinuteToString()
+            }
+            dialog.show(parentFragmentManager, null)
         }
 
         dataBinding.txtTimeConfigTo.setOnClickListener {
             val (hour, minute) = dataBinding.txtTimeConfigTo.text.toHourMinutes()
-            val dialog = TimePickerDialogFragment.newInstance(hour.toInt(), minute.toInt())
-            dialog.setTargetFragment(this, REQUEST_CODE_TO)
-            dialog.show(parentFragmentManager, javaClass.name)
+
+            val dialog = TimePickerDialogFragment.newInstance(hour.toInt(), minute.toInt()) { h, m ->
+                dataBinding.txtTimeConfigTo.text = (h.toLong() to m.toLong()).hourMinuteToString()
+            }
+            dialog.show(parentFragmentManager, null)
         }
     }
 
@@ -67,24 +75,14 @@ class ConfigTimeRangeDialogFragment :
         }
     }
 
-    override fun onTimeSet(hour: Int, minute: Int, requestCode: Int) {
-        if (requestCode == REQUEST_CODE_FROM) {
-            dataBinding.txtTimeConfigFrom.text = (hour.toLong() to minute.toLong()).hourMinuteToString()
-        }
-
-        if (requestCode == REQUEST_CODE_TO) {
-            dataBinding.txtTimeConfigTo.text = (hour.toLong() to minute.toLong()).hourMinuteToString()
-        }
-    }
-
     companion object {
-        private val ARG_ITEM = "${ConfigTimeRangeDialogFragment::javaClass.name}.ARG_ITEM"
-        private const val REQUEST_CODE_FROM = 0x01
-        private const val REQUEST_CODE_TO = 0x02
+        private val ARG_ITEM = "${ConfigTimeRangeDialogFragment::class.java.name}.ARG_ITEM"
+        private val ARG_ON_DISMISS = "${ConfigTimeRangeDialogFragment::class.java.name}.ON_DISMISS"
 
-        fun newInstance(item: LocalTimeRangeConfigItem) = ConfigTimeRangeDialogFragment().apply {
+        fun newInstance(item: LocalTimeRangeConfigItem, onDismiss: (() -> Unit)? = null) = ConfigTimeRangeDialogFragment().apply {
             arguments = bundleOf(
-                ARG_ITEM to item
+                ARG_ITEM to item,
+                ARG_ON_DISMISS to onDismiss
             )
         }
     }

@@ -15,7 +15,7 @@
         android:layout_height="match_parent">
 
         <androidx.recyclerview.widget.RecyclerView
-            android:layout_marginTop="@dimen/small_action_bar_size"
+            android:layout_marginTop="@dimen/default_action_bar_size"
             android:id="@+id/list_config_item"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -35,11 +35,10 @@
             <androidx.appcompat.widget.Toolbar
                 android:id="@+id/toolbar"
                 android:layout_width="match_parent"
-                android:layout_height="@dimen/small_action_bar_size"
+                android:layout_height="@dimen/default_action_bar_size"
                 android:background="@android:color/white"
                 app:contentInsetStart="0dp"
-                app:layout_collapseMode="pin"
-                app:popupTheme="@style/AppTheme.PopupOverlay" >
+                app:layout_collapseMode="pin" >
 
                 <TextView
                     style="@style/TextAppearance.AppCompat.Widget.ActionBar.Title"

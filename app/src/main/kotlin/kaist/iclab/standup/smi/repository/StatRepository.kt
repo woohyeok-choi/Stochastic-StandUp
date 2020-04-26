@@ -1,6 +1,7 @@
 package kaist.iclab.standup.smi.repository
 
 import android.location.Location
+import android.view.animation.OvershootInterpolator
 import com.google.android.libraries.places.api.model.Place
 import com.google.android.libraries.places.api.net.FetchPlaceRequest
 import com.google.android.libraries.places.api.net.PlacesClient
@@ -20,6 +21,8 @@ import kaist.iclab.standup.smi.data.PlaceStat
 import kaist.iclab.standup.smi.data.PlaceStats
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.joda.time.DateTime
+import org.joda.time.DateTimeZone
 
 class StatRepository(
     private val geoApiContext: GeoApiContext? = null,
@@ -30,10 +33,11 @@ class StatRepository(
     suspend fun getPlaceStat(
         latitude: Double,
         longitude: Double
-    ): PlaceStat? = docReference.invoke()?.let { reference ->
-        val geoHash = (latitude to longitude).toGeoHash() ?: return@let null
-        return PlaceStat.get(reference, geoHash)
-    }
+    ): PlaceStat? = (latitude to longitude).toGeoHash()?.let { getPlaceStat(it) }
+    
+    suspend fun getPlaceStat(
+        id: String
+    ) = docReference.invoke()?.let { reference -> PlaceStat.get(reference, id) }
 
     suspend fun getOverallStat(): OverallStat? = rootReference.invoke()?.let { reference ->
         OverallStat.getSelf(reference)
@@ -63,26 +67,6 @@ class StatRepository(
         }
     }
 
-    suspend fun updateStayDuration(
-        latitude: Double,
-        longitude: Double,
-        duration: Long
-    ) {
-        val exists = createOrUpdatePlace(
-            latitude,
-            longitude,
-            PlaceStats.approximateDuration to FieldValue.increment(duration)
-        )
-
-        rootReference.invoke()?.let { reference ->
-            OverallStat.updateSelf(
-                reference,
-                OverallStats.approximateDuration to FieldValue.increment(duration),
-                OverallStats.numPlaces to FieldValue.increment(if (exists) 0L else 1L)
-            )
-        }
-    }
-
     suspend fun updateMissionResult(
         latitude: Double,
         longitude: Double,
@@ -100,6 +84,9 @@ class StatRepository(
         )
 
         rootReference.invoke()?.let { reference ->
+            val lastMissionDay = OverallStat.getSelf(reference)?.lastMissionDay ?: 0
+            val curMissionDayStart = DateTime(System.currentTimeMillis(), DateTimeZone.getDefault()).withTimeAtStartOfDay().millis
+
             OverallStat.updateSelf(
                 reference,
                 OverallStats.numMission to FieldValue.increment(1L),
@@ -107,7 +94,11 @@ class StatRepository(
                 OverallStats.incentive to FieldValue.increment(
                     if (isSucceeded && incentives >= 0 || !isSucceeded && incentives < 0) incentives.toLong() else 0L
                 ),
-                OverallStats.numPlaces to FieldValue.increment(if (exists) 0L else 1L)
+                OverallStats.numPlaces to FieldValue.increment(if (exists) 0L else 1L),
+                OverallStats.lastMissionDay to curMissionDayStart,
+                OverallStats.numDaysMissions to FieldValue.increment(
+                    if (lastMissionDay < curMissionDayStart) 1L else 0L
+                )
             )
         }
     }

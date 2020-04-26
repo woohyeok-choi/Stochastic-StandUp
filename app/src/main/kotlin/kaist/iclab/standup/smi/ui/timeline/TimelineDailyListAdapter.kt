@@ -6,8 +6,7 @@ import androidx.databinding.DataBindingUtil
 import androidx.recyclerview.widget.RecyclerView
 import kaist.iclab.standup.smi.R
 import kaist.iclab.standup.smi.databinding.ItemDailyTimelineBinding
-import kaist.iclab.standup.smi.databinding.SubItemDailyTimelineDetailBinding
-import kaist.iclab.standup.smi.pref.LocalPrefs
+import kaist.iclab.standup.smi.databinding.ItemMissionBinding
 import kaist.iclab.standup.smi.repository.SedentaryMissionEvent
 import kaist.iclab.standup.smi.repository.sumIncentives
 
@@ -18,13 +17,7 @@ class TimelineDailyListAdapter : RecyclerView.Adapter<TimelineDailyListAdapter.V
             notifyDataSetChanged()
         }
 
-    interface OnAdapterListener {
-        fun onBind(item: SedentaryMissionEvent)
-        fun onClick(item: SedentaryMissionEvent)
-        fun onLongClick(item: SedentaryMissionEvent)
-    }
-
-    var listener: OnAdapterListener? = null
+    var listener: OnTimelineItemListener? = null
 
     override fun getItemCount(): Int = items.size
 
@@ -39,16 +32,19 @@ class TimelineDailyListAdapter : RecyclerView.Adapter<TimelineDailyListAdapter.V
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val item = items.getOrNull(position) ?: return
+        val latitude = item.event.latitude
+        val longitude = item.event.longitude
+        val name = item.place?.name ?: ""
 
         holder.bind(
             item = item,
             isFirst = position == 0,
             isLast = position == items.lastIndex,
-            onClick = { listener?.onClick(it) },
-            onLongClick = { listener?.onLongClick(it) }
+            onClick = { listener?.onItemClick(name, latitude, longitude) },
+            onLongClick = { listener?.onItemLongClick(name, latitude, longitude) }
         )
 
-        listener?.onBind(item)
+        listener?.onItemBind(name, latitude, longitude)
     }
 
     class ViewHolder(private val binding: ItemDailyTimelineBinding) :
@@ -82,13 +78,14 @@ class TimelineDailyListAdapter : RecyclerView.Adapter<TimelineDailyListAdapter.V
             binding.containerIncentiveDetail.removeAllViews()
 
             item.missions.sortedByDescending { it.triggerTime }.forEach { mission ->
-                val subBinding: SubItemDailyTimelineDetailBinding = DataBindingUtil.inflate(
+                val subBinding: ItemMissionBinding = DataBindingUtil.inflate(
                     LayoutInflater.from(itemView.context),
-                    R.layout.sub_item_daily_timeline_detail,
+                    R.layout.item_mission,
                     binding.containerIncentiveDetail,
                     false
                 )
                 subBinding.mission = mission
+                subBinding.isSubItem = true
                 binding.containerIncentiveDetail.addView(subBinding.root)
             }
         }

@@ -14,10 +14,6 @@
             type="kaist.iclab.standup.smi.ui.timeline.TimelineViewModel" />
 
         <variable
-            name="isDailyMode"
-            type="Boolean" />
-
-        <variable
             name="isExpanded"
             type="Boolean" />
 
@@ -71,7 +67,7 @@
             app:behavior_hideable="false"
             app:behavior_peekHeight="@dimen/bottom_sheet_peek_height"
             app:elevation="4dp"
-            app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior" />
+            app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior"/>
 
         <com.google.android.material.appbar.AppBarLayout
             android:id="@+id/container_appbar"
@@ -91,8 +87,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="@dimen/small_action_bar_size"
                     android:background="@android:color/white"
-                    app:layout_collapseMode="pin"
-                    app:popupTheme="@style/AppTheme.PopupOverlay"/>
+                    app:layout_collapseMode="pin"/>
 
                 <FrameLayout
                     android:id="@+id/container_toolbar_title"
@@ -101,14 +96,14 @@
                     android:paddingStart="@dimen/space_horizontal_large"
                     android:paddingEnd="@dimen/space_horizontal_large"
                     android:layout_centerInParent="true"
-                    android:clickable="@{isDailyMode ? true : false}"
-                    android:focusable="@{isDailyMode ? true : false}">
+                    android:clickable="@{viewModel.isDailyMode ? true : false}"
+                    android:focusable="@{viewModel.isDailyMode ? true : false}">
 
                     <TextView
                         style="@style/TextAppearance.AppCompat.Widget.ActionBar.Title"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:text="@{isDailyMode ? (isExpanded ? DateUtils.formatDateTime(context, monthMillis, DateUtils.FORMAT_SHOW_YEAR | DateUtils.FORMAT_NO_MONTH_DAY) : DateUtils.getRelativeTimeSpanString(viewModel.currentDateTime.millis, System.currentTimeMillis(), DateUtils.DAY_IN_MILLIS)) : @string/timeline_title_place}"
+                        android:text="@{viewModel.isDailyMode ? (isExpanded ? DateUtils.formatDateTime(context, monthMillis, DateUtils.FORMAT_SHOW_YEAR | DateUtils.FORMAT_NO_MONTH_DAY) : DateUtils.getRelativeTimeSpanString(viewModel.currentDateTime.millis, System.currentTimeMillis(), DateUtils.DAY_IN_MILLIS)) : @string/timeline_title_place}"
                         android:textColor="@color/grey"
                         android:gravity="center"/>
 
@@ -120,7 +115,7 @@
                         android:layout_height="match_parent"
                         android:src="@drawable/ic_expand_more"
                         android:tint="@color/light_grey"
-                        android:visibility="@{isDailyMode ? View.VISIBLE : View.INVISIBLE}" />
+                        android:visibility="@{viewModel.isDailyMode ? View.VISIBLE : View.INVISIBLE}" />
 
                 </FrameLayout>
 

@@ -22,11 +22,6 @@ class MainActivity : BaseActivity<ActivityMainBinding, MainViewModel>(){
     override val layoutId: Int = R.layout.activity_main
 
     override fun beforeExecutePendingBindings() {
-        lifecycleScope.launchWhenCreated {
-            RemotePrefs.sync()
-            AppLog.d(MainActivity::class.java, "${RemotePrefs.getRemoteConfig().mapValues { it.value.asString() }}")
-        }
-
         StandUpService.startService(applicationContext)
 
         val navController = findNavController(R.id.fragment_nav_host)

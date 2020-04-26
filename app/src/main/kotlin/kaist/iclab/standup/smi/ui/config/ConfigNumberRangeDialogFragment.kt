@@ -1,6 +1,7 @@
 package kaist.iclab.standup.smi.ui.config
 
 import androidx.core.os.bundleOf
+import androidx.navigation.fragment.navArgs
 import kaist.iclab.standup.smi.R
 import kaist.iclab.standup.smi.base.BaseBottomSheetDialogFragment
 import kaist.iclab.standup.smi.databinding.FragmentConfigDialogNumberRangeBinding
@@ -11,13 +12,17 @@ class ConfigNumberRangeDialogFragment :
     override val showPositiveButton: Boolean = true
     override val showNegativeButton: Boolean = true
 
+    @Suppress("UNCHECKED_CAST")
     override fun beforeExecutePendingBindings() {
-        val item = arguments?.getParcelable(ARG_ITEM) as? NumberRangeConfigItem
-        val min = item?.min?.toInt() ?: 0
-        val max = item?.max?.toInt() ?: 100
-        val (from, to) = item?.value?.invoke() ?: (0L to 0L)
+        onDismiss = arguments?.getSerializable(ARG_ON_DISMISS) as? () -> Unit
+
+        val item = arguments?.getParcelable<NumberRangeConfigItem>(ARG_ITEM) ?: return
+
+        val min = item.min.toInt()
+        val max = item.max.toInt()
+        val (from, to) = item.value?.invoke() ?: (0L to 0L)
         val values = (min..max).map {
-            item?.valueFormatter?.invoke(it.toLong()) ?: it.toString()
+            item.valueFormatter?.invoke(it.toLong()) ?: it.toString()
         }.toTypedArray()
 
         dataBinding.item = item
@@ -27,7 +32,7 @@ class ConfigNumberRangeDialogFragment :
             displayedValues = values
             setOnValueChangedListener { _, _, newVal ->
                 val newValue = newVal.toLong() to dataBinding.numberPickerConfigTo.value.toLong()
-                isSavable(item?.isSavable?.invoke(newValue) ?: true)
+                isSavable(item.isSavable?.invoke(newValue) ?: true)
             }
         }
 
@@ -37,7 +42,7 @@ class ConfigNumberRangeDialogFragment :
             displayedValues = values
             setOnValueChangedListener { _, _, newVal ->
                 val newValue = dataBinding.numberPickerConfigFrom.value.toLong() to newVal.toLong()
-                isSavable(item?.isSavable?.invoke(newValue) ?: true)
+                isSavable(item.isSavable?.invoke(newValue) ?: true)
             }
         }
 
@@ -54,13 +59,14 @@ class ConfigNumberRangeDialogFragment :
     }
 
     companion object {
-        private val ARG_ITEM = "${ConfigNumberRangeDialogFragment::javaClass.name}.ARG_ITEM"
+        private val ARG_ITEM = "${ConfigNumberRangeDialogFragment::class.java.name}.ARG_ITEM"
+        private val ARG_ON_DISMISS = "${ConfigNumberRangeDialogFragment::class.java.name}.ON_DISMISS"
 
-        fun newInstance(item: NumberRangeConfigItem) = ConfigNumberRangeDialogFragment().apply {
+        fun newInstance(item: NumberRangeConfigItem, onDismiss: (() -> Unit)? = null) = ConfigNumberRangeDialogFragment().apply {
             arguments = bundleOf(
-                ARG_ITEM to item
+                ARG_ITEM to item,
+                ARG_ON_DISMISS to onDismiss
             )
         }
     }
-
 }

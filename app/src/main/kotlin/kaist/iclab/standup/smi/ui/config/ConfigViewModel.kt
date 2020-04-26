@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
+import android.util.Log
 import androidx.annotation.StringRes
 import androidx.lifecycle.liveData
 import com.google.firebase.auth.FirebaseAuth
@@ -99,7 +100,7 @@ class ConfigViewModel(
                             )
                         }
                         isSavable = { (from, to) ->
-                            from <= to && to - from > TimeUnit.HOURS.toMillis(9)
+                            from <= to && to - from > TimeUnit.HOURS.toMillis(12)
                         }
                         onSave = { (from, to) ->
                             LocalPrefs.activeStartTimeMs = from
@@ -133,7 +134,6 @@ class ConfigViewModel(
                             val curTime = System.currentTimeMillis()
 
                             checkDoNotDisturb(curTime)
-
                             LocalPrefs.doNotDisturbCount > 0
                         }
                         valueFormatter = {
@@ -377,6 +377,8 @@ class ConfigViewModel(
             LocalPrefs.doNotDisturbLastTimeSettingMillis = curDateTime.millis
             LocalPrefs.doNotDisturbCount = RemotePrefs.maxDoNotDisturb
         }
+
+        Log.d(javaClass.name, "$curDateTime, $lastSettingDateTime")
     }
 
     private fun resStr(@StringRes stringRes: Int, vararg params: Any): String =

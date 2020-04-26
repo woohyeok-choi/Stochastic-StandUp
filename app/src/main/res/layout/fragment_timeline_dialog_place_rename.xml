@@ -19,7 +19,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:paddingBottom="@dimen/space_vertical_small"
-            android:text="@string/timeline_place_rename_title"
+            android:text="@string/timeline_place_rename"
             android:textColor="@color/black"
             android:textSize="@dimen/txt_size_medium" />
 

@@ -1,9 +1,11 @@
 package kaist.iclab.standup.smi.ui.config
 
 import android.content.Intent
+import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.observe
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.fragment.findNavController
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.firebase.auth.FirebaseAuth
@@ -15,10 +17,11 @@ import kaist.iclab.standup.smi.base.BaseFragment
 import kaist.iclab.standup.smi.common.asSuspend
 import kaist.iclab.standup.smi.databinding.FragmentConfigBinding
 import kaist.iclab.standup.smi.ui.splash.SplashActivity
+import kotlinx.android.synthetic.main.fragment_config.*
 import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
-class ConfigFragment : BaseFragment<FragmentConfigBinding, ConfigViewModel>(), ConfigNavigator, BaseBottomSheetDialogFragment.OnDismissListener {
+class ConfigFragment : BaseFragment<FragmentConfigBinding, ConfigViewModel>(), ConfigNavigator {
     override val viewModel: ConfigViewModel by viewModel()
     override val viewModelVariable: Int = BR.viewModel
     override val layoutId: Int = R.layout.fragment_config
@@ -26,6 +29,10 @@ class ConfigFragment : BaseFragment<FragmentConfigBinding, ConfigViewModel>(), C
     private lateinit var adapter: ConfigListAdapter
 
     override fun beforeExecutePendingBindings() {
+        (activity as? AppCompatActivity)?.setSupportActionBar(toolbar)
+        (activity as? AppCompatActivity)?.supportActionBar?.apply {
+            setDisplayShowTitleEnabled(false)
+        }
         viewModel.navigator = this
 
         adapter = ConfigListAdapter { item, position ->
@@ -34,12 +41,24 @@ class ConfigFragment : BaseFragment<FragmentConfigBinding, ConfigViewModel>(), C
                     item.onActivity?.invoke()?.let { startActivityForResult(it, position) }
                     item.onAction?.invoke(requireContext())
                 }
-                is SingleChoiceConfigItem -> showDialogFragment(ConfigSingleChoiceDialogFragment.newInstance(item), position)
-                is BooleanConfigItem -> showDialogFragment(ConfigBooleanDialogFragment.newInstance(item), position)
-                is NumberConfigItem -> showDialogFragment(ConfigNumberDialogFragment.newInstance(item), position)
-                is NumberRangeConfigItem -> showDialogFragment(ConfigNumberRangeDialogFragment.newInstance(item), position)
-                is LocalTimeConfigItem -> showDialogFragment(ConfigTimeDialogFragment.newInstance(item), position)
-                is LocalTimeRangeConfigItem -> showDialogFragment(ConfigTimeRangeDialogFragment.newInstance(item), position)
+                is SingleChoiceConfigItem -> ConfigSingleChoiceDialogFragment.newInstance(item) {
+                    adapter.notifyItemChanged(position)
+                }.show(parentFragmentManager, null)
+                is BooleanConfigItem -> ConfigBooleanDialogFragment.newInstance(item) {
+                    adapter.notifyItemChanged(position)
+                }.show(parentFragmentManager, null)
+                is NumberConfigItem -> ConfigNumberDialogFragment.newInstance(item) {
+                    adapter.notifyItemChanged(position)
+                }.show(parentFragmentManager, null)
+                is NumberRangeConfigItem -> ConfigNumberRangeDialogFragment.newInstance(item) {
+                    adapter.notifyItemChanged(position)
+                }.show(parentFragmentManager, null)
+                is LocalTimeConfigItem -> ConfigTimeDialogFragment.newInstance(item) {
+                    adapter.notifyItemChanged(position)
+                }.show(parentFragmentManager, null)
+                is LocalTimeRangeConfigItem -> ConfigTimeRangeDialogFragment.newInstance(item) {
+                    adapter.notifyItemChanged(position)
+                }.show(parentFragmentManager, null)
             }
         }
 
@@ -50,22 +69,14 @@ class ConfigFragment : BaseFragment<FragmentConfigBinding, ConfigViewModel>(), C
         }
     }
 
-    override fun onDismiss(requestCode: Int) {
-        adapter.notifyItemChanged(requestCode)
-    }
-
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         adapter.notifyItemChanged(requestCode)
     }
 
-    private fun showDialogFragment(fragment: BaseBottomSheetDialogFragment<*>, position: Int) {
-        fragment.setTargetFragment(this, position)
-        fragment.show(parentFragmentManager, javaClass.name)
-    }
-
     override fun navigateSignOut() {
         FirebaseAuth.getInstance().signOut()
+
         lifecycleScope.launch {
             val options = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestIdToken(getString(R.string.default_web_client_id))

@@ -6,6 +6,7 @@ import android.view.ViewGroup
 import android.widget.RadioButton
 import androidx.core.os.bundleOf
 import androidx.core.view.children
+import androidx.navigation.fragment.navArgs
 import kaist.iclab.standup.smi.R
 import kaist.iclab.standup.smi.base.BaseBottomSheetDialogFragment
 import kaist.iclab.standup.smi.databinding.FragmentConfigDialogSingleChoiceBinding
@@ -17,11 +18,14 @@ class ConfigSingleChoiceDialogFragment : BaseBottomSheetDialogFragment<FragmentC
 
     private lateinit var viewIdToOptions: Map<Int?, Int>
 
+    @Suppress("UNCHECKED_CAST")
     override fun beforeExecutePendingBindings() {
-        val item = arguments?.getParcelable(ARG_ITEM) as? SingleChoiceConfigItem
+        onDismiss = arguments?.getSerializable(ARG_ON_DISMISS) as? () -> Unit
+
+        val item = arguments?.getParcelable<SingleChoiceConfigItem>(ARG_ITEM) ?: return
         dataBinding.item = item
 
-        val options = item?.options ?: intArrayOf()
+        val options = item.options
         val optionsToView = options.associate { option ->
             val button = RadioButton(requireContext()).apply {
                 id = View.generateViewId()
@@ -33,8 +37,8 @@ class ConfigSingleChoiceDialogFragment : BaseBottomSheetDialogFragment<FragmentC
                     resources.getDimensionPixelSize(R.dimen.space_horizontal_large),
                     resources.getDimensionPixelSize(R.dimen.space_vertical_default)
                 )
-                text = if (item?.valueFormatter == null) {
-                    item?.formatter?.invoke(option)
+                text = if (item.valueFormatter == null) {
+                    item.formatter?.invoke(option)
                 } else {
                     item.valueFormatter?.invoke(option)
                 } ?: option.toString()
@@ -57,7 +61,7 @@ class ConfigSingleChoiceDialogFragment : BaseBottomSheetDialogFragment<FragmentC
             optionsToView[it]?.id
         }
 
-        val value = item?.value?.invoke() ?: 0
+        val value = item.value?.invoke() ?: 0
         val selectedId = optionsToView[value]?.id ?: -1
         val firstChild = dataBinding.radioOptions.children.firstOrNull()
 
@@ -66,7 +70,7 @@ class ConfigSingleChoiceDialogFragment : BaseBottomSheetDialogFragment<FragmentC
                 isSavable(false)
             } else {
                 val checkedOption = viewIdToOptions[checkedId] ?: return@setOnCheckedChangeListener
-                isSavable(item?.isSavable?.invoke(checkedOption) ?: true)
+                isSavable(item.isSavable?.invoke(checkedOption) ?: true)
             }
         }
 
@@ -86,11 +90,13 @@ class ConfigSingleChoiceDialogFragment : BaseBottomSheetDialogFragment<FragmentC
     }
 
     companion object {
-        private val ARG_ITEM = "${ConfigSingleChoiceDialogFragment::javaClass.name}.ARG_ITEM"
+        private val ARG_ITEM = "${ConfigSingleChoiceDialogFragment::class.java.name}.ARG_ITEM"
+        private val ARG_ON_DISMISS = "${ConfigSingleChoiceDialogFragment::class.java.name}.ON_DISMISS"
 
-        fun newInstance(item: SingleChoiceConfigItem) = ConfigSingleChoiceDialogFragment().apply {
+        fun newInstance(item: SingleChoiceConfigItem, onDismiss: (() -> Unit)? = null) = ConfigSingleChoiceDialogFragment().apply {
             arguments = bundleOf(
-                ARG_ITEM to item
+                ARG_ITEM to item,
+                ARG_ON_DISMISS to onDismiss
             )
         }
     }

@@ -15,6 +15,7 @@ import androidx.fragment.app.DialogFragment
 import kaist.iclab.standup.smi.R
 import kaist.iclab.standup.smi.common.AppLog
 import kaist.iclab.standup.smi.databinding.FragmentBaseDialogBinding
+import java.io.Serializable
 
 abstract class BaseDialogFragment<B : ViewDataBinding> : DialogFragment() {
     protected lateinit var dataBinding: B
@@ -30,8 +31,8 @@ abstract class BaseDialogFragment<B : ViewDataBinding> : DialogFragment() {
     @StringRes
     protected open val textNegativeButton: Int = android.R.string.cancel
 
-    interface OnDismissListener {
-        fun onDismiss(requestCode: Int)
+    interface OnDismissListener : Serializable {
+        fun onDismiss()
     }
 
     abstract fun beforeExecutePendingBindings()
@@ -41,6 +42,8 @@ abstract class BaseDialogFragment<B : ViewDataBinding> : DialogFragment() {
     protected fun isSavable(isEnabled: Boolean) {
         rootBinding.btnPositive.isEnabled = isEnabled
     }
+
+    var onDismiss: OnDismissListener? = null
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
@@ -142,10 +145,6 @@ abstract class BaseDialogFragment<B : ViewDataBinding> : DialogFragment() {
     }
 
     override fun onDismiss(dialog: DialogInterface) {
-        if (targetFragment != null) {
-            (targetFragment as? OnDismissListener)?.onDismiss(targetRequestCode)
-        } else {
-            (activity as? OnDismissListener)?.onDismiss(targetRequestCode)
-        }
+        onDismiss?.onDismiss()
     }
 }

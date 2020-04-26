@@ -11,7 +11,6 @@ object PlaceStats : Documents() {
     val numVisit = long("numVisit", 0)
     val numMission = long("numMission", 0)
     val numSuccess = long("numSuccess", 0)
-    val approximateDuration = long("approximateDuration", 0)
     val lastVisitTime = long("lastVisitTime", -1)
 }
 
@@ -22,7 +21,6 @@ class PlaceStat : DocumentEntity() {
     var numVisit by PlaceStats.numVisit
     var numMission by PlaceStats.numMission
     var numSuccess by PlaceStats.numSuccess
-    var approximateDuration by PlaceStats.approximateDuration
     var lastVisitTime by PlaceStats.lastVisitTime
 
     companion object : DocumentEntityClass<PlaceStat>(PlaceStats)
@@ -39,7 +37,6 @@ class PlaceStat : DocumentEntity() {
         if (numVisit != other.numVisit) return false
         if (numMission != other.numMission) return false
         if (numSuccess != other.numSuccess) return false
-        if (approximateDuration != other.approximateDuration) return false
         if (lastVisitTime != other.lastVisitTime) return false
 
         return true
@@ -53,7 +50,6 @@ class PlaceStat : DocumentEntity() {
         result = 31 * result + numVisit.hashCode()
         result = 31 * result + numMission.hashCode()
         result = 31 * result + numSuccess.hashCode()
-        result = 31 * result + approximateDuration.hashCode()
         result = 31 * result + lastVisitTime.hashCode()
         return result
     }
@@ -67,7 +63,6 @@ class PlaceStat : DocumentEntity() {
         .append("numVisit=$numVisit, ")
         .append("numMission=$numMission, ")
         .append("numSuccess=$numSuccess, ")
-        .append("approximateDuration=$approximateDuration, ")
         .append("lastVisitTime=$lastVisitTime")
         .append(")")
         .toString()

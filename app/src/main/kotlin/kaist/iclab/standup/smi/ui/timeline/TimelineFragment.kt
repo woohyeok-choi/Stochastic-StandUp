@@ -1,19 +1,19 @@
 package kaist.iclab.standup.smi.ui.timeline
 
-import android.os.Bundle
+import android.location.Location
 import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.graphics.drawable.DrawableCompat
-import androidx.core.os.bundleOf
-import androidx.core.view.iterator
+import androidx.core.view.forEach
 import androidx.fragment.app.FragmentContainerView
 import androidx.fragment.app.commit
 import androidx.lifecycle.lifecycleScope
-import com.fonfon.kgeohash.toGeoHash
+import androidx.navigation.fragment.findNavController
 import com.github.sundeepk.compactcalendarview.CompactCalendarView
+import com.google.android.libraries.maps.CameraUpdate
 import com.google.android.libraries.maps.CameraUpdateFactory
 import com.google.android.libraries.maps.GoogleMap
 import com.google.android.libraries.maps.SupportMapFragment
@@ -27,13 +27,10 @@ import kaist.iclab.standup.smi.BR
 import kaist.iclab.standup.smi.BuildConfig
 import kaist.iclab.standup.smi.R
 import kaist.iclab.standup.smi.base.BaseFragment
-import kaist.iclab.standup.smi.common.getMapAsSuspend
-import kaist.iclab.standup.smi.common.snackBar
-import kaist.iclab.standup.smi.common.wrap
-import kaist.iclab.standup.smi.data.PlaceStat
+import kaist.iclab.standup.smi.common.*
 import kaist.iclab.standup.smi.databinding.FragmentTimelineBinding
-import kaist.iclab.standup.smi.repository.SedentaryMissionEvent
 import kaist.iclab.standup.smi.tracker.LocationTracker
+import kaist.iclab.standup.smi.ui.dialog.SingleChoiceDialogFragment
 import kotlinx.android.synthetic.main.fragment_timeline.*
 import kotlinx.coroutines.launch
 import org.joda.time.DateTime
@@ -44,15 +41,12 @@ import java.util.*
 
 
 class TimelineFragment : BaseFragment<FragmentTimelineBinding, TimelineViewModel>(),
-    TimelineNavigator, TimelinePlaceOrderDialogFragment.OnPlaceOrderChangedListener,
-    TimelinePlaceRenameDialogFragment.OnTextChangedListener, TimelinePlaceListAdapter.OnAdapterListener,
-    TimelineDailyListAdapter.OnAdapterListener {
+    TimelineNavigator, OnTimelineItemListener {
     override val viewModel: TimelineViewModel by viewModel()
     override val viewModelVariable: Int = BR.viewModel
     override val layoutId: Int = R.layout.fragment_timeline
 
     private lateinit var bottomSheetBehavior: BottomSheetBehavior<FragmentContainerView>
-    private var googleMap: GoogleMap? = null
 
     private val locationTracker: LocationTracker by inject()
     private val timeZone = DateTimeZone.getDefault()
@@ -63,10 +57,14 @@ class TimelineFragment : BaseFragment<FragmentTimelineBinding, TimelineViewModel
 
     private val markers: MutableMap<Pair<Double, Double>, Marker> = mutableMapOf()
 
-    private var lastFocusLocation: Pair<Double, Double> = 0.0 to 0.0
+    private var lastFocusedLocation: Pair<Double, Double> = 0.0 to 0.0
 
     override fun beforeExecutePendingBindings() {
         (activity as? AppCompatActivity)?.setSupportActionBar(toolbar)
+        (activity as? AppCompatActivity)?.supportActionBar?.apply {
+            setDisplayShowTitleEnabled(false)
+        }
+
         viewModel.navigator = this
 
         bottomSheetBehavior = BottomSheetBehavior.from(dataBinding.containerTimeline).apply {
@@ -85,13 +83,13 @@ class TimelineFragment : BaseFragment<FragmentTimelineBinding, TimelineViewModel
         }
 
         dataBinding.root.setOnTouchListener { _, _ ->
-            val isExpanded = dataBinding.isExpanded == true && dataBinding.isDailyMode == true
+            val isExpanded = dataBinding.isExpanded == true && viewModel.isDailyMode.value != false
             if (isExpanded) toggleCalendar()
             isExpanded
         }
 
         dataBinding.containerToolbarTitle.setOnClickListener {
-            if (dataBinding.isDailyMode == true) toggleCalendar()
+            if (viewModel.isDailyMode.value != false) toggleCalendar()
         }
 
         dataBinding.calendarView.apply {
@@ -128,7 +126,6 @@ class TimelineFragment : BaseFragment<FragmentTimelineBinding, TimelineViewModel
         )
 
         dataBinding.isExpanded = false
-        dataBinding.isDailyMode = true
         dataBinding.monthMillis = nowDate.millis
 
         dataBinding.containerTabs.selectTab(null, false)
@@ -138,8 +135,7 @@ class TimelineFragment : BaseFragment<FragmentTimelineBinding, TimelineViewModel
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
         super.onCreateOptionsMenu(menu, inflater)
         inflater.inflate(R.menu.place_order, menu)
-
-        menu.iterator().forEach { item ->
+        menu.forEach { item ->
             item.icon?.let {
                 DrawableCompat.setTint(it, resources.getColor(R.color.light_grey, null))
             }
@@ -148,86 +144,89 @@ class TimelineFragment : BaseFragment<FragmentTimelineBinding, TimelineViewModel
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         if (item.itemId != R.id.menu_place_order) return super.onOptionsItemSelected(item)
-
-        val dialog = TimelinePlaceOrderDialogFragment.newInstance(
+        TimelinePlaceOrderDialogFragment.newInstance(
             isDescending = viewModel.currentOrderDescendingDirection,
             field = viewModel.currentOrderField
-        )
-
-        dialog.setTargetFragment(this, 0)
-        dialog.show(parentFragmentManager, javaClass.name)
+        ) { isDescending, field ->
+            viewModel.loadPlaceStats(isDescending, field)
+        }.show(parentFragmentManager, null)
 
         return true
     }
 
-    override fun onTextChanged(prevText: String, curText: String, extra: Bundle?) {
-        val latitude = extra?.getDouble(ARG_PLACE_LATITUDE, Double.NaN) ?: Double.NaN
-        val longitude = extra?.getDouble(ARG_PLACE_LONGITUDE, Double.NaN) ?: Double.NaN
-
-        if (latitude.isNaN() || longitude.isNaN()) return
-
+    override fun onItemBind(name: String, latitude: Double, longitude: Double) {
         lifecycleScope.launch {
-            viewModel.renamePlace(
-                latitude = latitude,
-                longitude = longitude,
-                newName = curText
-            )
-
-            clearMap()
-
-            if (dataBinding.isDailyMode == true) {
-                viewModel.refreshDailyStat().join()
-            } else{
-                viewModel.refreshPlaceStats()
+            getMap()?.run {
+                val marker = addMarker(
+                    MarkerOptions().position(
+                        LatLng(latitude, longitude)
+                    ).icon(
+                        BitmapDescriptorFactory.fromResource(R.drawable.ic_marker)
+                    )
+                )
+                markers[(latitude to longitude)] = marker
             }
         }
     }
 
-    override fun onBind(item: PlaceStat) {
-        val location = item.id.toGeoHash().toLocation()
+    override fun onItemClick(name: String, latitude: Double, longitude: Double) {
+        bottomSheetBehavior.state = BottomSheetBehavior.STATE_HALF_EXPANDED
+        lastFocusedLocation = latitude to longitude
+
+        selectMarker(latitude, longitude)
 
         lifecycleScope.launch {
-            addMarker(
-                latitude = location.latitude,
-                longitude = location.longitude
-            )
+            getMap()?.run { animateCamera(getCameraUpdate(latitude, longitude)) }
         }
     }
 
-    override fun onClick(item: PlaceStat) {
-        val location = item.id.toGeoHash().toLocation()
+    override fun onItemLongClick(name: String, latitude: Double, longitude: Double) {
+        bottomSheetBehavior.state = BottomSheetBehavior.STATE_HALF_EXPANDED
+        lastFocusedLocation = latitude to longitude
+
+        selectMarker(latitude, longitude)
 
         lifecycleScope.launch {
-            selectPlace(latitude = location.latitude, longitude = location.longitude)
+            getMap()?.run { animateCamera(getCameraUpdate(latitude, longitude)) }
         }
+
+        val itemPlaceRename = getString(R.string.timeline_place_rename)
+        val itemPlaceDetail = getString(R.string.timeline_place_detail)
+        val location = Location(javaClass.name).apply {
+            this.latitude = latitude
+            this.longitude = longitude
+        }
+
+        SingleChoiceDialogFragment.newInstance(
+            items = arrayOf(itemPlaceRename, itemPlaceDetail)
+        ) { item ->
+            when(item) {
+                itemPlaceRename -> TimelinePlaceRenameDialogFragment.newInstance(name) { newName ->
+                    viewModel.renamePlace(newName, latitude, longitude)
+                }.show(parentFragmentManager, null)
+                itemPlaceDetail -> findNavController().navigate(
+                    TimelineFragmentDirections.actionPlaceDetail(
+                        location = location
+                    )
+                )
+            }
+        }.show(parentFragmentManager, null)
     }
 
-    override fun onLongClick(item: PlaceStat) {
-        val location = item.id.toGeoHash().toLocation()
+    override suspend fun navigateBeforeDataLoad() {
+        markers.clear()
 
-        lifecycleScope.launch {
-            renamePlace(placeName = item.name, latitude = location.latitude, longitude = location.longitude)
-        }
-    }
+        val (latitude, longitude) = locationTracker.getLastLocation()?.let { it.latitude to it.longitude } ?: lastFocusedLocation
 
-    override fun onBind(item: SedentaryMissionEvent) {
-        lifecycleScope.launch {
-            addMarker(
-                latitude = item.event.latitude,
-                longitude = item.event.longitude
-            )
-        }
-    }
+        val camera = getCameraUpdate(
+            latitude,
+            longitude,
+            if (viewModel.isDailyMode.value != false) DEFAULT_ZOOM_LEVEL_DAILY_MODE else DEFAULT_ZOOM_LEVEL_PLACE_MODE
+        )
 
-    override fun onClick(item: SedentaryMissionEvent) {
-        lifecycleScope.launch {
-            selectPlace(latitude = item.event.latitude, longitude = item.event.longitude)
-        }
-    }
-
-    override fun onLongClick(item: SedentaryMissionEvent) {
-        lifecycleScope.launch {
-            renamePlace(placeName = item.place?.name ?: "", latitude = item.event.latitude, longitude = item.event.longitude)
+        getMap()?.run {
+            clear()
+            animateCamera(camera)
         }
     }
 
@@ -264,30 +263,6 @@ class TimelineFragment : BaseFragment<FragmentTimelineBinding, TimelineViewModel
         )
     }
 
-    private suspend fun selectPlace(latitude: Double, longitude: Double) {
-        bottomSheetBehavior.state = BottomSheetBehavior.STATE_HALF_EXPANDED
-        changeFocus(latitude, longitude)
-    }
-
-    private suspend fun renamePlace(
-        placeName: String,
-        latitude: Double,
-        longitude: Double
-    ) {
-        bottomSheetBehavior.state = BottomSheetBehavior.STATE_HALF_EXPANDED
-        changeFocus(latitude, longitude)
-
-        val dialog = TimelinePlaceRenameDialogFragment.newInstance(
-            name = placeName,
-            extra = bundleOf(
-                ARG_PLACE_LATITUDE to latitude,
-                ARG_PLACE_LONGITUDE to longitude
-            )
-        )
-        dialog.setTargetFragment(this@TimelineFragment, 0)
-        dialog.show(parentFragmentManager, javaClass.name)
-    }
-
     private fun toggleCalendar() {
         val isExpanded = dataBinding.isExpanded == true
         val isAnimating = dataBinding.calendarView.isAnimating
@@ -307,27 +282,15 @@ class TimelineFragment : BaseFragment<FragmentTimelineBinding, TimelineViewModel
         dataBinding.isExpanded = !isExpanded
     }
 
-    override fun onOrderChanged(isDescending: Boolean, field: Int) {
-        lifecycleScope.launch {
-            clearMap()
-
-            viewModel.loadPlaceStats(
-                isDescending = isDescending,
-                field = field
-            )
-        }
-    }
-
-    private fun changeDate(date: Date) = lifecycleScope.launch {
-        clearMap()
-
+    private fun changeDate(date: Date) {
         dataBinding.calendarView.currentDate = date
         viewModel.loadDailyStat(DateTime(date.time, timeZone))
         toggleCalendar()
     }
 
-    private fun changeTab(isDailyMode: Boolean) = lifecycleScope.launch {
-        clearMap()
+    private fun changeTab(isDailyMode: Boolean) {
+        viewModel.isDailyMode.value = isDailyMode
+        setHasOptionsMenu(!isDailyMode)
 
         if (isDailyMode) {
             childFragmentManager.commit {
@@ -336,84 +299,45 @@ class TimelineFragment : BaseFragment<FragmentTimelineBinding, TimelineViewModel
             val dateTime = dataBinding.calendarView.currentDate?.let {
                 DateTime(it.time, timeZone)
             } ?: nowDate
-            setHasOptionsMenu(false)
-
             viewModel.loadDailyStat(dateTime)
         } else {
             childFragmentManager.commit {
                 replace(R.id.container_timeline, TimelineChildPlaceListFragment())
             }
-            setHasOptionsMenu(true)
-
             viewModel.loadPlaceStats()
-        }
-
-        dataBinding.isDailyMode = isDailyMode
-
-        locationTracker.getLastLocation()?.let {
-            changeFocus(
-                it.latitude,
-                it.longitude,
-                if (isDailyMode) DEFAULT_ZOOM_LEVEL_DAILY_MODE else DEFAULT_ZOOM_LEVEL_PLACE_MODE
-            )
         }
     }
 
     private fun changeBottomSheetState(bottomSheet: View, state: Int) = lifecycleScope.launch {
-        if (state == BottomSheetBehavior.STATE_HALF_EXPANDED) {
-            val newPadding = bottomSheet.height * 0.40F
-            getMap()?.setPadding(0, 0, 0, newPadding.toInt())
-        } else if (state == BottomSheetBehavior.STATE_COLLAPSED) {
-            getMap()?.setPadding(0, 0, 0, 0)
+        val padding = when (state) {
+            BottomSheetBehavior.STATE_HALF_EXPANDED -> bottomSheet.height * 0.40F
+            BottomSheetBehavior.STATE_COLLAPSED -> 0F
+            else -> null
         }
-        changeFocus()
-    }
 
-    private suspend fun getMap(): GoogleMap? {
-        if (googleMap == null) {
-            googleMap =
-                (childFragmentManager.findFragmentById(R.id.fragment_map) as? SupportMapFragment)?.getMapAsSuspend()
-                    ?.apply {
-                        isMyLocationEnabled = true
-                        uiSettings.isZoomControlsEnabled = true
-                        uiSettings.isZoomGesturesEnabled = true
-                    }
+        getMap()?.run {
+            if (padding != null) setPadding(0, 0, 0, padding.toInt())
+            val (latitude, longitude) = lastFocusedLocation
+            animateCamera(getCameraUpdate(latitude, longitude))
         }
-        return googleMap
     }
 
-    private suspend fun addMarker(latitude: Double, longitude: Double) {
-        val marker = getMap()?.addMarker(
-            MarkerOptions().position(
-                LatLng(latitude, longitude)
-            ).icon(
-                BitmapDescriptorFactory.fromResource(R.drawable.ic_marker)
-            )
-        ) ?: return
-        markers[(latitude to longitude)] = marker
-    }
-
-    private suspend fun clearMap() {
-        getMap()?.clear()
-        markers.clear()
-    }
-
-    private suspend fun changeFocus(
-        lat: Double? = null,
-        lng: Double? = null,
-        zoomLevel: Float? = null
-    ) {
-        if (lat != null && lng != null) {
-            lastFocusLocation = lat to lng
+    private suspend fun getMap() : GoogleMap? =
+        (childFragmentManager.findFragmentById(R.id.fragment_map) as? SupportMapFragment)?.getMap { map ->
+            if (!map.isMyLocationEnabled) map.isMyLocationEnabled = true
+            if (!map.uiSettings.isZoomControlsEnabled) map.uiSettings.isZoomControlsEnabled = true
+            if (!map.uiSettings.isZoomGesturesEnabled) map.uiSettings.isZoomGesturesEnabled = true
         }
-        val (latitude, longitude) = lastFocusLocation
 
-        val camera = if (zoomLevel == null) {
+    private fun getCameraUpdate(latitude: Double, longitude: Double, zoomLevel: Float? = null) : CameraUpdate {
+        return if (zoomLevel == null) {
             CameraUpdateFactory.newLatLng(LatLng(latitude, longitude))
         } else {
             CameraUpdateFactory.newLatLngZoom(LatLng(latitude, longitude), zoomLevel)
         }
+    }
 
+    private fun selectMarker(latitude: Double, longitude: Double) {
         markers.keys.forEach { (curLat, curLng) ->
             val isSame = curLat == latitude && curLng == longitude
             val icon = if (isSame) {
@@ -429,22 +353,15 @@ class TimelineFragment : BaseFragment<FragmentTimelineBinding, TimelineViewModel
             markers[(curLat to curLng)]?.setIcon(icon)
             markers[(curLat to curLng)]?.zIndex = zIndex
         }
-
-        getMap()?.animateCamera(camera)
     }
 
     companion object {
-        private val PREFIX = TimelineFragment::class.java.name
         private const val DEFAULT_ZOOM_LEVEL_DAILY_MODE = 15F
         private const val DEFAULT_ZOOM_LEVEL_PLACE_MODE = 12F
-
-        private val ARG_PLACE_LATITUDE = "$PREFIX.ARG_PLACE_LATITUDE"
-        private val ARG_PLACE_LONGITUDE = "$PREFIX.ARG_PLACE_LONGITUDE"
-
         const val EXTRA_FIELD_VISIT_TIME = 0x00
-        const val EXTRA_FIELD_DURATION = 0x01
-        const val EXTRA_FIELD_INCENTIVE = 0x02
-        const val EXTRA_FIELD_MISSIONS = 0x03
-        const val EXTRA_FIELD_VISITS = 0x04
+        const val EXTRA_FIELD_INCENTIVE = 0x01
+        const val EXTRA_FIELD_MISSIONS = 0x02
+        const val EXTRA_FIELD_VISITS = 0x03
     }
+
 }

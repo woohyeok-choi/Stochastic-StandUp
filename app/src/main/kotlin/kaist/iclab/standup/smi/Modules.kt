@@ -19,6 +19,7 @@ import kaist.iclab.standup.smi.tracker.StepCountTracker
 import kaist.iclab.standup.smi.ui.config.ConfigViewModel
 import kaist.iclab.standup.smi.ui.dashboard.DashboardViewModel
 import kaist.iclab.standup.smi.ui.main.MainViewModel
+import kaist.iclab.standup.smi.ui.place.PlaceDetailViewModel
 import kaist.iclab.standup.smi.ui.splash.SplashViewModel
 import kaist.iclab.standup.smi.ui.timeline.TimelineViewModel
 import org.koin.android.ext.koin.androidContext
@@ -231,6 +232,13 @@ val viewModelModules = module {
         ConfigViewModel(
             context = androidContext(),
             permissions = PERMISSIONS
+        )
+    }
+
+    viewModel {
+        PlaceDetailViewModel(
+            statRepository = get(),
+            missionReference = get(named(COLLECTION_MISSIONS))
         )
     }
 }

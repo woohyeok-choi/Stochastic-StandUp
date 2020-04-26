@@ -1,6 +1,9 @@
 package kaist.iclab.standup.smi.ui.timeline
 
 
+import android.view.ContextMenu
+import android.view.MenuItem
+import android.view.View
 import androidx.lifecycle.observe
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -18,7 +21,7 @@ class TimelineChildPlaceListFragment : BaseFragment<FragmentTimelinePlaceListBin
     override fun beforeExecutePendingBindings() {
         val adapter = TimelinePlaceListAdapter()
 
-        adapter.listener = parentFragment as? TimelinePlaceListAdapter.OnAdapterListener
+        adapter.listener = parentFragment as? OnTimelineItemListener
 
         viewModel.placeStats.observe(this) { stats ->
             stats?.let { adapter.submitList(it) }

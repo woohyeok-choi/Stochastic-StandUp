@@ -11,7 +11,8 @@ object OverallStats: Documents() {
     val numVisit = long("numVisit", 0)
     val numMission = long("numMission", 0)
     val numSuccess = long("numSuccess", 0)
-    val approximateDuration = long("approximateDuration", 0)
+    val numDaysMissions = long("numDaysMissions", 0)
+    val lastMissionDay = long("lastMissionDay", 0)
 }
 
 class OverallStat: DocumentEntity() {
@@ -20,7 +21,8 @@ class OverallStat: DocumentEntity() {
     var numVisit by OverallStats.numVisit
     var numMission by OverallStats.numMission
     var numSuccess by OverallStats.numSuccess
-    var approximateDuration by OverallStats.approximateDuration
+    var numDaysMissions by OverallStats.numDaysMissions
+    var lastMissionDay by OverallStats.lastMissionDay
 
     companion object : DocumentEntityClass<OverallStat>(OverallStats)
 
@@ -35,7 +37,8 @@ class OverallStat: DocumentEntity() {
         if (numVisit != other.numVisit) return false
         if (numMission != other.numMission) return false
         if (numSuccess != other.numSuccess) return false
-        if (approximateDuration != other.approximateDuration) return false
+        if (numDaysMissions != other.numDaysMissions) return false
+        if (lastMissionDay != other.lastMissionDay) return false
 
         return true
     }
@@ -47,7 +50,8 @@ class OverallStat: DocumentEntity() {
         result = 31 * result + numVisit.hashCode()
         result = 31 * result + numMission.hashCode()
         result = 31 * result + numSuccess.hashCode()
-        result = 31 * result + approximateDuration.hashCode()
+        result = 31 * result + numDaysMissions.hashCode()
+        result = 31 * result + lastMissionDay.hashCode()
         return result
     }
 
@@ -59,7 +63,7 @@ class OverallStat: DocumentEntity() {
         .append("numVisit=$numVisit, ")
         .append("numMission=$numMission, ")
         .append("numSuccess=$numSuccess, ")
-        .append("approximateDuration=$approximateDuration")
+        .append("numSuccess=$numDaysMissions, ")
         .append(")")
         .toString()
 }

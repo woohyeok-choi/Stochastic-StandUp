@@ -183,6 +183,27 @@ abstract class DocumentEntityClass<T : DocumentEntity>(
         limit: Long? = null,
         body: (QueryBuilder.() -> Unit)? = null
     ): List<T> {
+        val query = buildQuery(ref, orderBy, isAscending, limit, body)
+        val task = query?.get() ?: ref.get()
+
+        return task.asSuspend()?.documents?.map { snapshot ->
+            val instance = constructor.call() as T
+            instance.id = snapshot.id
+
+            documents.fields.forEach { field ->
+                field.fromSnapshot(snapshot)?.let { instance.readValues[field] = it }
+            }
+            instance
+        } ?: listOf()
+    }
+
+    fun buildQuery(
+        ref: CollectionReference,
+        orderBy: DataField<*>? = null,
+        isAscending: Boolean = true,
+        limit: Long? = null,
+        body: (QueryBuilder.() -> Unit)? = null
+    ) : Query? {
         var query: Query? = if (body != null) {
             val builder = QueryBuilder(ref)
             builder.body()
@@ -198,16 +219,7 @@ abstract class DocumentEntityClass<T : DocumentEntity>(
             if (isAscending) Query.Direction.ASCENDING else Query.Direction.DESCENDING
         )
         if (limit != null) query = query?.limit(limit) ?: ref.limit(limit)
-        val task = query?.get() ?: ref.get()
 
-        return task.asSuspend()?.documents?.map { snapshot ->
-            val instance = constructor.call() as T
-            instance.id = snapshot.id
-
-            documents.fields.forEach { field ->
-                field.fromSnapshot(snapshot)?.let { instance.readValues[field] = it }
-            }
-            instance
-        } ?: listOf()
+        return query
     }
 }

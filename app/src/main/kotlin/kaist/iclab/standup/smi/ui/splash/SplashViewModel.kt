@@ -19,6 +19,8 @@ import com.tedpark.tedpermission.rx2.TedRx2Permission
 import kaist.iclab.standup.smi.R
 import kaist.iclab.standup.smi.base.BaseViewModel
 import kaist.iclab.standup.smi.common.*
+import kaist.iclab.standup.smi.pref.LocalPrefs
+import kaist.iclab.standup.smi.pref.RemotePrefs
 import kotlinx.coroutines.launch
 
 class SplashViewModel(
@@ -31,7 +33,7 @@ class SplashViewModel(
         try {
             call()
         } catch (e: Exception) {
-            navigator?.navigateError(e)
+            ui { navigator?.navigateError(e) }
         }
     }
 
@@ -102,6 +104,7 @@ class SplashViewModel(
     @SuppressLint("BatteryLife")
     fun doWhitelist() = tryLaunch {
         if (context.checkWhitelist()) {
+            RemotePrefs.sync()
             ui { navigator?.navigateSuccess() }
         } else {
             val intent = Intent().apply {
@@ -114,6 +117,7 @@ class SplashViewModel(
 
     fun doWhitelistAgain() = tryLaunch {
         if (context.checkWhitelist()) {
+            RemotePrefs.sync()
             ui { navigator?.navigateSuccess() }
         } else {
             throwError(R.string.error_whitelist_denied)
