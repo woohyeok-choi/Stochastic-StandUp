@@ -78,7 +78,7 @@
     <string name="config_item_do_not_disturb">방해 금지 모드</string>
     <string name="config_item_do_not_disturb_set">%1s 분 남음 / %2d 회 설정 가능</string>
     <string name="config_item_do_not_disturb_unset">미설정 / %1d 회 설정 가능</string>
-    <string name="config_item_do_not_disturb_value_formatter">%1d 분 후</string>
+    <string name="config_item_do_not_disturb_value_formatter">%1d 분 후까지</string>
     <string name="config_header_debug">디버그</string>
     <string name="config_item_min_stay_time">최소 앉아 있는 시간</string>
     <string name="config_item_min_mission_trigger_time">최소 미션 시작 시간</string>

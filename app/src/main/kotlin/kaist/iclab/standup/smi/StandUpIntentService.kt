@@ -208,6 +208,15 @@ class StandUpIntentService : IntentService(StandUpIntentService::class.java.simp
                 triggerAt = LocalPrefs.doNotDisturbUntil,
                 intent = intentForCancelDoNotDisturb(applicationContext)
             )
+
+            if (LocalPrefs.isMissionInProgress) {
+                LocalPrefs.isMissionInProgress = false
+            }
+
+            Notifications.cancelMissionNotification(
+                context = applicationContext
+            )
+
             Notifications.notifyForegroundStatus(
                 context = applicationContext,
                 lastStillTime = LocalPrefs.lastStillTime,
@@ -343,7 +352,7 @@ class StandUpIntentService : IntentService(StandUpIntentService::class.java.simp
         LocalPrefs.isMissionInProgress = false
         LocalPrefs.missionIdInProgress = ""
 
-        Log.d(javaClass.simpleName, "handleCompleteMission(timestamp = $timestamp, latitude = $latitude, longitude = $longitude, isSucceeded = $isSucceeded): id = $id")
+        Log.d(javaClass.simpleName, "handleCompleteMission(timestamp = $timestamp, latitude = $latitude, longitude = $longitude, isSucceeded = $isSucceeded): id = $id, isMissionInProgress = $isMissionInProgress")
 
         if (!id.isBlank()) {
             val mission = tryCatch {
