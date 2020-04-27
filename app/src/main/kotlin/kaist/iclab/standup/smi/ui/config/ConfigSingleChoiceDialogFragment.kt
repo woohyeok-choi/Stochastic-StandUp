@@ -66,18 +66,15 @@ class ConfigSingleChoiceDialogFragment : BaseBottomSheetDialogFragment<FragmentC
         val firstChild = dataBinding.radioOptions.children.firstOrNull()
 
         dataBinding.radioOptions.setOnCheckedChangeListener { _, checkedId ->
-            if (checkedId < 0) {
-                isSavable(false)
-            } else {
-                val checkedOption = viewIdToOptions[checkedId] ?: return@setOnCheckedChangeListener
-                isSavable(item.isSavable?.invoke(checkedOption) ?: true)
-            }
+           onValueChanged(item, checkedId)
         }
 
-        if (selectedId > 0) dataBinding.radioOptions.check(selectedId)
-
-        if (dataBinding.radioOptions.checkedRadioButtonId < 0 && firstChild != null) {
+        if (selectedId < 0 && firstChild != null) {
             dataBinding.radioOptions.check(firstChild.id)
+            onValueChanged(item, firstChild.id)
+        } else {
+            dataBinding.radioOptions.check(selectedId)
+            onValueChanged(item, selectedId)
         }
     }
 
@@ -86,6 +83,15 @@ class ConfigSingleChoiceDialogFragment : BaseBottomSheetDialogFragment<FragmentC
             val checkedId = dataBinding.radioOptions.checkedRadioButtonId
             val option = viewIdToOptions[checkedId] ?: 0
             dataBinding.item?.onSave?.invoke(option)
+        }
+    }
+
+    private fun onValueChanged(item: SingleChoiceConfigItem, value: Int) {
+        if (value < 0) {
+            isSavable(false)
+        } else {
+            val checkedOption = viewIdToOptions[value] ?: return
+            isSavable(item.isSavable?.invoke(checkedOption) ?: true)
         }
     }
 

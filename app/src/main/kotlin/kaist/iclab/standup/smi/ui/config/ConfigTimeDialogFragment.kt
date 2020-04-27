@@ -32,9 +32,7 @@ class ConfigTimeDialogFragment : BaseBottomSheetDialogFragment<FragmentConfigDia
 
         dataBinding.txtTimeConfig.doOnTextChanged { text, _, _, _ ->
             val newValue = text.toHourMinutes().hourMinuteToMillis()
-            isSavable(
-                item.isSavable?.invoke(newValue) ?: true
-            )
+            onValueChanged(item, newValue)
         }
 
         dataBinding.txtTimeConfig.setOnClickListener {
@@ -46,6 +44,7 @@ class ConfigTimeDialogFragment : BaseBottomSheetDialogFragment<FragmentConfigDia
         }
 
         dataBinding.txtTimeConfig.text = (hourValue to minuteValue).hourMinuteToString()
+        onValueChanged(item, value)
     }
 
     override fun onClick(isPositive: Boolean) {
@@ -53,6 +52,10 @@ class ConfigTimeDialogFragment : BaseBottomSheetDialogFragment<FragmentConfigDia
             val newValue = dataBinding.txtTimeConfig.text.toHourMinutes().hourMinuteToMillis()
             dataBinding.item?.onSave?.invoke(newValue)
         }
+    }
+
+    private fun onValueChanged(item: LocalTimeConfigItem, value: Long) {
+        isSavable(item.isSavable?.invoke(value) ?: true)
     }
 
     companion object {

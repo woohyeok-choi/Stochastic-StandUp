@@ -1,8 +1,6 @@
 package kaist.iclab.standup.smi.ui.config
 
-import android.util.Log
 import androidx.core.os.bundleOf
-import androidx.navigation.fragment.navArgs
 import kaist.iclab.standup.smi.R
 import kaist.iclab.standup.smi.base.BaseBottomSheetDialogFragment
 import kaist.iclab.standup.smi.databinding.FragmentConfigDialogNumberBinding
@@ -29,11 +27,12 @@ class ConfigNumberDialogFragment : BaseBottomSheetDialogFragment<FragmentConfigD
         dataBinding.numberPickerConfig.minValue = min
         dataBinding.numberPickerConfig.maxValue = max
         dataBinding.numberPickerConfig.setOnValueChangedListener { _, _, newVal ->
-            isSavable(item.isSavable?.invoke(newVal.toLong()) ?: true)
+            onValueChanged(item, newVal)
         }
         dataBinding.numberPickerConfig.displayedValues = values
         dataBinding.numberPickerConfig.value = value.coerceIn(min, max)
-        isSavable(item.isSavable?.invoke(value.coerceIn(min, max).toLong()) ?: true)
+
+        onValueChanged(item, value.coerceIn(min, max))
     }
 
     override fun onClick(isPositive: Boolean) {
@@ -41,6 +40,10 @@ class ConfigNumberDialogFragment : BaseBottomSheetDialogFragment<FragmentConfigD
             val newValue = dataBinding.numberPickerConfig.value.toLong()
             dataBinding.item?.onSave?.invoke(newValue)
         }
+    }
+
+    private fun onValueChanged(item: NumberConfigItem, value: Int) {
+        isSavable(item.isSavable?.invoke(value.toLong()) ?: true)
     }
 
     companion object {

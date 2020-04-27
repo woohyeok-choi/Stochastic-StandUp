@@ -1,7 +1,6 @@
 package kaist.iclab.standup.smi.ui.config
 
 import androidx.core.os.bundleOf
-import androidx.navigation.fragment.navArgs
 import kaist.iclab.standup.smi.R
 import kaist.iclab.standup.smi.base.BaseBottomSheetDialogFragment
 import kaist.iclab.standup.smi.databinding.FragmentConfigDialogNumberRangeBinding
@@ -31,8 +30,8 @@ class ConfigNumberRangeDialogFragment :
             maxValue = max
             displayedValues = values
             setOnValueChangedListener { _, _, newVal ->
-                val newValue = newVal.toLong() to dataBinding.numberPickerConfigTo.value.toLong()
-                isSavable(item.isSavable?.invoke(newValue) ?: true)
+                val toValue = dataBinding.numberPickerConfigTo.value
+                onValueChanged(item, newVal, toValue)
             }
         }
 
@@ -41,14 +40,15 @@ class ConfigNumberRangeDialogFragment :
             maxValue = max
             displayedValues = values
             setOnValueChangedListener { _, _, newVal ->
-                val newValue = dataBinding.numberPickerConfigFrom.value.toLong() to newVal.toLong()
-                isSavable(item.isSavable?.invoke(newValue) ?: true)
+                val fromValue = dataBinding.numberPickerConfigFrom.value
+                onValueChanged(item, fromValue, newVal)
             }
         }
 
         dataBinding.numberPickerConfigFrom.value = from.toInt().coerceIn(min, max)
         dataBinding.numberPickerConfigTo.value = to.toInt().coerceIn(min, max)
 
+        onValueChanged(item, from.toInt().coerceIn(min, max), to.toInt().coerceIn(min, max))
     }
 
     override fun onClick(isPositive: Boolean) {
@@ -56,6 +56,10 @@ class ConfigNumberRangeDialogFragment :
             val newValue = dataBinding.numberPickerConfigFrom.value.toLong() to dataBinding.numberPickerConfigTo.value.toLong()
             dataBinding.item?.onSave?.invoke(newValue)
         }
+    }
+
+    private fun onValueChanged(item: NumberRangeConfigItem, fromValue: Int, toValue: Int) {
+        isSavable(item.isSavable?.invoke(fromValue.toLong() to toValue.toLong()) ?: true)
     }
 
     companion object {

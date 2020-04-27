@@ -100,7 +100,7 @@ class ConfigViewModel(
                             )
                         }
                         isSavable = { (from, to) ->
-                            from <= to && to - from > TimeUnit.HOURS.toMillis(12)
+                            from <= to && to - from >= TimeUnit.HOURS.toMillis(9)
                         }
                         onSave = { (from, to) ->
                             LocalPrefs.activeStartTimeMs = from

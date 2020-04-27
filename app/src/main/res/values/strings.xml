@@ -111,7 +111,7 @@
     <string name="config_item_is_mission_triggered">Mission on/off</string>
     <string name="config_item_is_mission_triggered_on">On</string>
     <string name="config_item_is_mission_triggered_off">Off</string>
-    <string name="config_item_mission_time_range">Mission available time (at least 12 hrs)</string>
+    <string name="config_item_mission_time_range">Mission available time (at least 9 hrs)</string>
     <string name="config_item_do_not_disturb">Do-not-disturb</string>
     <string name="config_item_do_not_disturb_set">%1s minute(s) left / %2d time(s) available</string>
     <string name="config_item_do_not_disturb_unset">Not set / %1d time(s) available.</string>

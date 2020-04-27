@@ -13,7 +13,7 @@ object LocalPrefs : PreferenceHolder(BuildConfig.PREF_NAME) {
      * Allow users to set belows
      */
     var activeStartTimeMs: Long by ReadWriteLong(default = TimeUnit.HOURS.toMillis(9))
-    var activeEndTimeMs: Long by ReadWriteLong(default = TimeUnit.HOURS.toMillis(21))
+    var activeEndTimeMs: Long by ReadWriteLong(default = TimeUnit.HOURS.toMillis(18))
     var doNotDisturbUntil: Long by ReadWriteLong(default = -1)
     var isMissionOn: Boolean by ReadWriteBoolean(default = true)
 

@@ -74,7 +74,7 @@
     <string name="config_item_is_mission_triggered">미션 전달 여부</string>
     <string name="config_item_is_mission_triggered_on">전달함</string>
     <string name="config_item_is_mission_triggered_off">전달하지 않음</string>
-    <string name="config_item_mission_time_range">미션 수행 및 활동 추적 시간 (최소 12시간 이상)</string>
+    <string name="config_item_mission_time_range">미션 수행 및 활동 추적 시간 (최소 9시간 이상)</string>
     <string name="config_item_do_not_disturb">방해 금지 모드</string>
     <string name="config_item_do_not_disturb_set">%1s 분 남음 / %2d 회 설정 가능</string>
     <string name="config_item_do_not_disturb_unset">미설정 / %1d 회 설정 가능</string>

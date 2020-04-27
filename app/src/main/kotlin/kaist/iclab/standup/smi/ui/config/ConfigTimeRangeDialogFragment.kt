@@ -33,17 +33,13 @@ class ConfigTimeRangeDialogFragment :
         dataBinding.txtTimeConfigFrom.doOnTextChanged { text, _, _, _ ->
             val fromMillis = text.toHourMinutes().hourMinuteToMillis()
             val toMillis = dataBinding.txtTimeConfigTo.text.toHourMinutes().hourMinuteToMillis()
-            isSavable(
-                item.isSavable?.invoke(fromMillis to toMillis) ?: true
-            )
+            onValueChanged(item, fromMillis, toMillis)
         }
 
         dataBinding.txtTimeConfigTo.doOnTextChanged { text, _, _, _ ->
             val fromMillis = dataBinding.txtTimeConfigFrom.text.toHourMinutes().hourMinuteToMillis()
             val toMillis = text.toHourMinutes().hourMinuteToMillis()
-            isSavable(
-                item.isSavable?.invoke(fromMillis to toMillis) ?: true
-            )
+            onValueChanged(item, fromMillis, toMillis)
         }
 
         dataBinding.txtTimeConfigFrom.text = (fromHour to fromMinute).hourMinuteToString()
@@ -65,6 +61,7 @@ class ConfigTimeRangeDialogFragment :
             }
             dialog.show(parentFragmentManager, null)
         }
+        onValueChanged(item, from, to)
     }
 
     override fun onClick(isPositive: Boolean) {
@@ -73,6 +70,10 @@ class ConfigTimeRangeDialogFragment :
             val toMillis = dataBinding.txtTimeConfigTo.text.toHourMinutes().hourMinuteToMillis()
             dataBinding.item?.onSave?.invoke(fromMillis to toMillis)
         }
+    }
+
+    private fun onValueChanged(item: LocalTimeRangeConfigItem, fromValue: Long, toValue: Long) {
+        isSavable(item.isSavable?.invoke(fromValue.toLong() to toValue.toLong()) ?: true)
     }
 
     companion object {

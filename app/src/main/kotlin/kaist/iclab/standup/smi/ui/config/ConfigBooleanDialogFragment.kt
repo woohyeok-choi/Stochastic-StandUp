@@ -1,7 +1,6 @@
 package kaist.iclab.standup.smi.ui.config
 
 import androidx.core.os.bundleOf
-import androidx.navigation.fragment.navArgs
 import kaist.iclab.standup.smi.R
 import kaist.iclab.standup.smi.base.BaseBottomSheetDialogFragment
 import kaist.iclab.standup.smi.databinding.FragmentConfigDialogBooleanBinding
@@ -20,14 +19,12 @@ class ConfigBooleanDialogFragment :
 
         dataBinding.item = item
         dataBinding.switchConfig.setOnCheckedChangeListener { _, isChecked ->
-            isSavable(item.isSavable?.invoke(isChecked) ?: true)
-            dataBinding.switchConfig.text = if(item.valueFormatter == null) {
-                item.formatter?.invoke(isChecked)
-            } else {
-                item.valueFormatter?.invoke(isChecked)
-            } ?: getString(if (isChecked) R.string.general_switch_on else R.string.general_switch_off)
+            onValueChanged(item, isChecked)
         }
-        dataBinding.switchConfig.isChecked = item.value?.invoke() ?: false
+
+        val value = item.value?.invoke() ?: false
+        dataBinding.switchConfig.isChecked = value
+        onValueChanged(item, value)
     }
 
     override fun onClick(isPositive: Boolean) {
@@ -35,6 +32,16 @@ class ConfigBooleanDialogFragment :
             val newValue = dataBinding.switchConfig.isChecked
             dataBinding.item?.onSave?.invoke(newValue)
         }
+    }
+
+    private fun onValueChanged(item: BooleanConfigItem, isChecked: Boolean) {
+        dataBinding.switchConfig.text = if(item.valueFormatter == null) {
+            item.formatter?.invoke(isChecked)
+        } else {
+            item.valueFormatter?.invoke(isChecked)
+        } ?: getString(if (isChecked) R.string.general_switch_on else R.string.general_switch_off)
+
+        isSavable(item.isSavable?.invoke(isChecked) ?: true)
     }
 
     companion object {
