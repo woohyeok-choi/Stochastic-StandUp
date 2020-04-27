@@ -362,6 +362,10 @@ object Notifications {
         }
     }
 
+    fun cancelMissionNotification(context: Context) {
+        NotificationManagerCompat.from(context).cancel(NOTIFICATION_ID_MISSION)
+    }
+
     fun notifyMissionStart(
         context: Context,
         incentives: Int,
